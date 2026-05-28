@@ -85,11 +85,12 @@ jobs:
       # 만약 Firebase App Distribution을 연동하시려면 아래 단계를 주석 해제하고,
       # Firebase Console에서 발급받은 'CREDENTALS'와 'APP_ID'를 GitHub Secrets에 등록하세요.
       #
-      # - name: Upload to Firebase App Distribution
-      #   if: github.event_name == 'push'
-      #   uses: wzieba/Firebase-App-Distribution-Github-Action@v1
-      #   with:
-      #     appId: ${{ secrets.FIREBASE_APP_ID }}
-      #     token: ${{ secrets.FIREBASE_CLI_TOKEN }}
-      #     groups: testers
-      #     file: ${{ env.APK_PATH }}
+      # ==== 4단계: FIREBASE APP DISTRIBUTION 연동 단계 ====
+      - name: Upload to Firebase App Distribution
+        if: github.event_name == 'push'
+        uses: wzieba/Firebase-App-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          token: ${{ secrets.FIREBASE_CLI_TOKEN }}
+          groups: testers # 1단계에서 활성화한 테스터 그룹명을 적어줍니다.
+          file: ${{ env.APK_PATH }}
