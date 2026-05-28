@@ -82,6 +82,7 @@ export default function App() {
 
   // Virtual map tracker for simulated GPS picker
   const [mapClickedCoords, setMapClickedCoords] = useState({ lat: 33.3541, lng: 126.3712 });
+  const [showCourseModal, setShowCourseModal] = useState(false);
 
   const handleMapClick = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -176,6 +177,7 @@ export default function App() {
     };
 
     setCourses(prev => [...prev, courseData]);
+    setShowCourseModal(false);
     alert('New golf course successfully registered.');
     
     // Reset
@@ -219,8 +221,8 @@ export default function App() {
       
       {/* Top Header App Bar */}
       <header className="bg-emerald-700 text-white py-4 px-6 text-center shadow-md">
-        <h1 className="text-xl font-extrabold tracking-wide">⛳ Skky Golf</h1>
-        <p className="text-xs text-emerald-100 mt-1 font-medium">Recording &amp; remembering momentos on the field together</p>
+        <h1 className="text-xl font-extrabold tracking-wide">⛳ SKKY Golf</h1>
+        <p className="text-xs text-emerald-100 mt-1 font-medium">시근이와 계영이의 골프 여행기</p>
       </header>
 
       {/* Main Content Viewport */}
@@ -353,12 +355,12 @@ export default function App() {
         {activeTab === 'course' && (
           <div className="space-y-4 animate-fadeIn">
             
-            {/* Expanded Course Form */}
+            {/* Fake GPS Picker Map Area 항상 보이기 */}
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center">
-                <span className="mr-2">🗺️</span> Register New Golf Course
+              <h2 className="text-base font-bold text-gray-800 mb-1 flex items-center">
+                <span className="mr-2">🗺️</span> Course Location / 골프장 지도 시뮬레이터
               </h2>
-              <p className="text-xs text-gray-400 mb-4 font-medium">Click on the canvas helper below to auto-inject coordinates.</p>
+              <p className="text-[11px] text-gray-400 mb-4 font-medium">지도 영역을 클릭하면 GPS 위치가 시뮬레이션 변경되며, 이 핀 주소를 기준으로 신규 골프장을 등록할 수 있습니다.</p>
               
               {/* Fake GPS Picker Map Area */}
               <div 
@@ -373,112 +375,150 @@ export default function App() {
                   <span>📍</span> 
                   <span className="font-bold text-emerald-800">Lat: {mapClickedCoords.lat}, Lng: {mapClickedCoords.lng}</span>
                 </div>
-                <div className="absolute bottom-1.5 text-[10px] text-gray-400 font-semibold uppercase tracking-widest text-center">Click map simulation to move pin</div>
+                <div className="absolute bottom-1.5 text-[10px] text-gray-400 font-semibold uppercase tracking-widest text-center">클릭하여 핀 위치 변경하기</div>
               </div>
 
-              {/* Form Input Container */}
-              <form onSubmit={handleSaveCourse} className="mt-4 space-y-3">
-                
-                {/* Course Name */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Golf Course Name</label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g. Jeju Nine Bridges CC" 
-                    className="w-full p-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    value={newCourse.name}
-                    onChange={(e) => setNewCourse({ ...newCourse, name: e.target.value })}
-                    required
-                  />
-                </div>
-
-                {/* Custom Address Input */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Course Physical Address</label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g. 34 Gapyeong-ro, Gapyeong-eup, South Korea" 
-                    className="w-full p-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    value={newCourse.address}
-                    onChange={(e) => setNewCourse({ ...newCourse, address: e.target.value })}
-                  />
-                </div>
-
-                {/* Total Par Parameter */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Course Par</label>
-                  <input 
-                    type="number" 
-                    placeholder="72" 
-                    className="w-full p-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    value={newCourse.totalPar}
-                    onChange={(e) => setNewCourse({ ...newCourse, totalPar: e.target.value })}
-                  />
-                </div>
-
-                {/* Tee Box Configuration Inputs Display */}
-                <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 space-y-3">
-                  <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">Rating &amp; Slope Options</h3>
-                  
-                  {/* Lady Tee Config */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[10px] font-bold text-pink-700 uppercase">Lady Course Rating</label>
-                      <input 
-                        type="number" 
-                        step="0.1"
-                        placeholder="72.1" 
-                        className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs"
-                        value={newCourse.ladyRating}
-                        onChange={(e) => setNewCourse({ ...newCourse, ladyRating: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-pink-700 uppercase">Lady Slope</label>
-                      <input 
-                        type="number" 
-                        placeholder="113" 
-                        className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs"
-                        value={newCourse.ladySlope}
-                        onChange={(e) => setNewCourse({ ...newCourse, ladySlope: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Blue Tee Config */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[10px] font-bold text-blue-700 uppercase">Blue Course Rating</label>
-                      <input 
-                        type="number" 
-                        step="0.1"
-                        placeholder="73.5" 
-                        className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs"
-                        value={newCourse.blueRating}
-                        onChange={(e) => setNewCourse({ ...newCourse, blueRating: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-blue-700 uppercase">Blue Slope</label>
-                      <input 
-                        type="number" 
-                        placeholder="113" 
-                        className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs"
-                        value={newCourse.blueSlope}
-                        onChange={(e) => setNewCourse({ ...newCourse, blueSlope: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <button 
-                  type="submit" 
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-sm transition"
-                >
-                  Register Course Info
-                </button>
-              </form>
+              {/* Add Golf Course Button */}
+              <button 
+                onClick={() => setShowCourseModal(true)}
+                className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 px-4 rounded-xl text-sm transition duration-150 transform active:scale-95 shadow-md shadow-emerald-700/20"
+              >
+                ⛳ Add Golf Course / 골프장 등록하기
+              </button>
             </div>
+
+            {/* Registration Modal Overlay */}
+            {showCourseModal && (
+              <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-2xl w-full max-w-sm max-h-[85vh] overflow-y-auto p-5 shadow-2xl border border-gray-100 flex flex-col">
+                  <div className="flex justify-between items-center pb-3 border-b border-gray-100 mb-4">
+                    <h3 className="text-base font-bold text-gray-800 flex items-center">
+                      <span className="mr-2">⛳</span> 등록할 골프장 정보 입력
+                    </h3>
+                    <button 
+                      onClick={() => setShowCourseModal(false)}
+                      className="text-gray-400 hover:text-gray-600 text-lg font-bold"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-emerald-800 font-semibold mb-3 bg-emerald-50 p-2.5 rounded-lg text-center">
+                    📍 Selected GPS Lat: {mapClickedCoords.lat}, Lng: {mapClickedCoords.lng}
+                  </p>
+
+                  <form onSubmit={handleSaveCourse} className="space-y-4 text-left">
+                    {/* Course Name */}
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">골프장 이름 (Golf Course Name)</label>
+                      <input 
+                        type="text" 
+                        placeholder="예: Nine Bridges CC" 
+                        className="w-full p-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        value={newCourse.name}
+                        onChange={(e) => setNewCourse({ ...newCourse, name: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    {/* Custom Address Input */}
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">골프장 주소 (Course Address)</label>
+                      <input 
+                        type="text" 
+                        placeholder="예: 제주 안덕면 광평리" 
+                        className="w-full p-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        value={newCourse.address}
+                        onChange={(e) => setNewCourse({ ...newCourse, address: e.target.value })}
+                      />
+                    </div>
+
+                    {/* Total Par Parameter */}
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">골프장 총 Par (Total Course Par)</label>
+                      <input 
+                        type="number" 
+                        placeholder="72" 
+                        className="w-full p-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        value={newCourse.totalPar}
+                        onChange={(e) => setNewCourse({ ...newCourse, totalPar: e.target.value })}
+                      />
+                    </div>
+
+                    {/* Tee Box Configuration Inputs Display */}
+                    <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 space-y-3">
+                      <h3 className="text-[11px] font-bold text-gray-700 uppercase tracking-wider">티박스 난이도 정보 (Tee Info)</h3>
+                      
+                      {/* Lady Tee Config */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[10px] font-bold text-pink-700 uppercase">Lady 레이팅</label>
+                          <input 
+                            type="number" 
+                            step="0.1"
+                            placeholder="72.1" 
+                            className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-pink-500"
+                            value={newCourse.ladyRating}
+                            onChange={(e) => setNewCourse({ ...newCourse, ladyRating: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-pink-700 uppercase">Lady 슬롭</label>
+                          <input 
+                            type="number" 
+                            placeholder="113" 
+                            className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-pink-500"
+                            value={newCourse.ladySlope}
+                            onChange={(e) => setNewCourse({ ...newCourse, ladySlope: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Blue Tee Config */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[10px] font-bold text-blue-700 uppercase">Blue 레이팅</label>
+                          <input 
+                            type="number" 
+                            step="0.1"
+                            placeholder="73.5" 
+                            className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            value={newCourse.blueRating}
+                            onChange={(e) => setNewCourse({ ...newCourse, blueRating: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-blue-700 uppercase">Blue 슬롭</label>
+                          <input 
+                            type="number" 
+                            placeholder="113" 
+                            className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            value={newCourse.blueSlope}
+                            onChange={(e) => setNewCourse({ ...newCourse, blueSlope: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex space-x-2 pt-2">
+                      <button 
+                        type="button"
+                        onClick={() => setShowCourseModal(false)}
+                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-4 rounded-xl text-sm transition"
+                      >
+                        취소 (Cancel)
+                      </button>
+                      <button 
+                        type="submit" 
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-sm transition"
+                      >
+                        등록하기 (Register)
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
 
             {/* Courses Overview List and Personal Feed */}
             <div className="space-y-3">

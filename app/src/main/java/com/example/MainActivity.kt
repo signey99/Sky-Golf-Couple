@@ -57,8 +57,8 @@ fun GolfApp(viewModel: GolfViewModel) {
             TopAppBar(
                 title = {
                     Column {
-                        Text("⛳ Couple's Golf Diary", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
-                        Text("Recording & remembering moments on the field together", fontSize = 12.sp, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f))
+                        Text("⛳ SKKY Golf", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                        Text("시근이와 계영이의 골프 여행기", fontSize = 12.sp, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary)

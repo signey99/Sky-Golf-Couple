@@ -3,6 +3,8 @@ package com.example.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -58,6 +60,7 @@ fun CourseTab(
     // Individual hole pars state (default is Par 4 for all 18 holes)
     val holePars = remember { mutableStateListOf(*Array(18) { 4 }) }
     var showParDialogForHole by remember { mutableStateOf<Int?>(null) } // hole number (1 to 18), or null
+    var showRegisterFormDialog by remember { mutableStateOf(false) }
 
     // Popup Par Select Dialog
     if (showParDialogForHole != null) {
@@ -101,86 +104,53 @@ fun CourseTab(
         )
     }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
-        item {
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("🗺️ Course Location & Registration", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    Text("Click on the map area to simulate entering custom GPS coordinates.", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(bottom = 12.dp))
-
-                    // Mock Map
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(130.dp)
-                            .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(8.dp))
-                            .clickable {
-                                // Simulate click resulting in updated coordinates
-                                val randomOffsetLat = (Math.random() * 0.1)
-                                val randomOffsetLng = (Math.random() * 0.1)
-                                clickedLat = "%.4f".format(33.3541 + randomOffsetLat)
-                                clickedLng = "%.4f".format(126.3712 + randomOffsetLng)
-                                lat = clickedLat
-                                lng = clickedLng
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("📍 Lat: $clickedLat, Lng: $clickedLng", 
-                                fontSize = 12.sp, 
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                modifier = Modifier.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp)).padding(horizontal = 8.dp, vertical = 4.dp))
-                            Text("Click here to simulate changing location pin", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha=0.7f), modifier = Modifier.padding(top=8.dp))
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
+    if (showRegisterFormDialog) {
+        val registerScrollState = rememberScrollState()
+        AlertDialog(
+            onDismissRequest = { showRegisterFormDialog = false },
+            title = { Text("⛳ 등록할 골프장 정보 입력", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(registerScrollState),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text("Selected GPS Pin (From map clicks):", fontSize = 11.sp, color = Color.Gray)
+                    Text("📍 Lat: $clickedLat, Lng: $clickedLng", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    
                     OutlinedTextField(
                         value = newCourseName,
                         onValueChange = { newCourseName = it },
-                        label = { Text("Golf Course Name") },
-                        placeholder = { Text("e.g. Nine Bridges CC") },
+                        label = { Text("골프장 이름 (Golf Course Name)") },
+                        placeholder = { Text("예: Nine Bridges CC") },
                         modifier = Modifier.fillMaxWidth()
                     )
-
-                    Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
                         value = address,
                         onValueChange = { address = it },
-                        label = { Text("Course Address") },
-                        placeholder = { Text("e.g. Jeju Andeok-myeon, South Korea") },
+                        label = { Text("골프장 주소 (Course Address)") },
+                        placeholder = { Text("예: 제주 안덕면 광평리") },
                         modifier = Modifier.fillMaxWidth()
                     )
-
-                    Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
                         value = totalPar,
                         onValueChange = { totalPar = it },
-                        label = { Text("Total Course Par (Auto-sums holes)") },
-                        placeholder = { Text("e.g. 72") },
+                        label = { Text("골프장 총 Par (Total Course Par)") },
+                        placeholder = { Text("예: 72") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     // Individual Hole Par Selector UI
                     Text(
-                        text = "⛳ Individual Hole Pars (Tap to change)",
+                        text = "⛳ 홀별 기본 타수 (탭하여 수정)",
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(top = 16.dp, bottom = 6.dp)
+                        modifier = Modifier.padding(top = 8.dp)
                     )
 
                     Column(
@@ -233,92 +203,149 @@ fun CourseTab(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text("Tee Information", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("티박스 난이도 정보 (Tee Info)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.primary)
 
                     // Lady Tee Form
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
                             value = ladyRating,
                             onValueChange = { ladyRating = it },
-                            label = { Text("Lady Course Rating") },
-                            placeholder = { Text("e.g. 72.1") },
+                            label = { Text("Lady 레이팅") },
+                            placeholder = { Text("72.0") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.weight(1f)
                         )
                         OutlinedTextField(
                             value = ladySlope,
                             onValueChange = { ladySlope = it },
-                            label = { Text("Lady Tee Slope") },
-                            placeholder = { Text("e.g. 113") },
+                            label = { Text("Lady 슬롭") },
+                            placeholder = { Text("113") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.weight(1f)
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(8.dp))
 
                     // Blue Tee Form
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
                             value = blueRating,
                             onValueChange = { blueRating = it },
-                            label = { Text("Blue Course Rating") },
-                            placeholder = { Text("e.g. 73.5") },
+                            label = { Text("Blue 레이팅") },
+                            placeholder = { Text("72.0") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.weight(1f)
                         )
                         OutlinedTextField(
                             value = blueSlope,
                             onValueChange = { blueSlope = it },
-                            label = { Text("Blue Tee Slope") },
-                            placeholder = { Text("e.g. 120") },
+                            label = { Text("Blue 슬롭") },
+                            placeholder = { Text("113") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.weight(1f)
                         )
                     }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (newCourseName.isNotBlank()) {
+                            val parsJson = JsonUtils.serializeHolePars(holePars.toList())
+                            onAddCourse(
+                                newCourseName,
+                                address,
+                                totalPar.toIntOrNull() ?: 72,
+                                ladyRating.toDoubleOrNull() ?: 72.0,
+                                ladySlope.toIntOrNull() ?: 113,
+                                blueRating.toDoubleOrNull() ?: 72.0,
+                                blueSlope.toIntOrNull() ?: 113,
+                                lat.toDoubleOrNull() ?: 33.3541,
+                                lng.toDoubleOrNull() ?: 126.3712,
+                                parsJson
+                            )
+                            // Reset fields
+                            newCourseName = ""
+                            address = ""
+                            totalPar = "72"
+                            ladyRating = ""
+                            ladySlope = ""
+                            blueRating = ""
+                            blueSlope = ""
+                            holePars.indices.forEach { holePars[it] = 4 }
+                            showRegisterFormDialog = false
+                        }
+                    }
+                ) {
+                    Text("등록하기 (Register)")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRegisterFormDialog = false }) {
+                    Text("취소 (Cancel)")
+                }
+            }
+        )
+    }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        item {
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("🗺️ Course Location / 골프장 지도 시뮬레이터", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text("지도 영역을 클릭하면 GPS 위치가 시뮬레이션 변경되며, 이 핀 주소를 기준으로 신규 골프장을 등록할 수 있습니다.", fontSize = 11.sp, color = Color.Gray, modifier = Modifier.padding(bottom = 12.dp))
 
-                    Button(
-                        onClick = {
-                            if (newCourseName.isNotBlank()) {
-                                val parsJson = JsonUtils.serializeHolePars(holePars.toList())
-                                onAddCourse(
-                                    newCourseName,
-                                    address,
-                                    totalPar.toIntOrNull() ?: 72,
-                                    ladyRating.toDoubleOrNull() ?: 72.0,
-                                    ladySlope.toIntOrNull() ?: 113,
-                                    blueRating.toDoubleOrNull() ?: 72.0,
-                                    blueSlope.toIntOrNull() ?: 113,
-                                    lat.toDoubleOrNull() ?: 33.3541,
-                                    lng.toDoubleOrNull() ?: 126.3712,
-                                    parsJson
-                                )
-                                // Reset fields
-                                newCourseName = ""
-                                address = ""
-                                totalPar = "72"
-                                ladyRating = ""
-                                ladySlope = ""
-                                blueRating = ""
-                                blueSlope = ""
-                                holePars.indices.forEach { holePars[it] = 4 }
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
+                    // Mock Map
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(130.dp)
+                            .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(8.dp))
+                            .clickable {
+                                // Simulate click resulting in updated coordinates
+                                val randomOffsetLat = (Math.random() * 0.1)
+                                val randomOffsetLng = (Math.random() * 0.1)
+                                clickedLat = "%.4f".format(33.3541 + randomOffsetLat)
+                                clickedLng = "%.4f".format(126.3712 + randomOffsetLng)
+                                lat = clickedLat
+                                lng = clickedLng
+                            },
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text("Register Course", fontWeight = FontWeight.Bold)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("📍 Lat: $clickedLat, Lng: $clickedLng", 
+                                fontSize = 12.sp, 
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp)).padding(horizontal = 8.dp, vertical = 4.dp))
+                            Text("클릭하여 핀 위치 변경하기", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha=0.7f), modifier = Modifier.padding(top=8.dp))
+                        }
                     }
                 }
             }
         }
 
         item {
-            Text("⛳ Registered Courses & Results", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Button(
+                onClick = { showRegisterFormDialog = true },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) {
+                Text("⛳ Add Golf Course / 골프장 등록하기", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        item {
+            Text("⛳ Registered Courses / 등록된 골프장 목록", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
 
         items(courses) { course ->
