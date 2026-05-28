@@ -38,9 +38,9 @@ class MainActivity : ComponentActivity() {
 }
 
 enum class NavigationTab(val title: String, val iconText: String) {
-    SCORE("스코어 입력", "📝"),
-    COURSE("코스 정보", "🗺️"),
-    HISTORY("기록 & 사진", "📸")
+    SCORE("Add Score", "📝"),
+    COURSE("Course Info", "🗺️"),
+    HISTORY("History & Photos", "📸")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -57,8 +57,8 @@ fun GolfApp(viewModel: GolfViewModel) {
             TopAppBar(
                 title = {
                     Column {
-                        Text("⛳ 부부 골프 다이어리", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
-                        Text("함께 기록하고 추억하는 필드의 순간들", fontSize = 12.sp, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f))
+                        Text("⛳ Couple's Golf Diary", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                        Text("Recording & remembering moments on the field together", fontSize = 12.sp, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary)
@@ -97,7 +97,17 @@ fun GolfApp(viewModel: GolfViewModel) {
                         viewModel.addScore(courseId, courseName, date, holesJson, "[]")
                     },
                     onAddCourseAndSave = { newCourseName, date, holesJson ->
-                        viewModel.addCourse(newCourseName, 37.5665, 126.9780, 72.0, 113) { newCourseId ->
+                        viewModel.addCourse(
+                            name = newCourseName,
+                            address = "Unknown Address",
+                            totalPar = 72,
+                            ladyRating = 72.0,
+                            ladySlope = 113,
+                            blueRating = 72.0,
+                            blueSlope = 113,
+                            lat = 37.5665,
+                            lng = 126.9780
+                        ) { newCourseId ->
                             viewModel.addScore(newCourseId, newCourseName, date, holesJson, "[]")
                         }
                     }
@@ -105,8 +115,8 @@ fun GolfApp(viewModel: GolfViewModel) {
                 NavigationTab.COURSE -> CourseTab(
                     courses = courses,
                     scores = scores,
-                    onAddCourse = { name, lat, lng, handicap, slope ->
-                        viewModel.addCourse(name, lat, lng, handicap, slope)
+                    onAddCourse = { name, address, totalPar, ladyRating, ladySlope, blueRating, blueSlope, lat, lng ->
+                        viewModel.addCourse(name, address, totalPar, ladyRating, ladySlope, blueRating, blueSlope, lat, lng)
                     }
                 )
                 NavigationTab.HISTORY -> HistoryTab(

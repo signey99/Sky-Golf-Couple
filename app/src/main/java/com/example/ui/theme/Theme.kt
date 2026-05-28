@@ -10,31 +10,39 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
+import androidx.compose.ui.graphics.Color
+
 private val DarkColorScheme =
-  darkColorScheme(primary = Green80, secondary = GreenGrey80, tertiary = DarkGreen80)
+  darkColorScheme(
+    primary = Color(0xFFA8DFB9),
+    secondary = Color(0xFFBACBC0),
+    tertiary = Color(0xFF9CCCB0),
+    background = Color(0xFF191C1A),
+    surface = Color(0xFF222623)
+  )
 
 private val LightColorScheme =
   lightColorScheme(
-    primary = Green40,
-    secondary = GreenGrey40,
-    tertiary = DarkGreen40,
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = Color(0xFF107C41),          // Beautiful Bright Emerald Golf Green
+    onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFFD0ECD8), // Delightful soft green highlight
+    onPrimaryContainer = Color(0xFF00220B),
+    secondary = Color(0xFF3B6E46),
+    onSecondary = Color(0xFFFFFFFF),
+    background = Color(0xFFF6FBF7),       // Crisp light green-tinted background
+    onBackground = Color(0xFF191C1A),
+    surface = Color(0xFFFFFFFF),          // Pure White for Cards & Surface Fields
+    onSurface = Color(0xFF191C1A),
+    surfaceVariant = Color(0xFFEDF3EE),   // Soft grey-green borders/fields
+    onSurfaceVariant = Color(0xFF404941),
+    outline = Color(0xFF707971),
+    outlineVariant = Color(0xFFBFC9BE)
   )
 
 @Composable
 fun MyApplicationTheme(
-  darkTheme: Boolean = isSystemInDarkTheme(),
-  // Dynamic color is available on Android 12+
-  dynamicColor: Boolean = true,
+  darkTheme: Boolean = false,              // Default to false for bright clean theme
+  dynamicColor: Boolean = false,           // Default to false to bypass system color override
   content: @Composable () -> Unit,
 ) {
   val colorScheme =

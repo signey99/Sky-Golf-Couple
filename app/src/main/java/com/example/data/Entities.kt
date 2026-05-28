@@ -7,10 +7,14 @@ import androidx.room.PrimaryKey
 data class CourseEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
+    val address: String = "",
+    val totalPar: Int = 72,
+    val ladyRating: Double = 72.0,
+    val ladySlope: Int = 113,
+    val blueRating: Double = 72.0,
+    val blueSlope: Int = 113,
     val lat: Double,
-    val lng: Double,
-    val handicap: Double,
-    val slope: Int
+    val lng: Double
 )
 
 @Entity(tableName = "scores")

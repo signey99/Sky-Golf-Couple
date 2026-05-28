@@ -51,7 +51,7 @@ fun ScoreTab(
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("📝 오늘의 스코어 입력", fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
+                    Text("📝 Enter Today's Score", fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
 
                     var expanded by remember { mutableStateOf(false) }
                     ExposedDropdownMenuBox(
@@ -59,10 +59,10 @@ fun ScoreTab(
                         onExpandedChange = { expanded = !expanded }
                     ) {
                         OutlinedTextField(
-                            value = if (isNewCourse) "+ 신규 골프장 직접 입력" else courses.find { it.id == selectedCourseId }?.name ?: "선택해주세요",
+                            value = if (isNewCourse) "+ Add New Golf Course" else courses.find { it.id == selectedCourseId }?.name ?: "Select a Golf Course",
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("골프장 선택") },
+                            label = { Text("Golf Course") },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                             modifier = Modifier.menuAnchor().fillMaxWidth(),
                             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
@@ -82,7 +82,7 @@ fun ScoreTab(
                                 )
                             }
                             DropdownMenuItem(
-                                text = { Text("+ 신규 골프장 직접 입력") },
+                                text = { Text("+ Add New Golf Course") },
                                 onClick = {
                                     isNewCourse = true
                                     selectedCourseId = null
@@ -97,7 +97,7 @@ fun ScoreTab(
                         OutlinedTextField(
                             value = newCourseName,
                             onValueChange = { newCourseName = it },
-                            label = { Text("골프장 이름 입력") },
+                            label = { Text("Enter Golf Course Name") },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -107,13 +107,13 @@ fun ScoreTab(
                     OutlinedTextField(
                         value = date,
                         onValueChange = { date = it },
-                        label = { Text("플레이 날짜 (YYYY-MM-DD)") },
+                        label = { Text("Play Date (YYYY-MM-DD)") },
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text("18홀 점수 기록", fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
+                    Text("18-Hole Scores", fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
 
                     Column(
                         modifier = Modifier
@@ -127,10 +127,10 @@ fun ScoreTab(
                                 .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
                                 .padding(8.dp)
                         ) {
-                            Text("홀", modifier = Modifier.weight(1f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
-                            Text("아이언", modifier = Modifier.weight(1.5f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
-                            Text("퍼팅", modifier = Modifier.weight(1.5f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
-                            Text("합계", modifier = Modifier.weight(1f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Text("Hole", modifier = Modifier.weight(1f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Text("Iron", modifier = Modifier.weight(1.5f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Text("Putt", modifier = Modifier.weight(1.5f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Text("Total", modifier = Modifier.weight(1f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
                         }
 
                         holes.forEachIndexed { index, holeScore ->
@@ -190,7 +190,7 @@ fun ScoreTab(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("기록 저장하기", fontWeight = FontWeight.Bold)
+                        Text("Save Record", fontWeight = FontWeight.Bold)
                     }
                 }
             }

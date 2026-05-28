@@ -35,9 +35,9 @@ fun HistoryTab(
     if (scores.isEmpty()) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("기록된 경기 히스토리가 없습니다.", color = Color.Gray, fontWeight = FontWeight.Bold)
+                Text("No game history has been recorded yet.", color = Color.Gray, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("1번 탭에서 첫 라운드를 기록해보세요!", color = Color.Gray, fontSize = 12.sp)
+                Text("Record your first round in the 1st tab!", color = Color.Gray, fontSize = 12.sp)
             }
         }
     } else {
@@ -48,7 +48,7 @@ fun HistoryTab(
         ) {
             item {
                 Text(
-                    text = "\uD83D\uDCF8 우리의 골프 여행 추억",
+                    text = "\uD83D\uDCF8 Our Golf Memories",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -98,8 +98,8 @@ fun HistoryCard(score: ScoreEntity, onAddPhoto: (ScoreEntity, String) -> Unit) {
                     Text("\uD83D\uDCC5 ${score.date}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("${totalStrokes}타", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
-                    Text("퍼팅 ${totalPutts}개", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("${totalStrokes} Strokes", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+                    Text("Putts: ${totalPutts}", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
@@ -115,7 +115,7 @@ fun HistoryCard(score: ScoreEntity, onAddPhoto: (ScoreEntity, String) -> Unit) {
                     photos.forEach { photoUrl ->
                         AsyncImage(
                             model = photoUrl,
-                            contentDescription = "골프 사진",
+                            contentDescription = "Golf Photo",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .size(80.dp)
@@ -136,7 +136,7 @@ fun HistoryCard(score: ScoreEntity, onAddPhoto: (ScoreEntity, String) -> Unit) {
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.Default.Add, contentDescription = "Add photo", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text("사진 등록", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("Add Photo", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }

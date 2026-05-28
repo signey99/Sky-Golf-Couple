@@ -35,9 +35,32 @@ class GolfViewModel(application: Application) : AndroidViewModel(application) {
         )
     }
 
-    fun addCourse(name: String, lat: Double, lng: Double, handicap: Double, slope: Int, onComplete: ((Long) -> Unit)? = null) {
+    fun addCourse(
+        name: String,
+        address: String,
+        totalPar: Int,
+        ladyRating: Double,
+        ladySlope: Int,
+        blueRating: Double,
+        blueSlope: Int,
+        lat: Double,
+        lng: Double,
+        onComplete: ((Long) -> Unit)? = null
+    ) {
         viewModelScope.launch {
-            val id = repository.insertCourse(CourseEntity(name = name, lat = lat, lng = lng, handicap = handicap, slope = slope))
+            val id = repository.insertCourse(
+                CourseEntity(
+                    name = name,
+                    address = address,
+                    totalPar = totalPar,
+                    ladyRating = ladyRating,
+                    ladySlope = ladySlope,
+                    blueRating = blueRating,
+                    blueSlope = blueSlope,
+                    lat = lat,
+                    lng = lng
+                )
+            )
             onComplete?.invoke(id)
         }
     }

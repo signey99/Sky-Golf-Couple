@@ -24,18 +24,34 @@ import com.example.utils.JsonUtils
 fun CourseTab(
     courses: List<CourseEntity>,
     scores: List<ScoreEntity>,
-    onAddCourse: (name: String, lat: Double, lng: Double, handicap: Double, slope: Int) -> Unit,
+    onAddCourse: (
+        name: String,
+        address: String,
+        totalPar: Int,
+        ladyRating: Double,
+        ladySlope: Int,
+        blueRating: Double,
+        blueSlope: Int,
+        lat: Double,
+        lng: Double
+    ) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var newCourseName by remember { mutableStateOf("") }
-    var lat by remember { mutableStateOf("33.450701") }
-    var lng by remember { mutableStateOf("126.570667") }
-    var handicap by remember { mutableStateOf("") }
-    var slope by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
+    var totalPar by remember { mutableStateOf("72") }
+    
+    var ladyRating by remember { mutableStateOf("") }
+    var ladySlope by remember { mutableStateOf("") }
+    var blueRating by remember { mutableStateOf("") }
+    var blueSlope by remember { mutableStateOf("") }
+
+    var lat by remember { mutableStateOf("33.3541") }
+    var lng by remember { mutableStateOf("126.3712") }
 
     // Mock map coordinates
-    var clickedLat by remember { mutableStateOf("33.4507") }
-    var clickedLng by remember { mutableStateOf("126.5707") }
+    var clickedLat by remember { mutableStateOf("33.3541") }
+    var clickedLng by remember { mutableStateOf("126.3712") }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -49,33 +65,33 @@ fun CourseTab(
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("🗺️ 골프장 위치 및 코스 등록", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    Text("지도의 영역을 클릭하여 위경도를 모의로 입력할 수 있습니다.", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(bottom = 12.dp))
+                    Text("🗺️ Course Location & Registration", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text("Click on the map area to simulate entering custom GPS coordinates.", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(bottom = 12.dp))
 
                     // Mock Map
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(150.dp)
+                            .height(130.dp)
                             .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(8.dp))
                             .clickable {
                                 // Simulate click resulting in updated coordinates
-                                val randomOffsetLat = (Math.random() * 0.1).toFloat()
-                                val randomOffsetLng = (Math.random() * 0.1).toFloat()
-                                clickedLat = "%.4f".format(33.45f + randomOffsetLat)
-                                clickedLng = "%.4f".format(126.57f + randomOffsetLng)
+                                val randomOffsetLat = (Math.random() * 0.1)
+                                val randomOffsetLng = (Math.random() * 0.1)
+                                clickedLat = "%.4f".format(33.3541 + randomOffsetLat)
+                                clickedLng = "%.4f".format(126.3712 + randomOffsetLng)
                                 lat = clickedLat
                                 lng = clickedLng
                             },
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("\uD83D\uDCCD 위도: $clickedLat, 경도: $clickedLng", 
+                            Text("\uD83D\uDCCD Lat: $clickedLat, Lng: $clickedLng", 
                                 fontSize = 12.sp, 
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                                 modifier = Modifier.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp)).padding(horizontal = 8.dp, vertical = 4.dp))
-                            Text("지도를 클릭하면 해당 위치가 입력됩니다.", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha=0.7f), modifier = Modifier.padding(top=8.dp))
+                            Text("Click here to simulate changing location pin", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha=0.7f), modifier = Modifier.padding(top=8.dp))
                         }
                     }
 
@@ -84,27 +100,74 @@ fun CourseTab(
                     OutlinedTextField(
                         value = newCourseName,
                         onValueChange = { newCourseName = it },
-                        label = { Text("골프장 이름") },
-                        placeholder = { Text("예: 나인브릿지 CC") },
+                        label = { Text("Golf Course Name") },
+                        placeholder = { Text("e.g. Nine Bridges CC") },
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    OutlinedTextField(
+                        value = address,
+                        onValueChange = { address = it },
+                        label = { Text("Course Address") },
+                        placeholder = { Text("e.g. Jeju Andeok-myeon, South Korea") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        value = totalPar,
+                        onValueChange = { totalPar = it },
+                        label = { Text("Total Course Par") },
+                        placeholder = { Text("e.g. 72") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text("Tee Information", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Lady Tee Form
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
-                            value = handicap,
-                            onValueChange = { handicap = it },
-                            label = { Text("총 코스 레이팅(핸디)") },
-                            placeholder = { Text("예: 72.0") },
+                            value = ladyRating,
+                            onValueChange = { ladyRating = it },
+                            label = { Text("Lady Course Rating") },
+                            placeholder = { Text("e.g. 72.1") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.weight(1f)
                         )
                         OutlinedTextField(
-                            value = slope,
-                            onValueChange = { slope = it },
-                            label = { Text("슬로프(Slope)") },
-                            placeholder = { Text("예: 113") },
+                            value = ladySlope,
+                            onValueChange = { ladySlope = it },
+                            label = { Text("Lady Tee Slope") },
+                            placeholder = { Text("e.g. 113") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Blue Tee Form
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = blueRating,
+                            onValueChange = { blueRating = it },
+                            label = { Text("Blue Course Rating") },
+                            placeholder = { Text("e.g. 73.5") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f)
+                        )
+                        OutlinedTextField(
+                            value = blueSlope,
+                            onValueChange = { blueSlope = it },
+                            label = { Text("Blue Tee Slope") },
+                            placeholder = { Text("e.g. 120") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.weight(1f)
                         )
@@ -117,26 +180,35 @@ fun CourseTab(
                             if (newCourseName.isNotBlank()) {
                                 onAddCourse(
                                     newCourseName,
-                                    lat.toDoubleOrNull() ?: 33.45,
-                                    lng.toDoubleOrNull() ?: 126.57,
-                                    handicap.toDoubleOrNull() ?: 72.0,
-                                    slope.toIntOrNull() ?: 113
+                                    address,
+                                    totalPar.toIntOrNull() ?: 72,
+                                    ladyRating.toDoubleOrNull() ?: 72.0,
+                                    ladySlope.toIntOrNull() ?: 113,
+                                    blueRating.toDoubleOrNull() ?: 72.0,
+                                    blueSlope.toIntOrNull() ?: 113,
+                                    lat.toDoubleOrNull() ?: 33.3541,
+                                    lng.toDoubleOrNull() ?: 126.3712
                                 )
+                                // Reset fields
                                 newCourseName = ""
-                                handicap = ""
-                                slope = ""
+                                address = ""
+                                totalPar = "72"
+                                ladyRating = ""
+                                ladySlope = ""
+                                blueRating = ""
+                                blueSlope = ""
                             }
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("코스 등록", fontWeight = FontWeight.Bold)
+                        Text("Register Course", fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
 
         item {
-            Text("⛳ 등록된 코스 리스트 & 나의 경기 결과", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text("⛳ Registered Courses & Results", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
 
         items(courses) { course ->
@@ -155,21 +227,40 @@ fun CourseCard(course: CourseEntity, scores: List<ScoreEntity>) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column {
-                    Text(course.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Text("위치: ${course.lat}, ${course.lng}", fontSize = 10.sp, color = Color.Gray)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(course.name, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
+                    if (course.address.isNotBlank()) {
+                        Text("Address: ${course.address}", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(top = 2.dp))
+                    }
+                    Text("GPS Pin: ${course.lat}, ${course.lng}", fontSize = 11.sp, color = Color.Gray)
+                    Text("Total Par: ${course.totalPar}", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 4.dp))
                 }
-                Column(horizontalAlignment = Alignment.End, modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 2.dp)) {
-                    Text("HC: ${course.handicap}", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
-                    Text("Slope: ${course.slope}", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                
+                // Lady & Blue Tee info display
+                Column(horizontalAlignment = Alignment.End) {
+                    Box(
+                        modifier = Modifier
+                            .background(Color(0xFFFFEAEF), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text("Lady CR: ${course.ladyRating} (S: ${course.ladySlope})", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFC2185B))
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Box(
+                        modifier = Modifier
+                            .background(Color(0xFFE3F2FD), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text("Blue CR: ${course.blueRating} (S: ${course.blueSlope})", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1976D2))
+                    }
                 }
             }
 
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            Divider(modifier = Modifier.padding(vertical = 12.dp))
 
-            Text("🎮 이 골프장에서의 경기 역사 (${scores.size}회)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text("🎮 Play History (${scores.size} games)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
             if (scores.isEmpty()) {
-                Text("아직 해당 골프장의 플레이 기록이 없습니다.", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(top = 4.dp))
+                Text("No games played on this course yet.", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(top = 4.dp))
             } else {
                 scores.forEach { score ->
                     val holes = JsonUtils.holeScoreListAdapter.fromJson(score.holesJson) ?: emptyList()
@@ -185,7 +276,7 @@ fun CourseCard(course: CourseEntity, scores: List<ScoreEntity>) {
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(score.date, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("총 ${totalStrokes}타 (퍼팅 ${totalPutts}개)", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
+                        Text("${totalStrokes} Strokes (Putts: ${totalPutts})", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
                     }
                 }
             }
