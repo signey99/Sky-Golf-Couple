@@ -35,7 +35,7 @@ jobs:
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '21'
           cache: 'gradle'
 
@@ -51,17 +51,8 @@ jobs:
             echo "debug.keystore.base64 not found, checking fallback"
           fi
 
-      - name: Grant Execute Permission and Regenerate Gradle Wrapper
-        run: |
-          echo "=== Removing potentially corrupt gradle-wrapper.jar ==="
-          rm -f gradle/wrapper/gradle-wrapper.jar
-          
-          echo "=== Regenerating fresh Gradle Wrapper ==="
-          gradle wrapper --gradle-version 9.3.1
-          
-          echo "=== Granting execution permission ==="
-          chmod +x gradlew
-        # Dynamically regenerating the wrapper on the fly guarantees a 100% clean and non-corrupted jar file.
+      - name: Grant Execute Permission to Gradle
+        run: chmod +x gradlew
 
       - name: Create Mock or Real Env Files for Secrets Plugin
         run: |
