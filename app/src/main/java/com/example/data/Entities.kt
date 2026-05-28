@@ -14,7 +14,8 @@ data class CourseEntity(
     val blueRating: Double = 72.0,
     val blueSlope: Int = 113,
     val lat: Double,
-    val lng: Double
+    val lng: Double,
+    val holeParsJson: String = ""
 )
 
 @Entity(tableName = "scores")
@@ -28,4 +29,10 @@ data class ScoreEntity(
 )
 
 @com.squareup.moshi.JsonClass(generateAdapter = true)
-data class HoleScore(val hole: Int, var iron: Int, var putt: Int)
+data class HoleScore(
+    val hole: Int,
+    var iron: Int = 0,
+    var putt: Int = 0,
+    var iron2: Int = 0,
+    var putt2: Int = 0
+)

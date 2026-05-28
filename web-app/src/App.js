@@ -219,7 +219,7 @@ export default function App() {
       
       {/* Top Header App Bar */}
       <header className="bg-emerald-700 text-white py-4 px-6 text-center shadow-md">
-        <h1 className="text-xl font-extrabold tracking-wide">⛳ Couple's Golf Diary</h1>
+        <h1 className="text-xl font-extrabold tracking-wide">⛳ Skky Golf</h1>
         <p className="text-xs text-emerald-100 mt-1 font-medium">Recording &amp; remembering momentos on the field together</p>
       </header>
 

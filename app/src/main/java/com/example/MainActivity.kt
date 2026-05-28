@@ -115,14 +115,14 @@ fun GolfApp(viewModel: GolfViewModel) {
                 NavigationTab.COURSE -> CourseTab(
                     courses = courses,
                     scores = scores,
-                    onAddCourse = { name, address, totalPar, ladyRating, ladySlope, blueRating, blueSlope, lat, lng ->
-                        viewModel.addCourse(name, address, totalPar, ladyRating, ladySlope, blueRating, blueSlope, lat, lng)
+                    onAddCourse = { name, address, totalPar, ladyRating, ladySlope, blueRating, blueSlope, lat, lng, holeParsJson ->
+                        viewModel.addCourse(name, address, totalPar, ladyRating, ladySlope, blueRating, blueSlope, lat, lng, holeParsJson)
                     }
                 )
                 NavigationTab.HISTORY -> HistoryTab(
                     scores = scores,
                     onAddPhoto = { score, newPhotoUri ->
-                        val currentPhotos = JsonUtils.stringListAdapter.fromJson(score.photosJson)?.toMutableList() ?: mutableListOf()
+                        val currentPhotos = JsonUtils.parseStringList(score.photosJson).toMutableList()
                         currentPhotos.add(newPhotoUri)
                         val newPhotosJson = JsonUtils.stringListAdapter.toJson(currentPhotos)
                         viewModel.updateScorePhotos(score, newPhotosJson)

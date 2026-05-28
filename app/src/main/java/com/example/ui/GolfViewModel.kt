@@ -45,6 +45,7 @@ class GolfViewModel(application: Application) : AndroidViewModel(application) {
         blueSlope: Int,
         lat: Double,
         lng: Double,
+        holeParsJson: String = "",
         onComplete: ((Long) -> Unit)? = null
     ) {
         viewModelScope.launch {
@@ -58,7 +59,8 @@ class GolfViewModel(application: Application) : AndroidViewModel(application) {
                     blueRating = blueRating,
                     blueSlope = blueSlope,
                     lat = lat,
-                    lng = lng
+                    lng = lng,
+                    holeParsJson = holeParsJson
                 )
             )
             onComplete?.invoke(id)

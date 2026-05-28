@@ -63,11 +63,13 @@ fun HistoryTab(
 
 @Composable
 fun HistoryCard(score: ScoreEntity, onAddPhoto: (ScoreEntity, String) -> Unit) {
-    val holes = JsonUtils.holeScoreListAdapter.fromJson(score.holesJson) ?: emptyList()
-    val photos = JsonUtils.stringListAdapter.fromJson(score.photosJson) ?: emptyList()
+    val holes = JsonUtils.parseHoleScores(score.holesJson)
+    val photos = JsonUtils.parseStringList(score.photosJson)
 
-    val totalStrokes = holes.sumOf { it.iron + it.putt }
-    val totalPutts = holes.sumOf { it.putt }
+    val totalStrokesP1 = holes.sumOf { it.iron + it.putt }
+    val totalPuttsP1 = holes.sumOf { it.putt }
+    val totalStrokesP2 = holes.sumOf { it.iron2 + it.putt2 }
+    val totalPuttsP2 = holes.sumOf { it.putt2 }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -95,11 +97,13 @@ fun HistoryCard(score: ScoreEntity, onAddPhoto: (ScoreEntity, String) -> Unit) {
             ) {
                 Column {
                     Text(score.courseName, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("\uD83D\uDCC5 ${score.date}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("📅 ${score.date}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("${totalStrokes} Strokes", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
-                    Text("Putts: ${totalPutts}", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("P1: ${totalStrokesP1} Strokes (P: ${totalPuttsP1})", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    if (totalStrokesP2 > 0) {
+                        Text("P2: ${totalStrokesP2} Strokes (P: ${totalPuttsP2})", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
+                    }
                 }
             }
 

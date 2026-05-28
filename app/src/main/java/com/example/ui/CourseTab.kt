@@ -1,6 +1,7 @@
 package com.example.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -33,7 +34,8 @@ fun CourseTab(
         blueRating: Double,
         blueSlope: Int,
         lat: Double,
-        lng: Double
+        lng: Double,
+        holeParsJson: String
     ) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -52,6 +54,52 @@ fun CourseTab(
     // Mock map coordinates
     var clickedLat by remember { mutableStateOf("33.3541") }
     var clickedLng by remember { mutableStateOf("126.3712") }
+
+    // Individual hole pars state (default is Par 4 for all 18 holes)
+    val holePars = remember { mutableStateListOf(*Array(18) { 4 }) }
+    var showParDialogForHole by remember { mutableStateOf<Int?>(null) } // hole number (1 to 18), or null
+
+    // Popup Par Select Dialog
+    if (showParDialogForHole != null) {
+        val holeIdx = showParDialogForHole!! - 1
+        val currentPar = holePars[holeIdx]
+        AlertDialog(
+            onDismissRequest = { showParDialogForHole = null },
+            title = { Text("Select Par for Hole $showParDialogForHole", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Text("Select standard strokes (Par 3, 4, or 5) for this hole:", fontSize = 14.sp, color = Color.Gray, modifier = Modifier.padding(bottom = 16.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    ) {
+                        listOf(3, 4, 5).forEach { parOption ->
+                            Button(
+                                onClick = {
+                                    holePars[holeIdx] = parOption
+                                    totalPar = holePars.sum().toString()
+                                    showParDialogForHole = null
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (currentPar == parOption) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
+                                    contentColor = if (currentPar == parOption) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer
+                                ),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.size(64.dp)
+                            ) {
+                                Text(parOption.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showParDialogForHole = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -86,7 +134,7 @@ fun CourseTab(
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("\uD83D\uDCCD Lat: $clickedLat, Lng: $clickedLng", 
+                            Text("📍 Lat: $clickedLat, Lng: $clickedLng", 
                                 fontSize = 12.sp, 
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -120,11 +168,70 @@ fun CourseTab(
                     OutlinedTextField(
                         value = totalPar,
                         onValueChange = { totalPar = it },
-                        label = { Text("Total Course Par") },
+                        label = { Text("Total Course Par (Auto-sums holes)") },
                         placeholder = { Text("e.g. 72") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    // Individual Hole Par Selector UI
+                    Text(
+                        text = "⛳ Individual Hole Pars (Tap to change)",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(top = 16.dp, bottom = 6.dp)
+                    )
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                            .padding(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // First row (Hole 1 to 9)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            (0..8).forEach { index ->
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(6.dp))
+                                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(6.dp))
+                                        .clickable { showParDialogForHole = index + 1 }
+                                        .padding(vertical = 6.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text("H${index + 1}", fontSize = 10.sp, color = Color.Gray)
+                                    Text("${holePars[index]}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                }
+                            }
+                        }
+
+                        // Second row (Hole 10 to 18)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            (9..17).forEach { index ->
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(6.dp))
+                                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(6.dp))
+                                        .clickable { showParDialogForHole = index + 1 }
+                                        .padding(vertical = 6.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text("H${index + 1}", fontSize = 10.sp, color = Color.Gray)
+                                    Text("${holePars[index]}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                }
+                            }
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -178,6 +285,7 @@ fun CourseTab(
                     Button(
                         onClick = {
                             if (newCourseName.isNotBlank()) {
+                                val parsJson = JsonUtils.serializeHolePars(holePars.toList())
                                 onAddCourse(
                                     newCourseName,
                                     address,
@@ -187,7 +295,8 @@ fun CourseTab(
                                     blueRating.toDoubleOrNull() ?: 72.0,
                                     blueSlope.toIntOrNull() ?: 113,
                                     lat.toDoubleOrNull() ?: 33.3541,
-                                    lng.toDoubleOrNull() ?: 126.3712
+                                    lng.toDoubleOrNull() ?: 126.3712,
+                                    parsJson
                                 )
                                 // Reset fields
                                 newCourseName = ""
@@ -197,6 +306,7 @@ fun CourseTab(
                                 ladySlope = ""
                                 blueRating = ""
                                 blueSlope = ""
+                                holePars.indices.forEach { holePars[it] = 4 }
                             }
                         },
                         modifier = Modifier.fillMaxWidth()
@@ -256,27 +366,96 @@ fun CourseCard(course: CourseEntity, scores: List<ScoreEntity>) {
                 }
             }
 
-            Divider(modifier = Modifier.padding(vertical = 12.dp))
+            // Visual representations of course pars
+            Spacer(modifier = Modifier.height(12.dp))
+            val holePars = JsonUtils.parseHolePars(course.holeParsJson)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                    .padding(8.dp)
+            ) {
+                Text("⛳ Detailed Hole Pars", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
+                Spacer(modifier = Modifier.height(6.dp))
+                
+                // Row 1: Holes 1 to 9
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    (0..8).forEach { index ->
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(4.dp))
+                                .padding(vertical = 4.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("${index + 1}", fontSize = 8.sp, color = Color.Gray)
+                            Text("${holePars[index]}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                // Row 2: Holes 10 to 18
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    (9..17).forEach { index ->
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(4.dp))
+                                .padding(vertical = 4.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("${index + 1}", fontSize = 8.sp, color = Color.Gray)
+                            Text("${holePars[index]}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                }
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
             Text("🎮 Play History (${scores.size} games)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
             if (scores.isEmpty()) {
                 Text("No games played on this course yet.", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(top = 4.dp))
             } else {
                 scores.forEach { score ->
-                    val holes = JsonUtils.holeScoreListAdapter.fromJson(score.holesJson) ?: emptyList()
-                    val totalStrokes = holes.sumOf { it.iron + it.putt }
-                    val totalPutts = holes.sumOf { it.putt }
+                    val holes = JsonUtils.parseHoleScores(score.holesJson)
+                    // Display total stats for couples or single scorecard
+                    val totalStrokes1 = holes.sumOf { it.iron + it.putt }
+                    val totalPutts1 = holes.sumOf { it.putt }
+                    val totalStrokes2 = holes.sumOf { it.iron2 + it.putt2 }
+                    val totalPutts2 = holes.sumOf { it.putt2 }
                     
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 4.dp)
                             .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
-                            .padding(8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .padding(8.dp)
                     ) {
-                        Text(score.date, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("${totalStrokes} Strokes (Putts: ${totalPutts})", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("📅 ${score.date}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("👤 Player 1: ${totalStrokes1} Strokes (Putts: ${totalPutts1})", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            if (totalStrokes2 > 0) {
+                                Text("👤 Player 2: ${totalStrokes2} Strokes (Putts: ${totalPutts2})", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
             }

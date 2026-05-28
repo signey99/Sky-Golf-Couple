@@ -1,5 +1,5 @@
 {
-  "name": "Golf Diary",
+  "name": "Skky Golf",
   "description": "A beautiful golf diary app to share and track scores, courses, and photos together.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

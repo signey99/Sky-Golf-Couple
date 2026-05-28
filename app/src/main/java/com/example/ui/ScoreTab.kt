@@ -37,7 +37,7 @@ fun ScoreTab(
     val defaultDate = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
     var date by remember { mutableStateOf(defaultDate) }
 
-    val holes = remember { mutableStateListOf(*Array(18) { HoleScore(it + 1, 0, 0) }) }
+    val holes = remember { mutableStateListOf(*Array(18) { HoleScore(it + 1, 0, 0, 0, 0) }) }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -113,7 +113,7 @@ fun ScoreTab(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text("18-Hole Scores", fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
+                    Text("18-Hole Scores (Couple Play)", fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
 
                     Column(
                         modifier = Modifier
@@ -125,44 +125,103 @@ fun ScoreTab(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
-                                .padding(8.dp)
+                                .padding(vertical = 6.dp, horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Hole", modifier = Modifier.weight(1f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
-                            Text("Iron", modifier = Modifier.weight(1.5f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
-                            Text("Putt", modifier = Modifier.weight(1.5f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
-                            Text("Total", modifier = Modifier.weight(1f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Text("Hole", modifier = Modifier.weight(0.8f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer, fontSize = 11.sp)
+                            
+                            // Player 1 Header Group
+                            Row(modifier = Modifier.weight(3f), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("P1 Strk", modifier = Modifier.weight(1.2f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer, fontSize = 11.sp)
+                                Text("P1 Putt", modifier = Modifier.weight(1.2f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer, fontSize = 11.sp)
+                                Text("P1 Tot", modifier = Modifier.weight(0.8f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer, fontSize = 11.sp)
+                            }
+                            
+                            Box(modifier = Modifier.width(1.dp).height(12.dp).background(MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.3f)))
+
+                            // Player 2 Header Group
+                            Row(modifier = Modifier.weight(3f), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("P2 Strk", modifier = Modifier.weight(1.2f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer, fontSize = 11.sp)
+                                Text("P2 Putt", modifier = Modifier.weight(1.2f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer, fontSize = 11.sp)
+                                Text("P2 Tot", modifier = Modifier.weight(0.8f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer, fontSize = 11.sp)
+                            }
                         }
 
                         holes.forEachIndexed { index, holeScore ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(8.dp),
+                                    .padding(vertical = 6.dp, horizontal = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("${holeScore.hole}H", modifier = Modifier.weight(1f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold)
+                                Text("${holeScore.hole}H", modifier = Modifier.weight(0.8f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                 
-                                OutlinedTextField(
-                                    value = if(holeScore.iron == 0) "" else holeScore.iron.toString(),
-                                    onValueChange = { holes[index] = holeScore.copy(iron = it.toIntOrNull() ?: 0) },
-                                    modifier = Modifier.weight(1.5f).padding(horizontal = 4.dp).height(50.dp),
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                    textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center)
-                                )
+                                // Player 1 score input fields
+                                Row(
+                                    modifier = Modifier.weight(3f),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
+                                    OutlinedTextField(
+                                        value = if(holeScore.iron == 0) "" else holeScore.iron.toString(),
+                                        onValueChange = { newValue -> holes[index] = holeScore.copy(iron = newValue.toIntOrNull() ?: 0) },
+                                        modifier = Modifier.weight(1.2f).height(46.dp),
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                        textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center, fontSize = 12.sp)
+                                    )
+                                    OutlinedTextField(
+                                        value = if(holeScore.putt == 0) "" else holeScore.putt.toString(),
+                                        onValueChange = { newValue -> holes[index] = holeScore.copy(putt = newValue.toIntOrNull() ?: 0) },
+                                        modifier = Modifier.weight(1.2f).height(46.dp),
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                        textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center, fontSize = 12.sp)
+                                    )
+                                    val totalP1 = holeScore.iron + holeScore.putt
+                                    Text(
+                                        text = if (totalP1 > 0) totalP1.toString() else "-",
+                                        modifier = Modifier.weight(0.8f),
+                                        textAlign = TextAlign.Center,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
                                 
-                                OutlinedTextField(
-                                    value = if(holeScore.putt == 0) "" else holeScore.putt.toString(),
-                                    onValueChange = { holes[index] = holeScore.copy(putt = it.toIntOrNull() ?: 0) },
-                                    modifier = Modifier.weight(1.5f).padding(horizontal = 4.dp).height(50.dp),
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                    textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center)
-                                )
-                                
-                                val total = holeScore.iron + holeScore.putt
-                                Text(if (total > 0) total.toString() else "-", modifier = Modifier.weight(1f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                Box(modifier = Modifier.width(1.dp).height(24.dp).background(MaterialTheme.colorScheme.outlineVariant))
+
+                                // Player 2 score input fields
+                                Row(
+                                    modifier = Modifier.weight(3f),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
+                                    OutlinedTextField(
+                                        value = if(holeScore.iron2 == 0) "" else holeScore.iron2.toString(),
+                                        onValueChange = { newValue -> holes[index] = holeScore.copy(iron2 = newValue.toIntOrNull() ?: 0) },
+                                        modifier = Modifier.weight(1.2f).height(46.dp),
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                        textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center, fontSize = 12.sp)
+                                    )
+                                    OutlinedTextField(
+                                        value = if(holeScore.putt2 == 0) "" else holeScore.putt2.toString(),
+                                        onValueChange = { newValue -> holes[index] = holeScore.copy(putt2 = newValue.toIntOrNull() ?: 0) },
+                                        modifier = Modifier.weight(1.2f).height(46.dp),
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                        textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center, fontSize = 12.sp)
+                                    )
+                                    val totalP2 = holeScore.iron2 + holeScore.putt2
+                                    Text(
+                                        text = if (totalP2 > 0) totalP2.toString() else "-",
+                                        modifier = Modifier.weight(0.8f),
+                                        textAlign = TextAlign.Center,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp,
+                                        color = MaterialTheme.colorScheme.secondary
+                                    )
+                                }
                             }
                             if (index < holes.size - 1) {
-                                Divider(color = MaterialTheme.colorScheme.outlineVariant)
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                             }
                         }
                     }
@@ -178,14 +237,14 @@ fun ScoreTab(
                                 newCourseName = ""
                                 isNewCourse = false
                                 date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-                                holes.forEachIndexed { i, _ -> holes[i] = HoleScore(i+1, 0, 0) }
+                                holes.forEachIndexed { i, _ -> holes[i] = HoleScore(i+1, 0, 0, 0, 0) }
                             } else if (selectedCourseId != null) {
                                 val cName = courses.find { it.id == selectedCourseId }?.name ?: ""
                                 onSaveScore(selectedCourseId!!, cName, date, holesJson)
                                 // Reset
                                 selectedCourseId = null
                                 date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-                                holes.forEachIndexed { i, _ -> holes[i] = HoleScore(i+1, 0, 0) }
+                                holes.forEachIndexed { i, _ -> holes[i] = HoleScore(i+1, 0, 0, 0, 0) }
                             }
                         },
                         modifier = Modifier.fillMaxWidth()
