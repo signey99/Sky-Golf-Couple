@@ -51,21 +51,27 @@ jobs:
             echo "debug.keystore.base64 not found, checking fallback"
           fi
 
-      - name: Grant Execute Permission to Gradle
+      - name: Grant Execute Permission and Regenerate Gradle Wrapper
         run: |
-          if [ ! -f gradlew ]; then
-            echo "⚠️ gradlew wrapper file is missing! Generating gradle wrapper on the fly..."
-            gradle wrapper
-          fi
+          echo "=== Removing potentially corrupt gradle-wrapper.jar ==="
+          rm -f gradle/wrapper/gradle-wrapper.jar
+          
+          echo "=== Regenerating fresh Gradle Wrapper ==="
+          gradle wrapper --gradle-version 9.3.1
+          
+          echo "=== Granting execution permission ==="
           chmod +x gradlew
-        # Though this environment uses 'gradle', standard repo uses './gradlew' on wrapper, so setting permissions ensures CI compatibility.
+        # Dynamically regenerating the wrapper on the fly guarantees a 100% clean and non-corrupted jar file.
 
       - name: Create Mock or Real Env Files for Secrets Plugin
         run: |
-          touch .env
-          echo "MAPS_API_KEY=mock-api-key" >> .env
-          touch .env.example
-          echo "MAPS_API_KEY=mock-api-key-example" >> .env.example
+          if [ -f .env.example ]; then
+            cp .env.example .env
+            echo "Successfully copied .env.example to .env for build process"
+          else
+            touch .env
+            echo "MAPS_API_KEY=mock-api-key" >> .env
+          fi
 
       - name: Build Debug APK
         run: ./gradlew :app:assembleDebug --no-daemon --no-configuration-cache --stacktrace
