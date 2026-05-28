@@ -622,21 +622,21 @@ export default function App() {
           className={`flex flex-col items-center space-y-1 transition-all active:scale-95 ${activeTab === 'score' ? 'text-emerald-600 scale-105 font-bold' : 'text-gray-400 hover:text-gray-600'}`}
         >
           <span className="text-xl">📝</span>
-          <span className="text-[11px] font-bold">Add Score</span>
+          <span className="text-[13px] font-bold">Scoreboard</span>
         </button>
         <button 
           onClick={() => setActiveTab('course')}
           className={`flex flex-col items-center space-y-1 transition-all active:scale-95 ${activeTab === 'course' ? 'text-emerald-600 scale-105 font-bold' : 'text-gray-400 hover:text-gray-600'}`}
         >
           <span className="text-xl">🗺️</span>
-          <span className="text-[11px] font-bold">Course Info</span>
+          <span className="text-[13px] font-bold">Courses</span>
         </button>
         <button 
           onClick={() => setActiveTab('history')}
           className={`flex flex-col items-center space-y-1 transition-all active:scale-95 ${activeTab === 'history' ? 'text-emerald-600 scale-105 font-bold' : 'text-gray-400 hover:text-gray-600'}`}
         >
           <span className="text-xl">📸</span>
-          <span className="text-[11px] font-bold">History &amp; Photos</span>
+          <span className="text-[13px] font-bold">History</span>
         </button>
       </nav>
 

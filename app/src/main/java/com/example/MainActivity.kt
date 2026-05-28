@@ -38,9 +38,9 @@ class MainActivity : ComponentActivity() {
 }
 
 enum class NavigationTab(val title: String, val iconText: String) {
-    SCORE("Add Score", "📝"),
-    COURSE("Course Info", "🗺️"),
-    HISTORY("History & Photos", "📸")
+    SCORE("Scoreboard", "📝"),
+    COURSE("Courses", "🗺️"),
+    HISTORY("History", "📸")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,7 +71,7 @@ fun GolfApp(viewModel: GolfViewModel) {
                         selected = activeTab == tab,
                         onClick = { activeTab = tab },
                         icon = { Text(tab.iconText, fontSize = 24.sp) },
-                        label = { Text(tab.title, fontSize = 10.sp, fontWeight = if (activeTab == tab) FontWeight.Bold else FontWeight.Normal) },
+                        label = { Text(tab.title, fontSize = 13.sp, fontWeight = if (activeTab == tab) FontWeight.Bold else FontWeight.Normal) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = MaterialTheme.colorScheme.primary,
                             selectedTextColor = MaterialTheme.colorScheme.primary,
