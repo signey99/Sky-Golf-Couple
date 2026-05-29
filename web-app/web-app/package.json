@@ -1,0 +1,8 @@
+{
+  "name": "golf-diary-web-forwarder",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "cd .. && npm install && npm run build"
+  }
+}
