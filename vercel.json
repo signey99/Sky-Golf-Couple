@@ -1,0 +1,5 @@
+{
+  "buildCommand": "cd web-app && npm run build",
+  "outputDirectory": "web-app/build",
+  "framework": "create-react-app"
+}
