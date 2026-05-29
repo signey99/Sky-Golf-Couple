@@ -74,6 +74,7 @@ export default function App() {
   // Save to LocalStorage and update Refs whenever state changes
   const scoresRef = useRef(scores);
   const coursesRef = useRef(courses);
+  const lastDownloadedDataStringRef = useRef(JSON.stringify({ scores, courses }));
 
   useEffect(() => {
     scoresRef.current = scores;
@@ -95,7 +96,6 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false); // Settings modal
 
   const syncChannel = 'skky_golf_live_sync_signey99';
-  const isIncomingCloudUpdate = useRef(false);
   const isFirebaseListening = useRef(false);
 
   useEffect(() => {
@@ -164,7 +164,10 @@ export default function App() {
       if (res.ok) {
         const cloudData = await res.json();
         if (cloudData && cloudData.updatedAt) {
-          isIncomingCloudUpdate.current = true;
+          lastDownloadedDataStringRef.current = JSON.stringify({
+            scores: cloudData.scores || [],
+            courses: cloudData.courses || []
+          });
           if (cloudData.scores) setScores(cloudData.scores);
           if (cloudData.courses) setCourses(cloudData.courses);
           localStorage.setItem('golf_diary_scores', JSON.stringify(cloudData.scores || []));
@@ -192,7 +195,10 @@ export default function App() {
         const snapshot = await db.ref(syncChannel).once('value');
         const cloudData = snapshot.val();
         if (cloudData && cloudData.updatedAt) {
-          isIncomingCloudUpdate.current = true;
+          lastDownloadedDataStringRef.current = JSON.stringify({
+            scores: cloudData.scores || [],
+            courses: cloudData.courses || []
+          });
           if (cloudData.scores) setScores(cloudData.scores);
           if (cloudData.courses) setCourses(cloudData.courses);
           localStorage.setItem('golf_diary_scores', JSON.stringify(cloudData.scores || []));
@@ -220,7 +226,9 @@ export default function App() {
     setLastSyncedTime('Uploading...');
     try {
       const timestamp = Date.now();
+      const currentLocalSerialized = JSON.stringify({ scores, courses });
       await uploadToCloud(scores, courses, timestamp);
+      lastDownloadedDataStringRef.current = currentLocalSerialized;
       alert('📤 클라우드 백업 성공!\n현재 휴대폰/화면에 있는 모든 코스 및 점수 데이터를 클라우드로 내보냈습니다.');
     } catch (err) {
       console.error("Manual forced sync upload failed", err);
@@ -260,7 +268,10 @@ export default function App() {
 
                 if (cloudData.updatedAt > localTimestamp) {
                   console.log("[Firebase RTDB] Live sync update received!", cloudData);
-                  isIncomingCloudUpdate.current = true;
+                  lastDownloadedDataStringRef.current = JSON.stringify({
+                    scores: cloudData.scores || [],
+                    courses: cloudData.courses || []
+                  });
                   if (cloudData.scores) setScores(cloudData.scores);
                   if (cloudData.courses) setCourses(cloudData.courses);
                   localStorage.setItem('golf_diary_scores', JSON.stringify(cloudData.scores));
@@ -295,7 +306,10 @@ export default function App() {
 
               if (cloudData.updatedAt > localTimestamp) {
                 console.log("[Web Sync Fallback] Newer data loaded!", cloudData);
-                isIncomingCloudUpdate.current = true;
+                lastDownloadedDataStringRef.current = JSON.stringify({
+                  scores: cloudData.scores || [],
+                  courses: cloudData.courses || []
+                });
                 if (cloudData.scores) setScores(cloudData.scores);
                 if (cloudData.courses) setCourses(cloudData.courses);
                 localStorage.setItem('golf_diary_scores', JSON.stringify(cloudData.scores));
@@ -342,16 +356,22 @@ export default function App() {
   useEffect(() => {
     if (!isInitialLoadDone) return;
 
-    if (isIncomingCloudUpdate.current) {
-      console.log("[Sync Loop Prevented] Skipping pushing downloaded data payload back up.");
-      isIncomingCloudUpdate.current = false;
+    const currentLocalSerialized = JSON.stringify({ scores, courses });
+    if (currentLocalSerialized === lastDownloadedDataStringRef.current) {
+      console.log("[Sync Loop Prevented] Local state matches the last synced state.");
       return;
     }
 
     const changeTime = Date.now();
     const delayDebounce = setTimeout(async () => {
       setSyncStatus('syncing');
-      await uploadToCloud(scores, courses, changeTime);
+      try {
+        await uploadToCloud(scores, courses, changeTime);
+        lastDownloadedDataStringRef.current = currentLocalSerialized;
+        localStorage.setItem('golf_diary_last_sync_timestamp', String(changeTime));
+      } catch (err) {
+        setSyncStatus('error');
+      }
     }, 1200);
 
     return () => clearTimeout(delayDebounce);
@@ -1556,32 +1576,6 @@ export default function App() {
               <div className="bg-emerald-50/50 p-3.5 rounded-2xl border border-emerald-100 text-[10px] text-emerald-950 leading-relaxed font-semibold">
                 📌 <strong>실시간 자동 동기화 안내:</strong><br/>
                 휴대폰 앱과 AI Studio 화면이 동일한 데이터베이스 채널을 사용합니다. 한쪽에서 점수를 입력하거나 코스를 저장하면, 실시간으로 다른 화면이 동기화됩니다!
-              </div>
-
-              {/* Manual Force Sync Controls */}
-              <div className="pt-2 border-t border-gray-100 space-y-2">
-                <p className="text-[11px] font-bold text-gray-500 uppercase">수동 동기화 제어</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={handleForceCloudDownload}
-                    className="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-705 text-white font-extrabold text-[11px] rounded-xl shadow-sm transition active:scale-95 outline-none flex items-center justify-center gap-1"
-                    title="클라우드에서 최신 데이터를 강제 가져오기"
-                  >
-                    <span>🔄</span> 클라우드 수신
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleForceCloudUpload}
-                    className="py-2.5 px-3 bg-teal-600 hover:bg-teal-705 text-white font-extrabold text-[11px] rounded-xl shadow-sm transition active:scale-95 outline-none flex items-center justify-center gap-1"
-                    title="현재 기기의 데이터를 클라우드로 강제 내보내기"
-                  >
-                    <span>📤</span> 클라우드 송신
-                  </button>
-                </div>
-                <p className="text-[9px] text-gray-400 mt-1 leading-normal text-center">
-                  * 실시간 연동이 지연되거나 휴대폰의 최신 코스 정보가 보이지 않을 때 <strong>[클라우드 수신]</strong> 버튼을 누르면 즉시 동기화됩니다.
-                </p>
               </div>
             </div>
 
