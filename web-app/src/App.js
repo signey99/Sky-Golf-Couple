@@ -71,12 +71,17 @@ export default function App() {
     ];
   });
 
-  // Save to LocalStorage whenever state changes
+  // Save to LocalStorage and update Refs whenever state changes
+  const scoresRef = useRef(scores);
+  const coursesRef = useRef(courses);
+
   useEffect(() => {
+    scoresRef.current = scores;
     localStorage.setItem('golf_diary_scores', JSON.stringify(scores));
   }, [scores]);
 
   useEffect(() => {
+    coursesRef.current = courses;
     localStorage.setItem('golf_diary_courses', JSON.stringify(courses));
   }, [courses]);
 
@@ -92,7 +97,6 @@ export default function App() {
   const syncChannel = 'skky_golf_live_sync_signey99';
   const isIncomingCloudUpdate = useRef(false);
   const isFirebaseListening = useRef(false);
-  const hasUserMutated = useRef(false);
 
   useEffect(() => {
     localStorage.setItem('golf_diary_fb_url', firebaseUrl);
@@ -301,7 +305,7 @@ export default function App() {
                 setSyncStatus('synced');
               } else if (localTimestamp > cloudData.updatedAt) {
                 // Upload our newer local data to fallback server to maintain backup parity
-                await silentUploadToFallback(scores, courses, localTimestamp);
+                await silentUploadToFallback(scoresRef.current, coursesRef.current, localTimestamp);
               } else {
                 setSyncStatus('synced');
                 setLastSyncedTime(new Date(cloudData.updatedAt).toLocaleTimeString());
@@ -310,7 +314,7 @@ export default function App() {
           } else if (res.status === 404) {
             // First time bootstrapping
             const localTimestamp = Number(localStorage.getItem('golf_diary_last_sync_timestamp') || '0');
-            await silentUploadToFallback(scores, courses, localTimestamp || Date.now());
+            await silentUploadToFallback(scoresRef.current, coursesRef.current, localTimestamp || Date.now());
           }
         } catch (e) {
           // quiet error handling on timer
@@ -321,8 +325,8 @@ export default function App() {
 
       tryConnectFirebase();
 
-      // Set fallback safe polling watcher every 10 seconds to avoid 429 rate limits
-      fallbackInterval = setInterval(queryFallbackSync, 10000);
+      // Set fallback fast-polling watcher every 2.0 seconds for instant bidirectional sync
+      fallbackInterval = setInterval(queryFallbackSync, 2000);
       queryFallbackSync();
     };
 
@@ -334,10 +338,9 @@ export default function App() {
     };
   }, [firebaseUrl]);
 
-  // Push local changes up immediately with a light debounce
+  // Push local changes up automatically with a light debounce whenever local state registers a change
   useEffect(() => {
     if (!isInitialLoadDone) return;
-    if (!hasUserMutated.current) return;
 
     if (isIncomingCloudUpdate.current) {
       console.log("[Sync Loop Prevented] Skipping pushing downloaded data payload back up.");
@@ -345,14 +348,11 @@ export default function App() {
       return;
     }
 
-    // Reset loop flag BEFORE dispatching/debouncing to prevent any simultaneous triggers
-    hasUserMutated.current = false;
-
     const changeTime = Date.now();
     const delayDebounce = setTimeout(async () => {
       setSyncStatus('syncing');
       await uploadToCloud(scores, courses, changeTime);
-    }, 1000);
+    }, 1200);
 
     return () => clearTimeout(delayDebounce);
   }, [scores, courses, isInitialLoadDone]);
@@ -444,7 +444,6 @@ export default function App() {
         lng: 126.9780,
         holePars: Array(18).fill(4)
       };
-      hasUserMutated.current = true;
       setCourses(prev => [...prev, newCreatedCourse]);
       courseIdVal = newCreatedCourse.id;
       courseNameVal = newCreatedCourse.name;
@@ -462,7 +461,6 @@ export default function App() {
       photos: []
     };
 
-    hasUserMutated.current = true;
     setScores(prev => [scoreData, ...prev]);
     alert('Golf score saved successfully!');
     
@@ -502,7 +500,6 @@ export default function App() {
 
   const handleDeleteCourse = (courseId) => {
     if (window.confirm("Are you sure you want to delete this golf course? Existing round records will not be affected, but it will no longer appear in the options.")) {
-      hasUserMutated.current = true;
       setCourses(prev => prev.filter(c => c.id !== courseId));
       if (Number(selectedCourseId) === courseId) {
         setSelectedCourseId('');
@@ -547,7 +544,6 @@ export default function App() {
       holePars: [...courseHolePars]
     };
 
-    hasUserMutated.current = true;
     if (editingCourseId) {
       setCourses(prev => prev.map(c => c.id === editingCourseId ? courseData : c));
       // Proactively update cached course names in historic scores so name changes propagate instantly
@@ -570,7 +566,6 @@ export default function App() {
       }
       const reader = new FileReader();
       reader.onloadend = () => {
-        hasUserMutated.current = true;
         setScores(prevScores => 
           prevScores.map(score => {
             if (score.id === scoreId) {
@@ -1415,7 +1410,6 @@ export default function App() {
                               <button 
                                 type="button"
                                 onClick={() => {
-                                  hasUserMutated.current = true;
                                   setScores(prev => prev.map(s => {
                                     if (s.id === activeDetailScore.id) {
                                       const u = [...s.photos];
