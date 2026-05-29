@@ -44,6 +44,8 @@ public class MainActivity extends AppCompatActivity {
             settings.setDatabaseEnabled(true);
             settings.setAllowFileAccess(true);
             settings.setAllowContentAccess(true);
+            settings.setAllowFileAccessFromFileURLs(true);
+            settings.setAllowUniversalAccessFromFileURLs(true);
             
             // Support modern rendering/viewports
             settings.setUseWideViewPort(true);
@@ -92,8 +94,8 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
-            // Load the dev server with HMR / Cloud wrap redirect
-            webView.loadUrl("https://ais-dev-lpfbtwrkbpcoqp4k4aha5t-658932554772.us-east1.run.app");
+            // Load the locally bundled React application from assets (100% offline & local)
+            webView.loadUrl("file:///android_asset/index.html");
 
             container.addView(webView);
             setContentView(container);

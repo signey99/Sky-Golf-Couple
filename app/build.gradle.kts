@@ -34,3 +34,11 @@ android {
 dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
 }
+
+tasks.register<Copy>("copyWebAssets") {
+    from(file("../web-app/build"))
+    into(file("src/main/assets"))
+}
+
+tasks.getByName("preBuild").dependsOn("copyWebAssets")
+
