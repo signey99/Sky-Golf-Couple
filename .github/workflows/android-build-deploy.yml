@@ -53,26 +53,38 @@ jobs:
 
       - name: Clean and Regenerate Gradle Wrapper JAR
         run: |
-          echo "=== Removing corrupted gradle-wrapper.jar ==="
-          rm -f gradle/wrapper/gradle-wrapper.jar
-          
-          echo "=== Attempting Download from Gradle Services Official Zip ==="
-          wget -q https://services.gradle.org/distributions/gradle-8.10.2-bin.zip || curl -sSL -O https://services.gradle.org/distributions/gradle-8.10.2-bin.zip
-          if [ -f gradle-8.10.2-bin.zip ]; then
-            echo "Successfully downloaded gradle zip. Extracting gradle-wrapper.jar..."
-            mkdir -p gradle/wrapper
-            unzip -q -o -j gradle-8.10.2-bin.zip gradle-8.10.2/gradle/wrapper/gradle-wrapper.jar -d gradle/wrapper/
-            rm -f gradle-8.10.2-bin.zip
+          echo "=== Checking existing gradle-wrapper.jar ==="
+          if [ -f gradle/wrapper/gradle-wrapper.jar ] && [ -s gradle/wrapper/gradle-wrapper.jar ]; then
+            echo "✅ Existing gradle-wrapper.jar is present and valid."
           else
-            echo "⚠️ Failed to download Zip, trying primary GitHub CDN fallback..."
-            mkdir -p gradle/wrapper
-            curl -sSLo gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.10.2/gradle/wrapper/gradle-wrapper.jar
-          fi
-          
-          if [ ! -f gradle/wrapper/gradle-wrapper.jar ] || [ ! -s gradle/wrapper/gradle-wrapper.jar ]; then
-            echo "⚠️ First fallback failed. Trying alternative GitHub url..."
-            mkdir -p gradle/wrapper
-            curl -sSLo gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/v8.10.2/gradle/wrapper/gradle-wrapper.jar
+            echo "⚠️ gradle-wrapper.jar is missing or empty!"
+            
+            # Option 1: Try running pre-installed gradle wrapper command
+            if command -v gradle >/dev/null 2>&1; then
+              echo "=== Attempting to generate wrapper using local gradle installation ==="
+              gradle wrapper --gradle-version 8.10.2 || true
+            fi
+            
+            # Option 2: Extracting from Gradle Services Official Zip (with || true fallback to prevent step crash)
+            if [ ! -f gradle/wrapper/gradle-wrapper.jar ] || [ ! -s gradle/wrapper/gradle-wrapper.jar ]; then
+              echo "=== Attempting Download from Gradle Services Official Zip ==="
+              wget -q https://services.gradle.org/distributions/gradle-8.10.2-bin.zip || curl -sSL -O https://services.gradle.org/distributions/gradle-8.10.2-bin.zip || true
+              if [ -f gradle-8.10.2-bin.zip ]; then
+                echo "Successfully downloaded gradle zip. Extracting gradle-wrapper.jar..."
+                mkdir -p gradle/wrapper
+                unzip -q -o -j gradle-8.10.2-bin.zip "*/gradle-wrapper.jar" -d gradle/wrapper/ || true
+                rm -f gradle-8.10.2-bin.zip
+              fi
+            fi
+            
+            # Option 3: Download directly from GitHub CDN
+            if [ ! -f gradle/wrapper/gradle-wrapper.jar ] || [ ! -s gradle/wrapper/gradle-wrapper.jar ]; then
+              echo "⚠️ Fallbacks failed. Trying direct raw GitHub CDN download..."
+              mkdir -p gradle/wrapper
+              curl -sSLo gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.10.2/gradle/wrapper/gradle-wrapper.jar || \
+              curl -sSLo gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.10.2/gradle/wrapper/gradle-wrapper.jar || \
+              curl -sSLo gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/master/gradle/wrapper/gradle-wrapper.jar || true
+            fi
           fi
           
           # Final validation
