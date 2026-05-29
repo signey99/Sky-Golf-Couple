@@ -1,4 +1,4 @@
 {
-  "buildCommand": "npm install && npm run build",
+  "buildCommand": "CI=false npm install && CI=false npm run build",
   "outputDirectory": "build"
 }

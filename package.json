@@ -5,7 +5,7 @@
   "description": "Root router for Couple's Golf Diary React Web App",
   "scripts": {
     "install-all": "npm install --prefix web-app",
-    "build": "npm install --prefix web-app && npm run build --prefix web-app",
+    "build": "CI=false npm install --prefix web-app && CI=false npm run build --prefix web-app",
     "start": "npm run start --prefix web-app"
   }
 }

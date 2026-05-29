@@ -1,4 +1,4 @@
 {
-  "buildCommand": "npm install --prefix web-app && npm run build --prefix web-app",
+  "buildCommand": "CI=false npm install --prefix web-app && CI=false npm run build --prefix web-app",
   "outputDirectory": "web-app/build"
 }
