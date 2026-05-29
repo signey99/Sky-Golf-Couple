@@ -221,6 +221,15 @@ export default function App() {
     setShowCourseModal(true);
   };
 
+  const handleDeleteCourse = (courseId) => {
+    if (window.confirm("정말로 이 골프장을 삭제하시겠습니까? 등록된 라운드 기록에는 영향이 없지만 선택 옵션에서 더이상 나타나지 않습니다.")) {
+      setCourses(prev => prev.filter(c => c.id !== courseId));
+      if (Number(selectedCourseId) === courseId) {
+        setSelectedCourseId('');
+      }
+    }
+  };
+
   const closeCourseModal = () => {
     setShowCourseModal(false);
     setEditingCourseId(null);
@@ -970,6 +979,14 @@ export default function App() {
                             title="수정하기"
                           >
                             ✏️ 수정
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCourse(course.id)}
+                            className="px-2 py-0.5 text-xs text-rose-700 font-bold bg-rose-50 hover:bg-rose-100 rounded-lg border border-rose-200/50 flex items-center justify-center transition"
+                            title="삭제하기"
+                          >
+                            🗑️ 삭제
                           </button>
                         </div>
                         <p className="text-xs text-gray-400 mt-1 truncate"><strong>Address:</strong> {course.address}</p>
