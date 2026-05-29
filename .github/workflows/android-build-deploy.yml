@@ -53,46 +53,40 @@ jobs:
 
       - name: Clean and Regenerate Gradle Wrapper JAR
         run: |
-          echo "=== Checking existing gradle-wrapper.jar ==="
-          if [ -f gradle/wrapper/gradle-wrapper.jar ] && [ -s gradle/wrapper/gradle-wrapper.jar ]; then
-            echo "✅ Existing gradle-wrapper.jar is present and valid."
-          else
-            echo "⚠️ gradle-wrapper.jar is missing or empty!"
-            
-            # Option 1: Try running pre-installed gradle wrapper command
-            if command -v gradle >/dev/null 2>&1; then
-              echo "=== Attempting to generate wrapper using local gradle installation ==="
-              gradle wrapper --gradle-version 8.10.2 || true
-            fi
-            
-            # Option 2: Extracting from Gradle Services Official Zip (with || true fallback to prevent step crash)
-            if [ ! -f gradle/wrapper/gradle-wrapper.jar ] || [ ! -s gradle/wrapper/gradle-wrapper.jar ]; then
-              echo "=== Attempting Download from Gradle Services Official Zip ==="
-              wget -q https://services.gradle.org/distributions/gradle-8.10.2-bin.zip || curl -sSL -O https://services.gradle.org/distributions/gradle-8.10.2-bin.zip || true
-              if [ -f gradle-8.10.2-bin.zip ]; then
-                echo "Successfully downloaded gradle zip. Extracting gradle-wrapper.jar..."
-                mkdir -p gradle/wrapper
-                unzip -q -o -j gradle-8.10.2-bin.zip "*/gradle-wrapper.jar" -d gradle/wrapper/ || true
-                rm -f gradle-8.10.2-bin.zip
-              fi
-            fi
-            
-            # Option 3: Download directly from GitHub CDN
-            if [ ! -f gradle/wrapper/gradle-wrapper.jar ] || [ ! -s gradle/wrapper/gradle-wrapper.jar ]; then
-              echo "⚠️ Fallbacks failed. Trying direct raw GitHub CDN download..."
-              mkdir -p gradle/wrapper
-              curl -sSLo gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.10.2/gradle/wrapper/gradle-wrapper.jar || \
-              curl -sSLo gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.10.2/gradle/wrapper/gradle-wrapper.jar || \
-              curl -sSLo gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/master/gradle/wrapper/gradle-wrapper.jar || true
-            fi
+          echo "=== Removing pre-existing or potentially corrupt gradle-wrapper.jar ==="
+          rm -f gradle/wrapper/gradle-wrapper.jar
+          
+          echo "=== Attempting to generate wrapper using local system gradle ==="
+          if command -v gradle >/dev/null 2>&1; then
+            gradle wrapper --gradle-version 8.10.2 --distribution-type bin || true
           fi
           
-          # Final validation
-          if [ -f gradle/wrapper/gradle-wrapper.jar ] && [ -s gradle/wrapper/gradle-wrapper.jar ]; then
-            echo "✅ Successfully restored gradle-wrapper.jar!"
+          # Check if the jar was successfully created and of valid integrity
+          if [ -f gradle/wrapper/gradle-wrapper.jar ] && [ -s gradle/wrapper/gradle-wrapper.jar ] && unzip -t gradle/wrapper/gradle-wrapper.jar >/dev/null 2>&1; then
+            echo "✅ Successfully generated and verified gradle-wrapper.jar using system gradle!"
+          else
+            echo "⚠️ System gradle generation failed or produced a corrupt jar. Trying direct safe GitHub download..."
+            mkdir -p gradle/wrapper
+            rm -f gradle/wrapper/gradle-wrapper.jar
+            
+            # Direct link to official gradle-wrapper.jar wrapper bin from official GitHub repository
+            curl -sSLo gradle/wrapper/gradle-wrapper.jar "https://github.com/gradle/gradle/raw/v8.10.2/gradle/wrapper/gradle-wrapper.jar" || \
+            curl -sSLo gradle/wrapper/gradle-wrapper.jar "https://raw.githubusercontent.com/gradle/gradle/v8.10.2/gradle/wrapper/gradle-wrapper.jar" || true
+          fi
+          
+          # Final validation and fallback
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ] || [ ! -s gradle/wrapper/gradle-wrapper.jar ] || ! unzip -t gradle/wrapper/gradle-wrapper.jar >/dev/null 2>&1; then
+            echo "⚠️ Primary downloads failed or were invalid. Trying alternative master source..."
+            rm -f gradle/wrapper/gradle-wrapper.jar
+            curl -sSLo gradle/wrapper/gradle-wrapper.jar "https://raw.githubusercontent.com/gradle/gradle/master/gradle/wrapper/gradle-wrapper.jar" || true
+          fi
+          
+          # Ultimate validation
+          if [ -f gradle/wrapper/gradle-wrapper.jar ] && [ -s gradle/wrapper/gradle-wrapper.jar ] && unzip -t gradle/wrapper/gradle-wrapper.jar >/dev/null 2>&1; then
+            echo "✅ Successfully restored and verified gradle-wrapper.jar!"
             ls -la gradle/wrapper/gradle-wrapper.jar
           else
-            echo "❌ Failed to restore gradle-wrapper.jar!"
+            echo "❌ CRITICAL ERROR: Could NOT restore a valid gradle-wrapper.jar file!"
             exit 1
           fi
           
