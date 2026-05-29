@@ -1,6 +1,7 @@
 {
   "short_name": "Skky Golf",
   "name": "Skky Golf",
+  "description": "Skky Golf - Share and track golf scores",
   "icons": [
     {
       "src": "logo.svg",

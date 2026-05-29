@@ -35,7 +35,18 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
 }
 
+tasks.register<Exec>("buildWebAssets") {
+    workingDir = file("../web-app")
+    val isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows
+    if (isWindows) {
+        commandLine("cmd", "/c", "npm run build")
+    } else {
+        commandLine("npm", "run", "build")
+    }
+}
+
 tasks.register<Copy>("copyWebAssets") {
+    dependsOn("buildWebAssets")
     from(file("../web-app/build"))
     into(file("src/main/assets"))
 }
