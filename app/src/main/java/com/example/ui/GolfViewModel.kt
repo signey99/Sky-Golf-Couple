@@ -116,6 +116,38 @@ class GolfViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun updateCourse(
+        id: Long,
+        name: String,
+        address: String,
+        totalPar: Int,
+        ladyRating: Double,
+        ladySlope: Int,
+        blueRating: Double,
+        blueSlope: Int,
+        lat: Double,
+        lng: Double,
+        holeParsJson: String = ""
+    ) {
+        viewModelScope.launch {
+            repository.updateCourse(
+                CourseEntity(
+                    id = id,
+                    name = name,
+                    address = address,
+                    totalPar = totalPar,
+                    ladyRating = ladyRating,
+                    ladySlope = ladySlope,
+                    blueRating = blueRating,
+                    blueSlope = blueSlope,
+                    lat = lat,
+                    lng = lng,
+                    holeParsJson = holeParsJson
+                )
+             )
+        }
+    }
+
     fun addScore(courseId: Long, courseName: String, date: String, holesJson: String, photosJson: String) {
         viewModelScope.launch {
             repository.insertScore(ScoreEntity(

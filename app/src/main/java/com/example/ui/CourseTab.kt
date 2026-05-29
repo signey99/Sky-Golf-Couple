@@ -43,6 +43,19 @@ fun CourseTab(
         lng: Double,
         holeParsJson: String
     ) -> Unit,
+    onEditCourse: (
+        id: Long,
+        name: String,
+        address: String,
+        totalPar: Int,
+        ladyRating: Double,
+        ladySlope: Int,
+        blueRating: Double,
+        blueSlope: Int,
+        lat: Double,
+        lng: Double,
+        holeParsJson: String
+    ) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var newCourseName by remember { mutableStateOf("") }
@@ -60,6 +73,7 @@ fun CourseTab(
     val holePars = remember { mutableStateListOf(*Array(18) { 4 }) }
     var showParDialogForHole by remember { mutableStateOf<Int?>(null) } // hole number (1 to 18), or null
     var showRegisterFormDialog by remember { mutableStateOf(false) }
+    var editingCourse by remember { mutableStateOf<CourseEntity?>(null) }
 
     // Popup Par Select Dialog
     if (showParDialogForHole != null) {
@@ -87,7 +101,7 @@ fun CourseTab(
                                 ),
                                 shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier.size(64.dp)
-                              ) {
+                            ) {
                                 Text(parOption.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold)
                             }
                         }
@@ -289,6 +303,18 @@ fun CourseTab(
         )
     }
 
+    if (editingCourse != null) {
+        val course = editingCourse!!
+        EditCourseDialog(
+            course = course,
+            onDismiss = { editingCourse = null },
+            onSave = { name, addr, par, ladyR, ladyS, blueR, blueS, lt, lg, parsJ ->
+                onEditCourse(course.id, name, addr, par, ladyR, ladyS, blueR, blueS, lt, lg, parsJ)
+                editingCourse = null
+            }
+        )
+    }
+
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -427,140 +453,329 @@ fun CourseTab(
         }
 
         items(courses) { course ->
-            CourseCard(course = course, scores = scores.filter { it.courseId == course.id })
+            CourseCard(
+                course = course,
+                gameCount = scores.count { it.courseId == course.id },
+                onEditClick = { editingCourse = course }
+            )
         }
     }
 }
 
 @Composable
-fun CourseCard(course: CourseEntity, scores: List<ScoreEntity>) {
+fun EditCourseDialog(
+    course: CourseEntity,
+    onDismiss: () -> Unit,
+    onSave: (
+        name: String,
+        address: String,
+        totalPar: Int,
+        ladyRating: Double,
+        ladySlope: Int,
+        blueRating: Double,
+        blueSlope: Int,
+        lat: Double,
+        lng: Double,
+        holeParsJson: String
+    ) -> Unit
+) {
+    var name by remember { mutableStateOf(course.name) }
+    var address by remember { mutableStateOf(course.address) }
+    var ladyRating by remember { mutableStateOf(course.ladyRating) }
+    var ladySlope by remember { mutableStateOf(course.ladySlope) }
+    var blueRating by remember { mutableStateOf(course.blueRating) }
+    var blueSlope by remember { mutableStateOf(course.blueSlope) }
+    var lat by remember { mutableStateOf(course.lat) }
+    var lng by remember { mutableStateOf(course.lng) }
+
+    val initialPars = remember {
+        val parsed = JsonUtils.parseHolePars(course.holeParsJson)
+        val list = if (parsed.size == 18) parsed else List(18) { 4 }
+        mutableStateListOf(*list.toTypedArray())
+    }
+
+    var showParDialogForHole by remember { mutableStateOf<Int?>(null) }
+    val editScrollState = rememberScrollState()
+
+    if (showParDialogForHole != null) {
+        val holeIdx = showParDialogForHole!! - 1
+        val currentPar = initialPars[holeIdx]
+        AlertDialog(
+            onDismissRequest = { showParDialogForHole = null },
+            title = { Text("Select Par for Hole $showParDialogForHole", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Text("Select standard strokes (Par 3, 4, or 5) for this hole:", fontSize = 14.sp, color = Color.Gray, modifier = Modifier.padding(bottom = 16.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    ) {
+                        listOf(3, 4, 5).forEach { parOption ->
+                            Button(
+                                onClick = {
+                                    initialPars[holeIdx] = parOption
+                                    showParDialogForHole = null
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (currentPar == parOption) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
+                                    contentColor = if (currentPar == parOption) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer
+                                ),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.size(64.dp)
+                            ) {
+                                Text(parOption.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showParDialogForHole = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("✏️ Edit Golf Course Info", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(editScrollState),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Golf Course Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = address,
+                    onValueChange = { address = it },
+                    label = { Text("Course Address") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Individual Hole Par Selector UI
+                Text(
+                    text = "⛳ Default Par per Hole (Tap to Edit)",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                        .padding(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        (0..8).forEach { index ->
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(6.dp))
+                                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(6.dp))
+                                    .clickable { showParDialogForHole = index + 1 }
+                                    .padding(vertical = 6.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text("H${index + 1}", fontSize = 10.sp, color = Color.Gray)
+                                Text("${initialPars[index]}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        (9..17).forEach { index ->
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(6.dp))
+                                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(6.dp))
+                                    .clickable { showParDialogForHole = index + 1 }
+                                    .padding(vertical = 6.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text("H${index + 1}", fontSize = 10.sp, color = Color.Gray)
+                                Text("${initialPars[index]}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Calculated Total Par:", fontSize = 13.sp, color = Color.Gray)
+                    Text("${initialPars.sum()}", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("Tee Box Difficulty Rating (Tee Info)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.primary)
+
+                RatingAdjuster(
+                    label = "Lady Rating",
+                    value = ladyRating,
+                    onValueChange = { ladyRating = it }
+                )
+                SlopeAdjuster(
+                    label = "Lady Slope",
+                    value = ladySlope,
+                    onValueChange = { ladySlope = it }
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                RatingAdjuster(
+                    label = "Blue Rating",
+                    value = blueRating,
+                    onValueChange = { blueRating = it }
+                )
+                SlopeAdjuster(
+                    label = "Blue Slope",
+                    value = blueSlope,
+                    onValueChange = { blueSlope = it }
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (name.isNotBlank()) {
+                        val parsJson = JsonUtils.serializeHolePars(initialPars.toList())
+                        onSave(
+                            name,
+                            address,
+                            initialPars.sum(),
+                            ladyRating,
+                            ladySlope,
+                            blueRating,
+                            blueSlope,
+                            lat,
+                            lng,
+                            parsJson
+                        )
+                    }
+                }
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun CourseCard(
+    course: CourseEntity,
+    gameCount: Int,
+    onEditClick: () -> Unit
+) {
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(course.name, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
-                    if (course.address.isNotBlank()) {
-                        Text("Address: ${course.address}", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(top = 2.dp))
-                    }
-                    Text("GPS Pin: ${course.lat}, ${course.lng}", fontSize = 11.sp, color = Color.Gray)
-                    Text("Total Par: ${course.totalPar}", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 4.dp))
-                }
-                
-                // Lady & Blue Tee info display
-                Column(horizontalAlignment = Alignment.End) {
-                    Box(
-                        modifier = Modifier
-                            .background(Color(0xFFFFEAEF), RoundedCornerShape(4.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text("Lady CR: ${course.ladyRating} (S: ${course.ladySlope})", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFC2185B))
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Box(
-                        modifier = Modifier
-                            .background(Color(0xFFE3F2FD), RoundedCornerShape(4.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text("Blue CR: ${course.blueRating} (S: ${course.blueSlope})", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1976D2))
-                    }
-                }
-            }
-
-            // Visual representations of course pars
-            Spacer(modifier = Modifier.height(12.dp))
-            val holePars = JsonUtils.parseHolePars(course.holeParsJson)
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                    .padding(8.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("⛳ Detailed Hole Pars", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
-                Spacer(modifier = Modifier.height(6.dp))
-                
-                // Row 1: Holes 1 to 9
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    (0..8).forEach { index ->
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(4.dp))
-                                .padding(vertical = 4.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text("${index + 1}", fontSize = 8.sp, color = Color.Gray)
-                            Text("${holePars[index]}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                        }
-                    }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = course.name,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "⛳ Total Par: ${course.totalPar}",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "🎮 Total Games Played: $gameCount 회(games)",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.Gray
+                    )
                 }
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                // Row 2: Holes 10 to 18
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+
+                // Edit Button
+                IconButton(
+                    onClick = onEditClick,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(8.dp))
                 ) {
-                    (9..17).forEach { index ->
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(4.dp))
-                                .padding(vertical = 4.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text("${index + 1}", fontSize = 8.sp, color = Color.Gray)
-                            Text("${holePars[index]}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                        }
-                    }
+                    Text("✏️", fontSize = 16.sp)
                 }
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Text("🎮 Play History (${scores.size} games)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            if (scores.isEmpty()) {
-                Text("No games played on this course yet.", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(top = 4.dp))
-            } else {
-                scores.forEach { score ->
-                    val holes = JsonUtils.parseHoleScores(score.holesJson)
-                    // Display total stats for couples or single scorecard
-                    val totalStrokes1 = holes.sumOf { it.iron + it.putt }
-                    val totalPutts1 = holes.sumOf { it.putt }
-                    val totalStrokes2 = holes.sumOf { it.iron2 + it.putt2 }
-                    val totalPutts2 = holes.sumOf { it.putt2 }
-                    
+            // Lady & Blue Tee ratings & slopes
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Card(
+                    modifier = Modifier.weight(1f),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEAEF)),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 4.dp)
-                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
-                            .padding(8.dp)
+                        modifier = Modifier.padding(10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("📅 ${score.date}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("👤 Player 1: ${totalStrokes1} Strokes (Putts: ${totalPutts1})", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            if (totalStrokes2 > 0) {
-                                Text("👤 Player 2: ${totalStrokes2} Strokes (Putts: ${totalPutts2})", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
-                            }
-                        }
+                        Text("👩 Lady Tee", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFC2185B))
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Rating: ${course.ladyRating}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFFC2185B))
+                        Text("Slope: ${course.ladySlope}", fontSize = 11.sp, color = Color(0xFFE91E63))
+                    }
+                }
+
+                Card(
+                    modifier = Modifier.weight(1f),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("👨 Blue Tee", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1976D2))
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Rating: ${course.blueRating}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1976D2))
+                        Text("Slope: ${course.blueSlope}", fontSize = 11.sp, color = Color(0xFF2196F3))
                     }
                 }
             }

@@ -117,6 +117,9 @@ fun GolfApp(viewModel: GolfViewModel) {
                     scores = scores,
                     onAddCourse = { name, address, totalPar, ladyRating, ladySlope, blueRating, blueSlope, lat, lng, holeParsJson ->
                         viewModel.addCourse(name, address, totalPar, ladyRating, ladySlope, blueRating, blueSlope, lat, lng, holeParsJson)
+                    },
+                    onEditCourse = { id, name, address, totalPar, ladyRating, ladySlope, blueRating, blueSlope, lat, lng, holeParsJson ->
+                        viewModel.updateCourse(id, name, address, totalPar, ladyRating, ladySlope, blueRating, blueSlope, lat, lng, holeParsJson)
                     }
                 )
                 NavigationTab.HISTORY -> HistoryTab(

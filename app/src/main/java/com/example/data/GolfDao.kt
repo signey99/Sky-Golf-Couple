@@ -15,6 +15,9 @@ interface GolfDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCourse(course: CourseEntity): Long
 
+    @Update
+    suspend fun updateCourse(course: CourseEntity)
+
     @Query("SELECT * FROM scores ORDER BY date DESC, id DESC")
     fun getAllScores(): Flow<List<ScoreEntity>>
 

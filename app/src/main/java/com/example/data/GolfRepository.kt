@@ -10,6 +10,10 @@ class GolfRepository(private val golfDao: GolfDao) {
         return golfDao.insertCourse(course)
     }
 
+    suspend fun updateCourse(course: CourseEntity) {
+        golfDao.updateCourse(course)
+    }
+
     suspend fun insertScore(score: ScoreEntity): Long {
         return golfDao.insertScore(score)
     }
