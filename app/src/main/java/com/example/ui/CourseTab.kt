@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.CourseEntity
 import com.example.data.ScoreEntity
 import com.example.utils.JsonUtils
+import java.util.Locale
 
 @Composable
 fun CourseTab(
@@ -43,19 +44,11 @@ fun CourseTab(
 ) {
     var newCourseName by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
-    var totalPar by remember { mutableStateOf("72") }
     
-    var ladyRating by remember { mutableStateOf("") }
-    var ladySlope by remember { mutableStateOf("") }
-    var blueRating by remember { mutableStateOf("") }
-    var blueSlope by remember { mutableStateOf("") }
-
-    var lat by remember { mutableStateOf("33.3541") }
-    var lng by remember { mutableStateOf("126.3712") }
-
-    // Mock map coordinates
-    var clickedLat by remember { mutableStateOf("33.3541") }
-    var clickedLng by remember { mutableStateOf("126.3712") }
+    var ladyRating by remember { mutableStateOf(72.0) }
+    var ladySlope by remember { mutableStateOf(113) }
+    var blueRating by remember { mutableStateOf(72.0) }
+    var blueSlope by remember { mutableStateOf(113) }
 
     // Individual hole pars state (default is Par 4 for all 18 holes)
     val holePars = remember { mutableStateListOf(*Array(18) { 4 }) }
@@ -80,7 +73,6 @@ fun CourseTab(
                             Button(
                                 onClick = {
                                     holePars[holeIdx] = parOption
-                                    totalPar = holePars.sum().toString()
                                     showParDialogForHole = null
                                 },
                                 colors = ButtonDefaults.buttonColors(
@@ -89,7 +81,7 @@ fun CourseTab(
                                 ),
                                 shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier.size(64.dp)
-                            ) {
+                              ) {
                                 Text(parOption.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold)
                             }
                         }
@@ -108,7 +100,7 @@ fun CourseTab(
         val registerScrollState = rememberScrollState()
         AlertDialog(
             onDismissRequest = { showRegisterFormDialog = false },
-            title = { Text("⛳ 등록할 골프장 정보 입력", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+            title = { Text("⛳ Enter Golf Course Info", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
             text = {
                 Column(
                     modifier = Modifier
@@ -116,37 +108,25 @@ fun CourseTab(
                         .verticalScroll(registerScrollState),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("Selected GPS Pin (From map clicks):", fontSize = 11.sp, color = Color.Gray)
-                    Text("📍 Lat: $clickedLat, Lng: $clickedLng", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                    
                     OutlinedTextField(
                         value = newCourseName,
                         onValueChange = { newCourseName = it },
-                        label = { Text("골프장 이름 (Golf Course Name)") },
-                        placeholder = { Text("예: Nine Bridges CC") },
+                        label = { Text("Golf Course Name") },
+                        placeholder = { Text("e.g. Nine Bridges CC") },
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     OutlinedTextField(
                         value = address,
                         onValueChange = { address = it },
-                        label = { Text("골프장 주소 (Course Address)") },
-                        placeholder = { Text("예: 제주 안덕면 광평리") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    OutlinedTextField(
-                        value = totalPar,
-                        onValueChange = { totalPar = it },
-                        label = { Text("골프장 총 Par (Total Course Par)") },
-                        placeholder = { Text("예: 72") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        label = { Text("Course Address") },
+                        placeholder = { Text("e.g. Heillip-ro, Jeju-si") },
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     // Individual Hole Par Selector UI
                     Text(
-                        text = "⛳ 홀별 기본 타수 (탭하여 수정)",
+                        text = "⛳ Default Par per Hole (Tap to Edit)",
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.primary,
@@ -203,48 +183,44 @@ fun CourseTab(
                         }
                     }
 
+                    // Dynamic calculated Total Par read-only message
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Calculated Total Par:", fontSize = 13.sp, color = Color.Gray)
+                        Text("${holePars.sum()}", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    }
+
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text("티박스 난이도 정보 (Tee Info)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.primary)
+                    Text("Tee Box Difficulty Rating (Tee Info)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.primary)
 
-                    // Lady Tee Form
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
-                            value = ladyRating,
-                            onValueChange = { ladyRating = it },
-                            label = { Text("Lady 레이팅") },
-                            placeholder = { Text("72.0") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f)
-                        )
-                        OutlinedTextField(
-                            value = ladySlope,
-                            onValueChange = { ladySlope = it },
-                            label = { Text("Lady 슬롭") },
-                            placeholder = { Text("113") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
+                    // Lady Tee Form with Steppers
+                    RatingAdjuster(
+                        label = "Lady Rating",
+                        value = ladyRating,
+                        onValueChange = { ladyRating = it }
+                    )
+                    SlopeAdjuster(
+                        label = "Lady Slope",
+                        value = ladySlope,
+                        onValueChange = { ladySlope = it }
+                    )
 
-                    // Blue Tee Form
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
-                            value = blueRating,
-                            onValueChange = { blueRating = it },
-                            label = { Text("Blue 레이팅") },
-                            placeholder = { Text("72.0") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f)
-                        )
-                        OutlinedTextField(
-                            value = blueSlope,
-                            onValueChange = { blueSlope = it },
-                            label = { Text("Blue 슬롭") },
-                            placeholder = { Text("113") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Blue Tee Form with Steppers
+                    RatingAdjuster(
+                        label = "Blue Rating",
+                        value = blueRating,
+                        onValueChange = { blueRating = it }
+                    )
+                    SlopeAdjuster(
+                        label = "Blue Slope",
+                        value = blueSlope,
+                        onValueChange = { blueSlope = it }
+                    )
                 }
             },
             confirmButton = {
@@ -255,34 +231,33 @@ fun CourseTab(
                             onAddCourse(
                                 newCourseName,
                                 address,
-                                totalPar.toIntOrNull() ?: 72,
-                                ladyRating.toDoubleOrNull() ?: 72.0,
-                                ladySlope.toIntOrNull() ?: 113,
-                                blueRating.toDoubleOrNull() ?: 72.0,
-                                blueSlope.toIntOrNull() ?: 113,
-                                lat.toDoubleOrNull() ?: 33.3541,
-                                lng.toDoubleOrNull() ?: 126.3712,
+                                holePars.sum(),
+                                ladyRating,
+                                ladySlope,
+                                blueRating,
+                                blueSlope,
+                                33.3541,
+                                126.3712,
                                 parsJson
                             )
                             // Reset fields
                             newCourseName = ""
                             address = ""
-                            totalPar = "72"
-                            ladyRating = ""
-                            ladySlope = ""
-                            blueRating = ""
-                            blueSlope = ""
+                            ladyRating = 72.0
+                            ladySlope = 113
+                            blueRating = 72.0
+                            blueSlope = 113
                             holePars.indices.forEach { holePars[it] = 4 }
                             showRegisterFormDialog = false
                         }
                     }
                 ) {
-                    Text("등록하기 (Register)")
+                    Text("Register")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showRegisterFormDialog = false }) {
-                    Text("취소 (Cancel)")
+                    Text("Cancel")
                 }
             }
         )
@@ -294,58 +269,18 @@ fun CourseTab(
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         item {
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("🗺️ Course Location / 골프장 지도 시뮬레이터", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    Text("지도 영역을 클릭하면 GPS 위치가 시뮬레이션 변경되며, 이 핀 주소를 기준으로 신규 골프장을 등록할 수 있습니다.", fontSize = 11.sp, color = Color.Gray, modifier = Modifier.padding(bottom = 12.dp))
-
-                    // Mock Map
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(130.dp)
-                            .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(8.dp))
-                            .clickable {
-                                // Simulate click resulting in updated coordinates
-                                val randomOffsetLat = (Math.random() * 0.1)
-                                val randomOffsetLng = (Math.random() * 0.1)
-                                clickedLat = "%.4f".format(33.3541 + randomOffsetLat)
-                                clickedLng = "%.4f".format(126.3712 + randomOffsetLng)
-                                lat = clickedLat
-                                lng = clickedLng
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("📍 Lat: $clickedLat, Lng: $clickedLng", 
-                                fontSize = 12.sp, 
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                modifier = Modifier.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp)).padding(horizontal = 8.dp, vertical = 4.dp))
-                            Text("클릭하여 핀 위치 변경하기", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha=0.7f), modifier = Modifier.padding(top=8.dp))
-                        }
-                    }
-                }
-            }
-        }
-
-        item {
             Button(
                 onClick = { showRegisterFormDialog = true },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("⛳ Add Golf Course / 골프장 등록하기", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text("⛳ Add Golf Course", fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
         }
 
         item {
-            Text("⛳ Registered Courses / 등록된 골프장 목록", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text("⛳ Registered Courses", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
 
         items(courses) { course ->
@@ -484,6 +419,126 @@ fun CourseCard(course: CourseEntity, scores: List<ScoreEntity>) {
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun RatingAdjuster(
+    label: String,
+    value: Double,
+    onValueChange: (Double) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                Text(
+                    text = String.format(Locale.US, "%.1f", value),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                // Down Arrow Button (decrements by 0.1)
+                FilledIconButton(
+                    onClick = { onValueChange((value - 0.1).coerceAtLeast(1.0)) },
+                    modifier = Modifier.size(36.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                ) {
+                    Text("▼", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                }
+                
+                // Up Arrow Button (increments by 0.1)
+                FilledIconButton(
+                    onClick = { onValueChange((value + 0.1).coerceAtMost(150.0)) },
+                    modifier = Modifier.size(36.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                ) {
+                    Text("▲", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SlopeAdjuster(
+    label: String,
+    value: Int,
+    onValueChange: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                Text(
+                    text = value.toString(),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                // Down Arrow Button (decrements by 1)
+                FilledIconButton(
+                    onClick = { onValueChange((value - 1).coerceAtLeast(1)) },
+                    modifier = Modifier.size(36.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                ) {
+                    Text("▼", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                }
+                
+                // Up Arrow Button (increments by 1)
+                FilledIconButton(
+                    onClick = { onValueChange((value + 1).coerceAtMost(300)) },
+                    modifier = Modifier.size(36.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                ) {
+                    Text("▲", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
