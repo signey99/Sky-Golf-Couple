@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
-const formatDate = (dateStr) => {
+// Common date helper matching Android format
+const formatPlayDate = (dateStr) => {
   if (!dateStr) return '';
-  if (dateStr.includes('/')) return dateStr;
+  if (dateStr.includes('/')) return dateStr; // already formatted
   const parts = dateStr.split('-');
   if (parts.length === 3) {
-    return `${parts[1]}/${parts[2]}/${parts[0]}`;
+    return `${parts[1]}/${parts[2]}/${parts[0]}`; // YYYY-MM-DD -> MM/DD/YYYY
   }
   return dateStr;
 };
@@ -28,8 +29,14 @@ export default function App() {
         id: 1,
         courseId: 1,
         courseName: 'Jeju Nine Bridges CC',
-        date: '2026-05-10',
-        holes: Array.from({ length: 18 }, (_, i) => ({ hole: i + 1, iron: 3, putt: 2 })),
+        date: '05/10/2026',
+        holes: Array.from({ length: 18 }, (_, i) => ({
+          hole: i + 1,
+          iron: 3,
+          putt: 2,
+          iron2: 4,
+          putt2: 2
+        })),
         photos: []
       }
     ];
@@ -56,6 +63,7 @@ export default function App() {
         blueSlope: 135,
         lat: 33.3541,
         lng: 126.3712,
+        holePars: Array(18).fill(4)
       }
     ];
   });
@@ -69,30 +77,51 @@ export default function App() {
     localStorage.setItem('golf_diary_courses', JSON.stringify(courses));
   }, [courses]);
 
-  // Score Form States
-  const [newScore, setNewScore] = useState({
-    courseId: '',
-    newCourseName: '', // Direct name input fallback
-    date: new Date().toISOString().split('T')[0],
-    holes: Array.from({ length: 18 }, (_, i) => ({ hole: i + 1, iron: '', putt: '' }))
-  });
+  // --- SCOREBOARD TAB STATES ---
+  const [selectedCourseId, setSelectedCourseId] = useState('');
+  const [isNewCourse, setIsNewCourse] = useState(false);
+  const [newCourseNameInput, setNewCourseNameInput] = useState('');
+  
+  // Format MM/DD/YYYY as default date
+  const getDefaultDate = () => {
+    const d = new Date();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return `${mm}/${dd}/${yyyy}`;
+  };
+  const [playDate, setPlayDate] = useState(getDefaultDate());
 
-  // Course Form States with Detailed Fields
+  // Dual-Player scorecard details (1-18 holes)
+  const [scoreboardHoles, setScoreboardHoles] = useState(
+    Array.from({ length: 18 }, (_, i) => ({
+      hole: i + 1,
+      iron: 0,
+      putt: 0,
+      iron2: 0,
+      putt2: 0
+    }))
+  );
+  const [activeHoleIndex, setActiveHoleIndex] = useState(0);
+
+  // --- COURSE TAB STATES ---
   const [newCourse, setNewCourse] = useState({
     name: '',
     address: '',
-    totalPar: 72,
-    ladyRating: '',
-    ladySlope: '',
-    blueRating: '',
-    blueSlope: '',
-    lat: '33.3541',
-    lng: '126.3712'
+    ladyRating: 72.0,
+    ladySlope: 113,
+    blueRating: 72.0,
+    blueSlope: 113,
+    lat: 33.3541,
+    lng: 126.3712
   });
+
+  const [courseHolePars, setCourseHolePars] = useState(Array(18).fill(4));
+  const [editingParHoleIndex, setEditingParHoleIndex] = useState(null); // null or 0..17
+  const [showCourseModal, setShowCourseModal] = useState(false);
 
   // Virtual map tracker for simulated GPS picker
   const [mapClickedCoords, setMapClickedCoords] = useState({ lat: 33.3541, lng: 126.3712 });
-  const [showCourseModal, setShowCourseModal] = useState(false);
 
   const handleMapClick = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -104,27 +133,27 @@ export default function App() {
     const simulatedLng = (126.3712 + (x / rect.width) * 0.1).toFixed(4);
     
     setMapClickedCoords({ lat: parseFloat(simulatedLat), lng: parseFloat(simulatedLng) });
-    setNewCourse(prev => ({ ...prev, lat: simulatedLat, lng: simulatedLng }));
+    setNewCourse(prev => ({ ...prev, lat: parseFloat(simulatedLat), lng: parseFloat(simulatedLng) }));
   };
 
   const handleSaveScore = (e) => {
     e.preventDefault();
-    let courseId = Number(newScore.courseId);
-    let courseName = '';
+    let courseIdVal = Number(selectedCourseId);
+    let courseNameVal = '';
 
-    if (!newScore.courseId) {
+    if (!selectedCourseId && !isNewCourse) {
       alert('Please select or write a golf course.');
       return;
     }
 
-    if (newScore.courseId === 'new') {
-      if (!newScore.newCourseName) {
+    if (isNewCourse) {
+      if (!newCourseNameInput.trim()) {
         alert('Please enter a golf course name.');
         return;
       }
       const newCreatedCourse = {
         id: Date.now(),
-        name: newScore.newCourseName,
+        name: newCourseNameInput,
         address: 'Direct Entry Address',
         totalPar: 72,
         ladyRating: 72.0,
@@ -132,76 +161,82 @@ export default function App() {
         blueRating: 72.0,
         blueSlope: 113,
         lat: 37.5665,
-        lng: 126.9780
+        lng: 126.9780,
+        holePars: Array(18).fill(4)
       };
       setCourses(prev => [...prev, newCreatedCourse]);
-      courseId = newCreatedCourse.id;
-      courseName = newCreatedCourse.name;
+      courseIdVal = newCreatedCourse.id;
+      courseNameVal = newCreatedCourse.name;
     } else {
-      const selected = courses.find(c => c.id === courseId);
-      courseName = selected ? selected.name : 'Unknown Course';
+      const selected = courses.find(c => c.id === courseIdVal);
+      courseNameVal = selected ? selected.name : 'Unknown Course';
     }
-
-    const processedHoles = newScore.holes.map(h => ({
-      hole: h.hole,
-      iron: Number(h.iron) || 0,
-      putt: Number(h.putt) || 0
-    }));
 
     const scoreData = {
       id: Date.now(),
-      courseId,
-      courseName,
-      date: newScore.date,
-      holes: processedHoles,
+      courseId: courseIdVal,
+      courseName: courseNameVal,
+      date: formatPlayDate(playDate),
+      holes: [...scoreboardHoles],
       photos: []
     };
 
     setScores(prev => [scoreData, ...prev]);
     alert('Golf score saved successfully!');
     
-    // Reset inputs
-    setNewScore({
-      courseId: '',
-      newCourseName: '',
-      date: new Date().toISOString().split('T')[0],
-      holes: Array.from({ length: 18 }, (_, i) => ({ hole: i + 1, iron: '', putt: '' }))
-    });
+    // Reset scoreboard tab
+    setSelectedCourseId('');
+    setIsNewCourse(false);
+    setNewCourseNameInput('');
+    setPlayDate(getDefaultDate());
+    setScoreboardHoles(
+      Array.from({ length: 18 }, (_, i) => ({
+        hole: i + 1,
+        iron: 0,
+        putt: 0,
+        iron2: 0,
+        putt2: 0
+      }))
+    );
+    setActiveHoleIndex(0);
   };
 
   const handleSaveCourse = (e) => {
     e.preventDefault();
-    if (!newCourse.name) return alert('Please enter a golf course name.');
+    if (!newCourse.name.trim()) return alert('Please enter a golf course name.');
     
+    const sumTotalPar = courseHolePars.reduce((sum, val) => sum + val, 0);
+
     const courseData = {
       id: Date.now(),
       name: newCourse.name,
       address: newCourse.address || 'Unknown Address',
-      totalPar: parseInt(newCourse.totalPar) || 72,
-      ladyRating: parseFloat(newCourse.ladyRating) || 72.0,
-      ladySlope: parseInt(newCourse.ladySlope) || 113,
-      blueRating: parseFloat(newCourse.blueRating) || 72.0,
-      blueSlope: parseInt(newCourse.blueSlope) || 113,
-      lat: parseFloat(newCourse.lat),
-      lng: parseFloat(newCourse.lng)
+      totalPar: sumTotalPar,
+      ladyRating: Number(newCourse.ladyRating) || 72.0,
+      ladySlope: Number(newCourse.ladySlope) || 113,
+      blueRating: Number(newCourse.blueRating) || 72.0,
+      blueSlope: Number(newCourse.blueSlope) || 113,
+      lat: mapClickedCoords.lat,
+      lng: mapClickedCoords.lng,
+      holePars: [...courseHolePars]
     };
 
     setCourses(prev => [...prev, courseData]);
     setShowCourseModal(false);
     alert('New golf course successfully registered.');
     
-    // Reset
+    // Reset course state
     setNewCourse({
       name: '',
       address: '',
-      totalPar: 72,
-      ladyRating: '',
-      ladySlope: '',
-      blueRating: '',
-      blueSlope: '',
-      lat: '33.3541',
-      lng: '126.3712'
+      ladyRating: 72.0,
+      ladySlope: 113,
+      blueRating: 72.0,
+      blueSlope: 113,
+      lat: 33.3541,
+      lng: 126.3712
     });
+    setCourseHolePars(Array(18).fill(4));
   };
 
   const handlePhotoUpload = (scoreId, event) => {
@@ -226,201 +261,455 @@ export default function App() {
     }
   };
 
+  // Stepper Modifier Helpers
+  const modifyScoreboardHole = (field, dChange) => {
+    const nextHoles = [...scoreboardHoles];
+    const currentVal = nextHoles[activeHoleIndex][field] || 0;
+    nextHoles[activeHoleIndex][field] = Math.max(0, currentVal + dChange);
+    setScoreboardHoles(nextHoles);
+  };
+
+  // Grand totals
+  const totalCombinedP1 = scoreboardHoles.reduce((sum, h) => sum + (h.iron || 0) + (h.putt || 0), 0);
+  const totalCombinedP2 = scoreboardHoles.reduce((sum, h) => sum + (h.iron2 || 0) + (h.putt2 || 0), 0);
+
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-gray-50 flex flex-col justify-between font-sans shadow-lg relative border-x border-gray-100 pb-20">
+    <div className="max-w-md mx-auto min-h-screen bg-gray-50 flex flex-col justify-between font-sans shadow-xl relative border-x border-gray-100 pb-24">
       
       {/* Top Header App Bar */}
-      <header className="bg-emerald-700 text-white py-4 px-6 text-center shadow-md">
-        <h1 className="text-xl font-extrabold tracking-wide">⛳ SKKY Golf</h1>
+      <header className="bg-emerald-700 text-white py-4 px-6 text-center shadow-md select-none">
+        <h1 className="text-xl font-extrabold tracking-wide flex justify-center items-center">⛳ SKKY Golf</h1>
         <p className="text-xs text-emerald-100 mt-1 font-medium">시근이와 계영이의 골프 여행기</p>
       </header>
 
-      {/* Main Content Viewport */}
+      {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto p-4 space-y-4">
         
-        {/* TAB 1: Score Input Form */}
+        {/* --- TAB 1: SCOREBOARD --- */}
         {activeTab === 'score' && (
-          <div className="space-y-4 animate-fadeIn">
+          <div className="space-y-4 fade-in">
+            
+            {/* Round Setup Form Card */}
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                <span className="mr-2">📝</span> Enter Today's Score
+              <h2 className="text-base font-bold text-gray-800 mb-3 flex items-center">
+                <span className="mr-2">🏌️</span> Setup Golf Round
               </h2>
               
-              <form onSubmit={handleSaveScore} className="space-y-4">
-                
-                {/* Course Selection */}
+              <div className="space-y-3.5">
+                {/* Golf Course Selector */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Select Golf Course</label>
+                  <label className="block text-[11px] font-bold text-emerald-800 uppercase tracking-wide mb-1">Golf Course</label>
                   <select 
-                    className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm transition-all"
-                    value={newScore.courseId}
-                    onChange={(e) => setNewScore({ ...newScore, courseId: e.target.value })}
-                    required
+                    className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-sm shadow-sm transition-all"
+                    value={isNewCourse ? 'new' : selectedCourseId}
+                    onChange={(e) => {
+                      if (e.target.value === 'new') {
+                        setIsNewCourse(true);
+                        setSelectedCourseId('');
+                      } else {
+                        setIsNewCourse(false);
+                        setSelectedCourseId(e.target.value);
+                      }
+                    }}
                   >
-                    <option value="">-- Choose a course --</option>
+                    <option value="">-- Select a Golf Course --</option>
                     {courses.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
-                    <option value="new">+ Quick Add New Golf Course</option>
+                    <option value="new">+ Add New Golf Course</option>
                   </select>
                 </div>
 
-                {/* Quick Add Form Name */}
-                {newScore.courseId === 'new' && (
-                  <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 space-y-2">
-                    <label className="block text-xs font-semibold text-emerald-800 uppercase">Quick Golf Course Name</label>
+                {/* Direct Entry Course Name */}
+                {isNewCourse && (
+                  <div className="bg-emerald-50/40 p-3.5 rounded-xl border border-emerald-100 space-y-1.5 animate-fadeIn">
+                    <label className="block text-[10px] font-bold text-emerald-800 uppercase">Enter Golf Course Name</label>
                     <input 
                       type="text" 
                       placeholder="e.g. Gapyeong Benest GC"
-                      className="w-full p-3 bg-white border border-emerald-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
-                      value={newScore.newCourseName || ''}
-                      onChange={(e) => setNewScore({ ...newScore, newCourseName: e.target.value })}
-                      required
+                      className="w-full p-2.5 bg-white border border-emerald-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500 text-sm"
+                      value={newCourseNameInput}
+                      onChange={(e) => setNewCourseNameInput(e.target.value)}
                     />
                   </div>
                 )}
 
-                {/* Date Input */}
+                {/* Date Picker Input */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Play Date</label>
+                  <label className="block text-[11px] font-bold text-emerald-800 uppercase tracking-wide mb-1">Play Date (MM/DD/YYYY)</label>
                   <input 
-                    type="date" 
-                    className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
-                    value={newScore.date}
-                    onChange={(e) => setNewScore({ ...newScore, date: e.target.value })}
-                    required
+                    type="text" 
+                    placeholder="MM/DD/YYYY"
+                    className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-sm"
+                    value={playDate}
+                    onChange={(e) => setPlayDate(e.target.value)}
                   />
                 </div>
+              </div>
+            </div>
 
-                {/* 18-Hole Dynamic Table */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wider">18-Hole Details</label>
-                  <div className="border border-gray-100 rounded-xl overflow-hidden shadow-sm max-h-[350px] overflow-y-auto">
-                    <table className="w-full text-left border-collapse text-sm">
-                      <thead className="bg-emerald-50/60 sticky top-0 backdrop-blur-sm">
-                        <tr>
-                          <th className="p-2 border-b border-gray-100 text-center font-bold text-emerald-800">Hole</th>
-                          <th className="p-2 border-b border-gray-100 text-center font-bold text-emerald-800">Iron Shot</th>
-                          <th className="p-2 border-b border-gray-100 text-center font-bold text-emerald-800">Putt</th>
-                          <th className="p-2 border-b border-gray-100 text-center font-bold text-emerald-800">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {newScore.holes.map((h, idx) => {
-                          const total = (Number(h.iron) || 0) + (Number(h.putt) || 0);
-                          return (
-                            <tr key={h.hole} className="hover:bg-gray-50/75 border-b border-gray-100 last:border-0 transition-all">
-                              <td className="p-2 text-center font-bold text-gray-700">{h.hole}H</td>
-                              <td className="p-1">
-                                <input 
-                                  type="number" 
-                                  placeholder="0"
-                                  min="0"
-                                  className="w-full p-1.5 text-center border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500 text-sm"
-                                  value={h.iron}
-                                  onChange={(e) => {
-                                    const updatedHoles = [...newScore.holes];
-                                    updatedHoles[idx].iron = e.target.value;
-                                    setNewScore({ ...newScore, holes: updatedHoles });
-                                  }}
-                                />
-                              </td>
-                              <td className="p-1">
-                                <input 
-                                  type="number" 
-                                  placeholder="0"
-                                  min="0"
-                                  className="w-full p-1.5 text-center border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500 text-sm"
-                                  value={h.putt}
-                                  onChange={(e) => {
-                                    const updatedHoles = [...newScore.holes];
-                                    updatedHoles[idx].putt = e.target.value;
-                                    setNewScore({ ...newScore, holes: updatedHoles });
-                                  }}
-                                />
-                              </td>
-                              <td className="p-2 text-center font-extrabold text-emerald-600">
-                                {total > 0 ? total : '-'}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+            {/* Select Hole scroll bar widget */}
+            <div className="space-y-1">
+              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider px-1">🎯 Select Hole to Record</label>
+              <div className="flex overflow-x-auto gap-2 py-1.5 px-0.5 scrollbar-thin">
+                {scoreboardHoles.map((h, k) => {
+                  const isSelected = activeHoleIndex === k;
+                  const isRecorded = (h.iron + h.putt > 0) || (h.iron2 + h.putt2 > 0);
+                  
+                  return (
+                    <button
+                      key={h.hole}
+                      type="button"
+                      onClick={() => setActiveHoleIndex(k)}
+                      className={`min-w-[56px] h-10 rounded-xl flex flex-col justify-center items-center transition-all border ${
+                        isSelected 
+                          ? 'bg-emerald-600 text-white border-emerald-600 font-extrabold shadow' 
+                          : isRecorded
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200 font-bold'
+                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="text-xs">{h.hole}H</span>
+                      {isRecorded && !isSelected && (
+                        <span className="text-[8px] opacity-80 mt-0.5">
+                          {h.iron + h.putt}/{h.iron2 + h.putt2}
+                        </span>
+                      )}
+                      {isRecorded && isSelected && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-white mt-0.5"></span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Stepper Recording Panel */}
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-150 overflow-hidden flex flex-col items-center">
+              
+              {/* Hole Header Navigator */}
+              <div className="w-full flex justify-between items-center pb-2.5 border-b border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setActiveHoleIndex(prev => Math.max(0, prev - 1))}
+                  disabled={activeHoleIndex === 0}
+                  className="text-xs text-emerald-600 font-bold hover:text-emerald-800 disabled:opacity-30 p-1.5 hover:bg-gray-50 rounded-lg transition"
+                >
+                  ◀ Prev
+                </button>
+                <span className="text-lg font-black text-emerald-700 tracking-wide">
+                  ⛳ HOLE {activeHoleIndex + 1}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setActiveHoleIndex(prev => Math.min(17, prev + 1))}
+                  disabled={activeHoleIndex === 17}
+                  className="text-xs text-emerald-600 font-bold hover:text-emerald-800 disabled:opacity-30 p-1.5 hover:bg-gray-50 rounded-lg transition"
+                >
+                  Next ▶
+                </button>
+              </div>
+
+              {/* Player 1 and Player 2 Steppers row */}
+              <div className="w-full grid grid-cols-2 gap-4 mt-4 relative">
+                
+                {/* Vert divider line */}
+                <div className="absolute top-1 bottom-1 left-1/2 w-[1px] bg-gray-100 -translate-x-1/2"></div>
+                
+                {/* PLAYER 1 COLUMN */}
+                <div className="flex flex-col items-center space-y-4 pr-1">
+                  <span className="text-xs font-bold text-emerald-700 flex items-center">
+                    👤 Player 1
+                  </span>
+
+                  {/* Strokes */}
+                  <div className="w-full flex flex-col items-center text-center">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase">Stroke (기본타)</span>
+                    <div className="flex items-center gap-1.5 bg-emerald-50/40 p-1 rounded-full border border-emerald-100/50 mt-1">
+                      <button
+                        type="button"
+                        onClick={() => modifyScoreboardHole('iron', -1)}
+                        className="w-8 h-8 rounded-full bg-white text-emerald-700 hover:bg-emerald-50 border border-emerald-100 font-bold text-sm shadow-sm flex justify-center items-center active:scale-95"
+                      >
+                        −
+                      </button>
+                      <span className="w-8 text-center font-black text-base text-emerald-700">
+                        {scoreboardHoles[activeHoleIndex].iron}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => modifyScoreboardHole('iron', 1)}
+                        className="w-8 h-8 rounded-full bg-white text-emerald-700 hover:bg-emerald-50 border border-emerald-100 font-bold text-sm shadow-sm flex justify-center items-center active:scale-95"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Putts */}
+                  <div className="w-full flex flex-col items-center text-center">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase">Putt (퍼팅)</span>
+                    <div className="flex items-center gap-1.5 bg-emerald-50/40 p-1 rounded-full border border-emerald-100/50 mt-1">
+                      <button
+                        type="button"
+                        onClick={() => modifyScoreboardHole('putt', -1)}
+                        className="w-8 h-8 rounded-full bg-white text-emerald-700 hover:bg-emerald-50 border border-emerald-100 font-bold text-sm shadow-sm flex justify-center items-center active:scale-95"
+                      >
+                        −
+                      </button>
+                      <span className="w-8 text-center font-black text-base text-emerald-700">
+                        {scoreboardHoles[activeHoleIndex].putt}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => modifyScoreboardHole('putt', 1)}
+                        className="w-8 h-8 rounded-full bg-white text-emerald-700 hover:bg-emerald-50 border border-emerald-100 font-bold text-sm shadow-sm flex justify-center items-center active:scale-95"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  <span className="text-xs font-black text-emerald-700 pt-1.5">
+                    Total: {scoreboardHoles[activeHoleIndex].iron + scoreboardHoles[activeHoleIndex].putt}
+                  </span>
                 </div>
 
-                <button 
-                  type="submit" 
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 px-4 rounded-xl transition duration-150 transform active:scale-95 shadow-md shadow-emerald-700/20"
-                >
-                  Save Score Record
-                </button>
-              </form>
+                {/* PLAYER 2 COLUMN */}
+                <div className="flex flex-col items-center space-y-4 pl-1">
+                  <span className="text-xs font-bold text-teal-700 flex items-center">
+                    👤 Player 2
+                  </span>
+
+                  {/* Strokes */}
+                  <div className="w-full flex flex-col items-center text-center">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase">Stroke (기본타)</span>
+                    <div className="flex items-center gap-1.5 bg-teal-50/40 p-1 rounded-full border border-teal-100/50 mt-1">
+                      <button
+                        type="button"
+                        onClick={() => modifyScoreboardHole('iron2', -1)}
+                        className="w-8 h-8 rounded-full bg-white text-teal-700 hover:bg-teal-50 border border-teal-100 font-bold text-sm shadow-sm flex justify-center items-center active:scale-95"
+                      >
+                        −
+                      </button>
+                      <span className="w-8 text-center font-black text-base text-teal-700">
+                        {scoreboardHoles[activeHoleIndex].iron2}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => modifyScoreboardHole('iron2', 1)}
+                        className="w-8 h-8 rounded-full bg-white text-teal-700 hover:bg-teal-50 border border-teal-100 font-bold text-sm shadow-sm flex justify-center items-center active:scale-95"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Putts */}
+                  <div className="w-full flex flex-col items-center text-center">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase">Putt (퍼팅)</span>
+                    <div className="flex items-center gap-1.5 bg-teal-50/40 p-1 rounded-full border border-teal-100/50 mt-1">
+                      <button
+                        type="button"
+                        onClick={() => modifyScoreboardHole('putt2', -1)}
+                        className="w-8 h-8 rounded-full bg-white text-teal-700 hover:bg-teal-50 border border-teal-100 font-bold text-sm shadow-sm flex justify-center items-center active:scale-95"
+                      >
+                        −
+                      </button>
+                      <span className="w-8 text-center font-black text-base text-teal-700">
+                        {scoreboardHoles[activeHoleIndex].putt2}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => modifyScoreboardHole('putt2', 1)}
+                        className="w-8 h-8 rounded-full bg-white text-teal-700 hover:bg-teal-50 border border-teal-100 font-bold text-sm shadow-sm flex justify-center items-center active:scale-95"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  <span className="text-xs font-black text-teal-700 pt-1.5">
+                    Total: {scoreboardHoles[activeHoleIndex].iron2 + scoreboardHoles[activeHoleIndex].putt2}
+                  </span>
+                </div>
+
+              </div>
+
             </div>
+
+            {/* Live Matrix Section (Split tables in UI Grid) */}
+            <div className="bg-white p-4 rounded-2xl border border-gray-150 shadow-sm space-y-3">
+              <span className="text-xs font-extrabold text-emerald-800 flex items-center px-1">
+                📊 18-Hole Live Matrix (Tap cell to navigate)
+              </span>
+
+              {/* Front Nine layout */}
+              <div>
+                <span className="text-[10px] font-bold text-gray-400 block mb-1 px-1">⛳ FRONT NINE (Holes 1 - 9)</span>
+                <div className="border border-gray-200 rounded-xl overflow-hidden flex bg-white text-center">
+                  <div className="w-12 bg-gray-50 flex flex-col justify-around text-[10px] font-bold text-gray-500 py-1 border-r border-gray-200">
+                    <span className="h-5 flex items-center justify-center">Hole</span>
+                    <span className="h-5 flex items-center justify-center text-emerald-600">P1</span>
+                    <span className="h-5 flex items-center justify-center text-teal-600">P2</span>
+                  </div>
+                  {scoreboardHoles.slice(0, 9).map((h, k) => {
+                    const isSelected = activeHoleIndex === k;
+                    const p1T = h.iron + h.putt;
+                    const p2T = h.iron2 + h.putt2;
+                    return (
+                      <div 
+                        key={k}
+                        onClick={() => setActiveHoleIndex(k)}
+                        className={`flex-1 py-1 flex flex-col justify-around cursor-pointer transition-all border-r last:border-r-0 border-gray-100 ${
+                          isSelected ? 'bg-emerald-50' : 'hover:bg-gray-50/50'
+                        }`}
+                      >
+                        <span className={`text-[10px] font-bold h-5 flex items-center justify-center ${isSelected ? 'text-emerald-700 font-black' : 'text-gray-400'}`}>
+                          {h.hole}
+                        </span>
+                        <span className="text-xs font-bold text-emerald-700 h-5 flex items-center justify-center">
+                          {p1T > 0 ? p1T : '-'}
+                        </span>
+                        <span className="text-xs font-bold text-teal-700 h-5 flex items-center justify-center">
+                          {p2T > 0 ? p2T : '-'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Back Nine layout */}
+              <div>
+                <span className="text-[10px] font-bold text-gray-400 block mb-1 px-1">⛳ BACK NINE (Holes 10 - 18)</span>
+                <div className="border border-gray-200 rounded-xl overflow-hidden flex bg-white text-center">
+                  <div className="w-12 bg-gray-50 flex flex-col justify-around text-[10px] font-bold text-gray-500 py-1 border-r border-gray-200">
+                    <span className="h-5 flex items-center justify-center">Hole</span>
+                    <span className="h-5 flex items-center justify-center text-emerald-600">P1</span>
+                    <span className="h-5 flex items-center justify-center text-teal-600">P2</span>
+                  </div>
+                  {scoreboardHoles.slice(9, 18).map((h, k) => {
+                    const globalK = k + 9;
+                    const isSelected = activeHoleIndex === globalK;
+                    const p1T = h.iron + h.putt;
+                    const p2T = h.iron2 + h.putt2;
+                    return (
+                      <div 
+                        key={globalK}
+                        onClick={() => setActiveHoleIndex(globalK)}
+                        className={`flex-1 py-1 flex flex-col justify-around cursor-pointer transition-all border-r last:border-r-0 border-gray-100 ${
+                          isSelected ? 'bg-emerald-50' : 'hover:bg-gray-50/50'
+                        }`}
+                      >
+                        <span className={`text-[10px] font-bold h-5 flex items-center justify-center ${isSelected ? 'text-emerald-700 font-black' : 'text-gray-400'}`}>
+                          {h.hole}
+                        </span>
+                        <span className="text-xs font-bold text-emerald-700 h-5 flex items-center justify-center">
+                          {p1T > 0 ? p1T : '-'}
+                        </span>
+                        <span className="text-xs font-bold text-teal-700 h-5 flex items-center justify-center">
+                          {p2T > 0 ? p2T : '-'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Grand Totals Card & Save Button */}
+            <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100/70 text-center space-y-4 shadow-sm">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-emerald-800 uppercase">Player 1 Total</span>
+                  <span className="text-2xl font-black text-emerald-700 mt-0.5">{totalCombinedP1}</span>
+                </div>
+                <div className="flex flex-col border-l border-emerald-100">
+                  <span className="text-[10px] font-bold text-teal-800 uppercase">Player 2 Total</span>
+                  <span className="text-2xl font-black text-teal-700 mt-0.5">{totalCombinedP2}</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSaveScore}
+                disabled={(!isNewCourse && !selectedCourseId) || (isNewCourse && !newCourseNameInput.trim())}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 px-4 rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-40 select-none text-sm"
+              >
+                Save Round Record / 라운드 저장하기
+              </button>
+            </div>
+
           </div>
         )}
 
-        {/* TAB 2: Course Information & Advanced Custom Options */}
+        {/* --- TAB 2: COURSES VIEW --- */}
         {activeTab === 'course' && (
-          <div className="space-y-4 animate-fadeIn">
+          <div className="space-y-4 fade-in">
             
-            {/* Fake GPS Picker Map Area 항상 보이기 */}
+            {/* Map GPS simulator card (always present) */}
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-base font-bold text-gray-800 mb-1 flex items-center">
                 <span className="mr-2">🗺️</span> Course Location / 골프장 지도 시뮬레이터
               </h2>
-              <p className="text-[11px] text-gray-400 mb-4 font-medium">지도 영역을 클릭하면 GPS 위치가 시뮬레이션 변경되며, 이 핀 주소를 기준으로 신규 골프장을 등록할 수 있습니다.</p>
+              <p className="text-[11px] text-gray-400 mb-4 font-medium leading-relaxed">
+                지도 영역을 클릭하면 GPS 위치가 시뮬레이션 변경되며, 이 핀 주소를 기준으로 신규 골프장을 등록할 수 있습니다.
+              </p>
               
-              {/* Fake GPS Picker Map Area */}
               <div 
                 onClick={handleMapClick}
                 className="w-full h-36 bg-emerald-50 border border-emerald-100 rounded-xl flex flex-col items-center justify-center relative cursor-crosshair overflow-hidden group shadow-inner"
               >
-                {/* Visual grid dots for simulation */}
-                <div className="absolute inset-0 bg-opacity-10 bg-[radial-gradient(#107c41_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                <div className="absolute inset-0 bg-opacity-15 bg-[radial-gradient(#059669_1px,transparent_1px)] [background-size:16px_16px]"></div>
                 
-                {/* Map Pins overlay */}
-                <div className="z-10 bg-white px-3 py-1.5 rounded-full shadow-md border border-gray-100 text-xs text-gray-700 flex items-center space-x-1.5 transition-all transform group-hover:scale-105">
+                <div className="z-10 bg-white px-3.5 py-1.5 rounded-full shadow-md border border-gray-100 text-xs text-gray-700 flex items-center space-x-1.5 transition-all">
                   <span>📍</span> 
-                  <span className="font-bold text-emerald-800">Lat: {mapClickedCoords.lat}, Lng: {mapClickedCoords.lng}</span>
+                  <span className="font-bold text-emerald-800">
+                    Lat: {mapClickedCoords.lat.toFixed(4)}, Lng: {mapClickedCoords.lng.toFixed(4)}
+                  </span>
                 </div>
-                <div className="absolute bottom-1.5 text-[10px] text-gray-400 font-semibold uppercase tracking-widest text-center">클릭하여 핀 위치 변경하기</div>
+                <div className="absolute bottom-2 text-[9px] text-gray-400 font-bold uppercase tracking-widest text-center select-none">
+                  클릭하여 핀 위치 변경하기
+                </div>
               </div>
 
-              {/* Add Golf Course Button */}
               <button 
+                type="button"
                 onClick={() => setShowCourseModal(true)}
-                className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 px-4 rounded-xl text-sm transition duration-150 transform active:scale-95 shadow-md shadow-emerald-700/20"
+                className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 px-4 rounded-xl text-sm transition-all shadow-md active:scale-95"
               >
                 ⛳ Add Golf Course / 골프장 등록하기
               </button>
             </div>
 
-            {/* Registration Modal Overlay */}
+            {/* Interactive Registration Modal Overlays */}
             {showCourseModal && (
-              <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+              <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
                 <div className="bg-white rounded-2xl w-full max-w-sm max-h-[85vh] overflow-y-auto p-5 shadow-2xl border border-gray-100 flex flex-col">
+                  
+                  {/* Modal Header */}
                   <div className="flex justify-between items-center pb-3 border-b border-gray-100 mb-4">
                     <h3 className="text-base font-bold text-gray-800 flex items-center">
                       <span className="mr-2">⛳</span> 등록할 골프장 정보 입력
                     </h3>
                     <button 
+                      type="button"
                       onClick={() => setShowCourseModal(false)}
-                      className="text-gray-400 hover:text-gray-600 text-lg font-bold"
+                      className="text-gray-400 hover:text-gray-600 font-bold text-lg p-1"
                     >
                       ✕
                     </button>
                   </div>
 
-                  <p className="text-xs text-emerald-800 font-semibold mb-3 bg-emerald-50 p-2.5 rounded-lg text-center">
-                    📍 Selected GPS Lat: {mapClickedCoords.lat}, Lng: {mapClickedCoords.lng}
+                  <p className="text-[11px] text-emerald-850 font-semibold mb-3 bg-emerald-50 p-2.5 rounded-lg text-center">
+                    📍 Simulated GPS - Lat: {mapClickedCoords.lat}, Lng: {mapClickedCoords.lng}
                   </p>
 
                   <form onSubmit={handleSaveCourse} className="space-y-4 text-left">
-                    {/* Course Name */}
                     <div>
-                      <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">골프장 이름 (Golf Course Name)</label>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">골프장 이름 *</label>
                       <input 
                         type="text" 
                         placeholder="예: Nine Bridges CC" 
@@ -431,9 +720,8 @@ export default function App() {
                       />
                     </div>
 
-                    {/* Custom Address Input */}
                     <div>
-                      <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">골프장 주소 (Course Address)</label>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">골프장 주소</label>
                       <input 
                         type="text" 
                         placeholder="예: 제주 안덕면 광평리" 
@@ -443,137 +731,274 @@ export default function App() {
                       />
                     </div>
 
-                    {/* Total Par Parameter */}
+                    {/* Individual Hole Par Editor Inside Modal */}
                     <div>
-                      <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">골프장 총 Par (Total Course Par)</label>
-                      <input 
-                        type="number" 
-                        placeholder="72" 
-                        className="w-full p-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                        value={newCourse.totalPar}
-                        onChange={(e) => setNewCourse({ ...newCourse, totalPar: e.target.value })}
-                      />
+                      <span className="block text-[11px] font-bold text-emerald-800 uppercase mb-1">
+                        ⛳ Default Par per Hole (Tap to Edit)
+                      </span>
+                      <div className="bg-gray-50 p-2 text-center rounded-xl border border-gray-150 grid grid-cols-9 gap-1 shadow-inner">
+                        {courseHolePars.map((p, idx) => (
+                          <div
+                            key={idx}
+                            onClick={() => setEditingParHoleIndex(idx)}
+                            className="bg-white hover:bg-emerald-50 border border-gray-200 rounded p-1.5 cursor-pointer flex flex-col items-center"
+                          >
+                            <span className="text-[7px] text-gray-400 font-bold">H{idx+1}</span>
+                            <span className="text-[11px] font-black text-emerald-700">{p}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex justify-between items-center text-[11px] text-gray-500 mt-1.5 px-1">
+                        <span>Calculated Total Par:</span>
+                        <span className="font-extrabold text-emerald-700">
+                          {courseHolePars.reduce((s,v)=>s+v, 0)} Par
+                        </span>
+                      </div>
                     </div>
 
-                    {/* Tee Box Configuration Inputs Display */}
-                    <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 space-y-3">
-                      <h3 className="text-[11px] font-bold text-gray-700 uppercase tracking-wider">티박스 난이도 정보 (Tee Info)</h3>
+                    {/* Difficulty adjusters */}
+                    <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-150 space-y-3">
+                      <span className="block text-[10px] font-bold text-gray-500 uppercase">티박스 난이도 정보 (Tee Info)</span>
                       
-                      {/* Lady Tee Config */}
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="block text-[10px] font-bold text-pink-700 uppercase">Lady 레이팅</label>
-                          <input 
-                            type="number" 
-                            step="0.1"
-                            placeholder="72.1" 
-                            className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-pink-500"
-                            value={newCourse.ladyRating}
-                            onChange={(e) => setNewCourse({ ...newCourse, ladyRating: e.target.value })}
-                          />
+                      {/* Lady Tee */}
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="bg-white p-2 rounded-lg border border-gray-200">
+                          <label className="block text-[9px] font-bold text-pink-700">Lady Rating</label>
+                          <div className="flex justify-between items-center font-bold mt-1">
+                            <button
+                              type="button"
+                              onClick={() => setNewCourse(p => ({ ...p, ladyRating: Math.max(1, p.ladyRating - 0.1) }))}
+                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs"
+                            >
+                              ▼
+                            </button>
+                            <span className="font-black text-pink-600">{newCourse.ladyRating.toFixed(1)}</span>
+                            <button
+                              type="button"
+                              onClick={() => setNewCourse(p => ({ ...p, ladyRating: Math.min(150, p.ladyRating + 0.1) }))}
+                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs"
+                            >
+                              ▲
+                            </button>
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-[10px] font-bold text-pink-700 uppercase">Lady 슬롭</label>
-                          <input 
-                            type="number" 
-                            placeholder="113" 
-                            className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-pink-500"
-                            value={newCourse.ladySlope}
-                            onChange={(e) => setNewCourse({ ...newCourse, ladySlope: e.target.value })}
-                          />
+
+                        <div className="bg-white p-2 rounded-lg border border-gray-200">
+                          <label className="block text-[9px] font-bold text-pink-700">Lady Slope</label>
+                          <div className="flex justify-between items-center font-bold mt-1">
+                            <button
+                              type="button"
+                              onClick={() => setNewCourse(p => ({ ...p, ladySlope: Math.max(1, p.ladySlope - 1) }))}
+                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs"
+                            >
+                              ▼
+                            </button>
+                            <span className="font-black text-pink-600">{newCourse.ladySlope}</span>
+                            <button
+                              type="button"
+                              onClick={() => setNewCourse(p => ({ ...p, ladySlope: Math.min(300, p.ladySlope + 1) }))}
+                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs"
+                            >
+                              ▲
+                            </button>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Blue Tee Config */}
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="block text-[10px] font-bold text-blue-700 uppercase">Blue 레이팅</label>
-                          <input 
-                            type="number" 
-                            step="0.1"
-                            placeholder="73.5" 
-                            className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            value={newCourse.blueRating}
-                            onChange={(e) => setNewCourse({ ...newCourse, blueRating: e.target.value })}
-                          />
+                      {/* Blue Tee */}
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="bg-white p-2 rounded-lg border border-gray-200">
+                          <label className="block text-[9px] font-bold text-blue-700">Blue Rating</label>
+                          <div className="flex justify-between items-center font-bold mt-1">
+                            <button
+                              type="button"
+                              onClick={() => setNewCourse(p => ({ ...p, blueRating: Math.max(1, p.blueRating - 0.1) }))}
+                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs"
+                            >
+                              ▼
+                            </button>
+                            <span className="font-black text-blue-600">{newCourse.blueRating.toFixed(1)}</span>
+                            <button
+                              type="button"
+                              onClick={() => setNewCourse(p => ({ ...p, blueRating: Math.min(150, p.blueRating + 0.1) }))}
+                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs"
+                            >
+                              ▲
+                            </button>
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-[10px] font-bold text-blue-700 uppercase">Blue 슬롭</label>
-                          <input 
-                            type="number" 
-                            placeholder="113" 
-                            className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            value={newCourse.blueSlope}
-                            onChange={(e) => setNewCourse({ ...newCourse, blueSlope: e.target.value })}
-                          />
+
+                        <div className="bg-white p-2 rounded-lg border border-gray-200">
+                          <label className="block text-[9px] font-bold text-blue-700">Blue Slope</label>
+                          <div className="flex justify-between items-center font-bold mt-1">
+                            <button
+                              type="button"
+                              onClick={() => setNewCourse(p => ({ ...p, blueSlope: Math.max(1, p.blueSlope - 1) }))}
+                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs"
+                            >
+                              ▼
+                            </button>
+                            <span className="font-black text-blue-600">{newCourse.blueSlope}</span>
+                            <button
+                              type="button"
+                              onClick={() => setNewCourse(p => ({ ...p, blueSlope: Math.min(300, p.blueSlope + 1) }))}
+                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs"
+                            >
+                              ▲
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex space-x-2 pt-2">
+                    {/* Form Controls */}
+                    <div className="flex gap-2.5 pt-2">
                       <button 
                         type="button"
                         onClick={() => setShowCourseModal(false)}
-                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-4 rounded-xl text-sm transition"
+                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-4 rounded-xl text-xs transition"
                       >
                         취소 (Cancel)
                       </button>
                       <button 
                         type="submit" 
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-sm transition"
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs transition active:scale-95"
                       >
                         등록하기 (Register)
                       </button>
                     </div>
+
                   </form>
                 </div>
               </div>
             )}
 
-            {/* Courses Overview List and Personal Feed */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-extrabold text-gray-700 px-1 uppercase tracking-wider">📍 Registered Course Profiles</h3>
+            {/* Individual Par Select Popover */}
+            {editingParHoleIndex !== null && (
+              <div className="fixed inset-0 bg-black/45 z-[110] flex items-center justify-center p-4">
+                <div className="bg-white rounded-2xl p-5 max-w-xs w-full text-center space-y-3 shadow-2xl animate-scaleIn">
+                  <span className="text-sm font-extrabold text-emerald-800 block">Select Par for Hole {editingParHoleIndex + 1}</span>
+                  <p className="text-xs text-gray-400">Select standard strokes (Par 3, 4, or 5) for this hole:</p>
+                  
+                  <div className="flex justify-center gap-3 py-2">
+                    {[3, 4, 5].map(pOption => {
+                      const isSelected = courseHolePars[editingParHoleIndex] === pOption;
+                      return (
+                        <button
+                          key={pOption}
+                          type="button"
+                          onClick={() => {
+                            const nextPars = [...courseHolePars];
+                            nextPars[editingParHoleIndex] = pOption;
+                            setCourseHolePars(nextPars);
+                            setEditingParHoleIndex(null);
+                          }}
+                          className={`w-14 h-14 rounded-xl flex items-center justify-center font-black text-lg transition ${
+                            isSelected 
+                              ? 'bg-emerald-600 text-white shadow' 
+                              : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                          }`}
+                        >
+                          {pOption}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setEditingParHoleIndex(null)}
+                    className="w-full text-xs text-gray-400 hover:text-gray-600 p-1.5 font-bold"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Registered Course Cards Profile Feed */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-extrabold text-gray-700 px-1 uppercase tracking-wider">📍 Registered Course Profiles</h3>
               
               {courses.map(course => {
                 const courseHistories = scores.filter(s => s.courseId === course.id);
+                // Ensure array represents 18 holes par securely
+                const displayPars = course.holePars || Array(18).fill(4);
 
                 return (
-                  <div key={course.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1 min-w-0 pr-2">
-                        <h4 className="font-extrabold text-gray-800 text-base leading-tight truncate">{course.name}</h4>
+                  <div key={course.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                    
+                    {/* Header info */}
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-extrabold text-gray-800 text-base leading-snug truncate">{course.name}</h4>
                         <p className="text-xs text-gray-400 mt-1 truncate"><strong>Address:</strong> {course.address}</p>
-                        <p className="text-[10px] text-gray-400 mt-0.5 font-mono">Location: {course.lat}, {course.lng}</p>
-                        <p className="text-xs font-semibold text-gray-700 mt-1">Total Par: {course.totalPar}</p>
+                        <p className="text-[10px] text-gray-400 font-semibold font-mono leading-none mt-0.5">Location: {course.lat}, {course.lng}</p>
+                        <p className="text-xs font-bold text-gray-700 mt-2">Total Par: {course.totalPar || 72}</p>
                       </div>
-                      <div className="text-right text-xs rounded bg-emerald-50/50 p-2 min-w-[100px] border border-emerald-50">
-                        <span className="block font-semibold text-rose-700">Lady: {course.ladyRating} (S:{course.ladySlope})</span>
-                        <span className="block font-semibold text-blue-700 mt-0.5">Blue: {course.blueRating} (S:{course.blueSlope})</span>
+                      
+                      <div className="text-right text-[10px] rounded-lg bg-emerald-50/50 px-2.5 py-1.5 min-w-[105px] border border-emerald-100/30 flex flex-col gap-0.5">
+                        <span className="font-bold text-rose-700">Lady: {course.ladyRating.toFixed(1)} (S:{course.ladySlope})</span>
+                        <span className="font-bold text-blue-700">Blue: {course.blueRating.toFixed(1)} (S:{course.blueSlope})</span>
                       </div>
                     </div>
 
-                    {/* Historical Runs */}
+                    {/* Detailed Pars Display grid */}
+                    <div className="bg-gray-50/70 p-3 rounded-xl border border-gray-100 space-y-1.5">
+                      <span className="text-[9px] font-bold text-gray-400 block uppercase tracking-wider">⛳ Detailed Hole Pars</span>
+                      
+                      {/* Row 1-9 */}
+                      <div className="grid grid-cols-9 gap-1 text-center font-semibold">
+                        {displayPars.slice(0, 9).map((p, idx) => (
+                          <div key={idx} className="bg-white p-1 rounded border border-gray-150">
+                            <span className="text-[7px] text-gray-400 block font-bold mt-0.5">H{idx+1}</span>
+                            <span className="text-[11px] font-extrabold text-emerald-700 leading-tight">{p}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Row 10-18 */}
+                      <div className="grid grid-cols-9 gap-1 text-center font-semibold">
+                        {displayPars.slice(9, 18).map((p, idx) => (
+                          <div key={idx + 9} className="bg-white p-1 rounded border border-gray-150">
+                            <span className="text-[7px] text-gray-400 block font-bold mt-0.5">H{idx + 10}</span>
+                            <span className="text-[11px] font-extrabold text-emerald-700 leading-tight">{p}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Historical Runs play list */}
                     <div className="border-t border-gray-100 pt-3">
-                      <p className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">🏆 Play History ({courseHistories.length} games)</p>
+                      <span className="text-xs font-extrabold text-gray-500 mb-2 block uppercase tracking-wide">🏆 Play History ({courseHistories.length} games)</span>
+                      
                       {courseHistories.length === 0 ? (
                         <p className="text-xs text-gray-300">No scorecards recorded for this club yet.</p>
                       ) : (
-                        <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                        <div className="space-y-2 max-h-36 overflow-y-auto pr-0.5">
                           {courseHistories.map(h => {
-                            const totalStrokes = h.holes.reduce((sum, hole) => sum + (hole.iron || 0) + (hole.putt || 0), 0);
-                            const totalPutts = h.holes.reduce((sum, hole) => sum + (hole.putt || 0), 0);
+                            const totalStrokesP1 = h.holes.reduce((sum, hole) => sum + (hole.iron || 0) + (hole.putt || 0), 0);
+                            const totalPuttsP1 = h.holes.reduce((sum, hole) => sum + (hole.putt || 0), 0);
+                            
+                            const totalStrokesP2 = h.holes.reduce((sum, hole) => sum + (hole.iron2 || 0) + (hole.putt2 || 0), 0);
+                            const totalPuttsP2 = h.holes.reduce((sum, hole) => sum + (hole.putt2 || 0), 0);
+
                             return (
-                              <div key={h.id} className="flex justify-between items-center text-xs bg-gray-50/70 p-2 rounded-xl border border-gray-100">
-                                <span className="text-gray-400 font-mono font-bold">{formatDate(h.date)}</span>
-                                <span className="font-bold text-gray-700">
-                                  {totalStrokes} Strokes <span className="text-emerald-600 font-normal">({totalPutts} Putts)</span>
-                                </span>
+                              <div key={h.id} className="text-xs bg-gray-50/70 p-2.5 rounded-xl border border-gray-100/80 flex flex-col gap-1 shadow-sm font-medium">
+                                <div className="text-[9px] text-gray-400 font-bold font-mono">{formatPlayDate(h.date)}</div>
+                                <div className="flex justify-between items-center text-gray-700 text-[11px]">
+                                  <span>👤 Player 1: <strong className="font-extrabold text-emerald-700">{totalStrokesP1} Strokes</strong> ({totalPuttsP1} Putts)</span>
+                                  {totalStrokesP2 > 0 && (
+                                    <span>👤 Player 2: <strong className="font-extrabold text-teal-700">{totalStrokesP2} Strokes</strong> ({totalPuttsP2} Putts)</span>
+                                  )}
+                                </div>
                               </div>
                             );
                           })}
                         </div>
                       )}
                     </div>
+
                   </div>
                 );
               })}
@@ -582,9 +1007,9 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 3: History & Shared Gallery Section */}
+        {/* --- TAB 3: SHARED HISTORY MEMORIES GALLERY --- */}
         {activeTab === 'history' && (
-          <div className="space-y-4 animate-fadeIn">
+          <div className="space-y-4 fade-in">
             <h2 className="text-lg font-bold text-gray-800 px-1 ml-1 flex items-center">
               <span className="mr-2">📸</span> Our Shared Memories
             </h2>
@@ -598,32 +1023,41 @@ export default function App() {
               [...scores]
                 .sort((a, b) => new Date(b.date) - new Date(a.date))
                 .map(score => {
-                  const totalStrokes = score.holes.reduce((sum, h) => sum + (h.iron || 0) + (h.putt || 0), 0);
-                  const totalPutts = score.holes.reduce((sum, h) => sum + (h.putt || 0), 0);
+                  const totalStrokesP1 = score.holes.reduce((sum, h) => sum + (h.iron || 0) + (h.putt || 0), 0);
+                  const totalPuttsP1 = score.holes.reduce((sum, h) => sum + (h.putt || 0), 0);
+
+                  const totalStrokesP2 = score.holes.reduce((sum, h) => sum + (h.iron2 || 0) + (h.putt2 || 0), 0);
+                  const totalPuttsP2 = score.holes.reduce((sum, h) => sum + (h.putt2 || 0), 0);
 
                   return (
-                    <div key={score.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div key={score.id} className="bg-white rounded-2xl shadow-sm border border-gray-150 overflow-hidden">
                       
-                      {/* Card Header Info block */}
-                      <div className="bg-gray-50/80 p-4 border-b border-gray-100 flex justify-between items-center">
+                      {/* Card Header */}
+                      <div className="bg-gray-50/80 p-4 border-b border-gray-100 flex justify-between items-center text-xs">
                         <div>
-                          <h3 className="font-bold text-gray-800 text-base leading-snug">{score.courseName}</h3>
-                          <p className="text-xs text-gray-400 font-bold mt-0.5">📅 {formatDate(score.date)}</p>
+                          <h3 className="font-bold text-gray-850 text-sm leading-snug">{score.courseName}</h3>
+                          <p className="text-[10px] text-gray-400 font-bold mt-0.5">📅 {formatPlayDate(score.date)}</p>
                         </div>
-                        <div className="text-right">
-                          <span className="text-xl font-black text-emerald-600 leading-none">{totalStrokes}</span>
-                          <span className="text-xs font-bold text-gray-500 ml-1">Strokes</span>
-                          <span className="block text-[10px] text-gray-400 font-semibold">{totalPutts} Total Putts</span>
+                        <div className="text-right flex flex-col gap-0.5 shrink-0 select-none">
+                          <span className="text-[11px] text-emerald-800 font-bold">
+                            Player 1: <strong className="font-black text-emerald-700 text-sm">{totalStrokesP1}</strong> Strokes ({totalPuttsP1} P)
+                          </span>
+                          {totalStrokesP2 > 0 && (
+                            <span className="text-[11px] text-teal-800 font-bold">
+                              Player 2: <strong className="font-black text-teal-700 text-sm">{totalStrokesP2}</strong> Strokes ({totalPuttsP2} P)
+                            </span>
+                          )}
                         </div>
                       </div>
 
-                      {/* Attached Gallery and Upload Trigger */}
+                      {/* Photo Gallery details */}
                       <div className="p-4 space-y-3 bg-white">
                         <div className="grid grid-cols-3 gap-2">
                           {score.photos && score.photos.map((photo, i) => (
                             <div key={i} className="aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-150 shadow-sm relative group">
                               <img src={photo} alt="round memorial" className="w-full h-full object-cover" />
                               <button 
+                                type="button"
                                 onClick={() => {
                                   // Easy deletion helper
                                   setScores(prev => prev.map(s => {
@@ -635,17 +1069,17 @@ export default function App() {
                                     return s;
                                   }))
                                 }}
-                                className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 text-xxs flex items-center justify-center hover:bg-black/80 shadow transition-opacity opacity-0 group-hover:opacity-100"
+                                className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center hover:bg-black/80 shadow transition-opacity opacity-0 group-hover:opacity-100"
                               >
                                 ✕
                               </button>
                             </div>
                           ))}
                           
-                          {/* File Uploader Frame */}
+                          {/* File Uploader Input Frame */}
                           <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 hover:border-emerald-500 hover:bg-emerald-50/30 flex flex-col items-center justify-center cursor-pointer bg-gray-50/50 transition-all p-2 text-center select-none active:scale-95">
-                            <span className="text-xl text-gray-400 group-hover:text-emerald-500 font-bold">+</span>
-                            <span className="text-[10px] text-gray-400 font-bold">Add Photo</span>
+                            <span className="text-lg text-gray-400 font-extrabold leading-none">+</span>
+                            <span className="text-[9px] text-gray-400 font-bold block mt-0.5">Add Photo</span>
                             <input 
                               type="file" 
                               accept="image/*" 
@@ -665,28 +1099,28 @@ export default function App() {
 
       </main>
 
-      {/* Styled Bottom Navigation Toolbar */}
+      {/* Styled Bottom Navigation Toolbar (Stay fixed in mobile frames) */}
       <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-150 flex justify-around py-3.5 shadow-xl z-50">
         <button 
           onClick={() => setActiveTab('score')}
-          className={`flex flex-col items-center space-y-1 transition-all active:scale-95 ${activeTab === 'score' ? 'text-emerald-600 scale-105 font-bold' : 'text-gray-400 hover:text-gray-600'}`}
+          className={`flex flex-col items-center space-y-1 transition-all active:scale-95 ${activeTab === 'score' ? 'text-emerald-600 scale-105 font-bold' : 'text-gray-400 hover:text-gray-650'}`}
         >
-          <span className="text-xl">📝</span>
-          <span className="text-[13px] font-bold">Scoreboard</span>
+          <span className="text-lg leading-tight">📝</span>
+          <span className="text-xs font-bold leading-tight">Scoreboard</span>
         </button>
         <button 
           onClick={() => setActiveTab('course')}
-          className={`flex flex-col items-center space-y-1 transition-all active:scale-95 ${activeTab === 'course' ? 'text-emerald-600 scale-105 font-bold' : 'text-gray-400 hover:text-gray-600'}`}
+          className={`flex flex-col items-center space-y-1 transition-all active:scale-95 ${activeTab === 'course' ? 'text-emerald-600 scale-105 font-bold' : 'text-gray-400 hover:text-gray-650'}`}
         >
-          <span className="text-xl">🗺️</span>
-          <span className="text-[13px] font-bold">Courses</span>
+          <span className="text-lg leading-tight">🗺️</span>
+          <span className="text-xs font-bold leading-tight">Courses</span>
         </button>
         <button 
           onClick={() => setActiveTab('history')}
-          className={`flex flex-col items-center space-y-1 transition-all active:scale-95 ${activeTab === 'history' ? 'text-emerald-600 scale-105 font-bold' : 'text-gray-400 hover:text-gray-600'}`}
+          className={`flex flex-col items-center space-y-1 transition-all active:scale-95 ${activeTab === 'history' ? 'text-emerald-600 scale-105 font-bold' : 'text-gray-400 hover:text-gray-650'}`}
         >
-          <span className="text-xl">📸</span>
-          <span className="text-[13px] font-bold">History</span>
+          <span className="text-lg leading-tight">📸</span>
+          <span className="text-xs font-bold leading-tight">History</span>
         </button>
       </nav>
 
