@@ -272,7 +272,7 @@ fun ScoreTab(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = "👤 Player 1",
+                                text = "👤 SK",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
@@ -327,7 +327,7 @@ fun ScoreTab(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = "👤 Player 2",
+                                text = "👤 KY",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.secondary,
@@ -400,11 +400,11 @@ fun ScoreTab(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Player 1 Total", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                            Text("SK Total", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                             Text("$totalP1", fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
                         }
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Player 2 Total", fontSize = 12.sp, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
+                            Text("KY Total", fontSize = 12.sp, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
                             Text("$totalP2", fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.secondary)
                         }
                     }
@@ -566,7 +566,7 @@ fun ScorecardHalfTable(
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(8.dp))
                 .clip(RoundedCornerShape(8.dp))
         ) {
-            // Label Header Column (H / P1 / P2)
+            // Label Header Column (H / SK / KY)
             Column(
                 modifier = Modifier
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
@@ -576,9 +576,9 @@ fun ScorecardHalfTable(
             ) {
                 Text("Hole", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray, modifier = Modifier.height(18.dp))
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
-                Text("P1", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, modifier = Modifier.height(18.dp))
+                Text("SK", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, modifier = Modifier.height(18.dp))
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
-                Text("P2", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary, modifier = Modifier.height(18.dp))
+                Text("KY", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary, modifier = Modifier.height(18.dp))
             }
             
             // 9 columns of data

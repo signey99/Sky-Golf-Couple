@@ -124,14 +124,14 @@ fun HistoryCard(
                 // Simplified player scores
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "P1: ${totalstrokes1}타",
+                        text = "SK: ${totalstrokes1}타",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
                     if (totalstrokes2 > 0) {
                         Text(
-                            text = "P2: ${totalstrokes2}타",
+                            text = "KY: ${totalstrokes2}타",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.secondary
@@ -273,9 +273,9 @@ fun HistoryDetailDialog(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("👤 Player 1: ${totalStrokes1}타 (퍼팅: ${totalPutts1}회)", fontSize = 12.sp, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                            Text("👤 SK: ${totalStrokes1}타 (퍼팅: ${totalPutts1}회)", fontSize = 12.sp, color = MaterialTheme.colorScheme.onPrimaryContainer)
                             if (totalStrokes2 > 0) {
-                                Text("👤 Player 2: ${totalStrokes2}타 (퍼팅: ${totalPutts2}회)", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                Text("👤 KY: ${totalStrokes2}타 (퍼팅: ${totalPutts2}회)", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                             }
                         }
                     }
@@ -303,8 +303,8 @@ fun HistoryDetailDialog(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text("홀", modifier = Modifier.weight(0.8f).padding(6.dp), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                        Text("Player 1 (퍼팅)", modifier = Modifier.weight(2f).padding(6.dp), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                        Text("Player 2 (퍼팅)", modifier = Modifier.weight(2f).padding(6.dp), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Text("SK (퍼팅)", modifier = Modifier.weight(2f).padding(6.dp), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Text("KY (퍼팅)", modifier = Modifier.weight(2f).padding(6.dp), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
 
                     holes.forEachIndexed { idx, holeScore ->
