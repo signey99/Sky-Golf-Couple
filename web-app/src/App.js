@@ -13,6 +13,8 @@ const formatPlayDate = (dateStr) => {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('score'); // 'score', 'course', 'history'
+  const [editingCourseId, setEditingCourseId] = useState(null);
+  const [selectedHistoryScore, setSelectedHistoryScore] = useState(null);
 
   // Load from LocalStorage if exists
   const [scores, setScores] = useState(() => {
@@ -201,6 +203,40 @@ export default function App() {
     setActiveHoleIndex(0);
   };
 
+  const handleStartEditCourse = (course) => {
+    setEditingCourseId(course.id);
+    setNewCourse({
+      name: course.name,
+      address: course.address,
+      ladyRating: course.ladyRating || 72.0,
+      ladySlope: course.ladySlope || 113,
+      blueRating: course.blueRating || 72.0,
+      blueSlope: course.blueSlope || 113,
+      lat: course.lat || 33.3541,
+      lng: course.lng || 126.3712
+    });
+    setCourseHolePars(course.holePars || Array(18).fill(4));
+    setMapClickedCoords({ lat: course.lat || 33.3541, lng: course.lng || 126.3712 });
+    setShowCourseModal(true);
+  };
+
+  const closeCourseModal = () => {
+    setShowCourseModal(false);
+    setEditingCourseId(null);
+    setNewCourse({
+      name: '',
+      address: '',
+      ladyRating: 72.0,
+      ladySlope: 113,
+      blueRating: 72.0,
+      blueSlope: 113,
+      lat: 33.3541,
+      lng: 126.3712
+    });
+    setCourseHolePars(Array(18).fill(4));
+    setMapClickedCoords({ lat: 33.3541, lng: 126.3712 });
+  };
+
   const handleSaveCourse = (e) => {
     e.preventDefault();
     if (!newCourse.name.trim()) return alert('Please enter a golf course name.');
@@ -208,7 +244,7 @@ export default function App() {
     const sumTotalPar = courseHolePars.reduce((sum, val) => sum + val, 0);
 
     const courseData = {
-      id: Date.now(),
+      id: editingCourseId ? editingCourseId : Date.now(),
       name: newCourse.name,
       address: newCourse.address || 'Unknown Address',
       totalPar: sumTotalPar,
@@ -221,22 +257,17 @@ export default function App() {
       holePars: [...courseHolePars]
     };
 
-    setCourses(prev => [...prev, courseData]);
-    setShowCourseModal(false);
-    alert('New golf course successfully registered.');
+    if (editingCourseId) {
+      setCourses(prev => prev.map(c => c.id === editingCourseId ? courseData : c));
+      // Proactively update cached course names in historic scores so name changes propagate instantly
+      setScores(prev => prev.map(s => s.courseId === editingCourseId ? { ...s, courseName: courseData.name } : s));
+      alert('Golf course successfully updated.');
+    } else {
+      setCourses(prev => [...prev, courseData]);
+      alert('New golf course successfully registered.');
+    }
     
-    // Reset course state
-    setNewCourse({
-      name: '',
-      address: '',
-      ladyRating: 72.0,
-      ladySlope: 113,
-      blueRating: 72.0,
-      blueSlope: 113,
-      lat: 33.3541,
-      lng: 126.3712
-    });
-    setCourseHolePars(Array(18).fill(4));
+    closeCourseModal();
   };
 
   const handlePhotoUpload = (scoreId, event) => {
@@ -410,16 +441,16 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Player 1 and Player 2 Steppers row */}
+              {/* SK and KY Steppers row */}
               <div className="w-full grid grid-cols-2 gap-4 mt-4 relative">
                 
                 {/* Vert divider line */}
                 <div className="absolute top-1 bottom-1 left-1/2 w-[1px] bg-gray-100 -translate-x-1/2"></div>
                 
-                {/* PLAYER 1 COLUMN */}
+                {/* SK COLUMN */}
                 <div className="flex flex-col items-center space-y-4 pr-1">
                   <span className="text-xs font-bold text-emerald-700 flex items-center">
-                    👤 Player 1
+                    👤 SK
                   </span>
 
                   {/* Strokes */}
@@ -475,10 +506,10 @@ export default function App() {
                   </span>
                 </div>
 
-                {/* PLAYER 2 COLUMN */}
+                {/* KY COLUMN */}
                 <div className="flex flex-col items-center space-y-4 pl-1">
                   <span className="text-xs font-bold text-teal-700 flex items-center">
-                    👤 Player 2
+                    👤 KY
                   </span>
 
                   {/* Strokes */}
@@ -550,8 +581,8 @@ export default function App() {
                 <div className="border border-gray-200 rounded-xl overflow-hidden flex bg-white text-center">
                   <div className="w-12 bg-gray-50 flex flex-col justify-around text-[10px] font-bold text-gray-500 py-1 border-r border-gray-200">
                     <span className="h-5 flex items-center justify-center">Hole</span>
-                    <span className="h-5 flex items-center justify-center text-emerald-600">P1</span>
-                    <span className="h-5 flex items-center justify-center text-teal-600">P2</span>
+                    <span className="h-5 flex items-center justify-center text-emerald-600">SK</span>
+                    <span className="h-5 flex items-center justify-center text-teal-600">KY</span>
                   </div>
                   {scoreboardHoles.slice(0, 9).map((h, k) => {
                     const isSelected = activeHoleIndex === k;
@@ -586,8 +617,8 @@ export default function App() {
                 <div className="border border-gray-200 rounded-xl overflow-hidden flex bg-white text-center">
                   <div className="w-12 bg-gray-50 flex flex-col justify-around text-[10px] font-bold text-gray-500 py-1 border-r border-gray-200">
                     <span className="h-5 flex items-center justify-center">Hole</span>
-                    <span className="h-5 flex items-center justify-center text-emerald-600">P1</span>
-                    <span className="h-5 flex items-center justify-center text-teal-600">P2</span>
+                    <span className="h-5 flex items-center justify-center text-emerald-600">SK</span>
+                    <span className="h-5 flex items-center justify-center text-teal-600">KY</span>
                   </div>
                   {scoreboardHoles.slice(9, 18).map((h, k) => {
                     const globalK = k + 9;
@@ -623,11 +654,11 @@ export default function App() {
             <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100/70 text-center space-y-4 shadow-sm">
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-emerald-800 uppercase">Player 1 Total</span>
+                  <span className="text-[10px] font-bold text-emerald-800 uppercase">SK Total</span>
                   <span className="text-2xl font-black text-emerald-700 mt-0.5">{totalCombinedP1}</span>
                 </div>
                 <div className="flex flex-col border-l border-emerald-100">
-                  <span className="text-[10px] font-bold text-teal-800 uppercase">Player 2 Total</span>
+                  <span className="text-[10px] font-bold text-teal-800 uppercase">KY Total</span>
                   <span className="text-2xl font-black text-teal-700 mt-0.5">{totalCombinedP2}</span>
                 </div>
               </div>
@@ -692,11 +723,11 @@ export default function App() {
                   {/* Modal Header */}
                   <div className="flex justify-between items-center pb-3 border-b border-gray-100 mb-4">
                     <h3 className="text-base font-bold text-gray-800 flex items-center">
-                      <span className="mr-2">⛳</span> 등록할 골프장 정보 입력
+                      <span className="mr-2">⛳</span> {editingCourseId ? '골프장 정보 수정' : '등록할 골프장 정보 입력'}
                     </h3>
                     <button 
                       type="button"
-                      onClick={() => setShowCourseModal(false)}
+                      onClick={closeCourseModal}
                       className="text-gray-400 hover:text-gray-600 font-bold text-lg p-1"
                     >
                       ✕
@@ -855,7 +886,7 @@ export default function App() {
                     <div className="flex gap-2.5 pt-2">
                       <button 
                         type="button"
-                        onClick={() => setShowCourseModal(false)}
+                        onClick={closeCourseModal}
                         className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-4 rounded-xl text-xs transition"
                       >
                         취소 (Cancel)
@@ -922,81 +953,42 @@ export default function App() {
               
               {courses.map(course => {
                 const courseHistories = scores.filter(s => s.courseId === course.id);
-                // Ensure array represents 18 holes par securely
-                const displayPars = course.holePars || Array(18).fill(4);
 
                 return (
-                  <div key={course.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                  <div key={course.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3 relative">
                     
                     {/* Header info */}
                     <div className="flex justify-between items-start gap-2">
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-extrabold text-gray-800 text-base leading-snug truncate">{course.name}</h4>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h4 className="font-extrabold text-gray-800 text-base leading-snug truncate">{course.name}</h4>
+                          <button
+                            type="button"
+                            onClick={() => handleStartEditCourse(course)}
+                            className="px-2 py-0.5 text-xs text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200/50 flex items-center justify-center transition"
+                            title="수정하기"
+                          >
+                            ✏️ 수정
+                          </button>
+                        </div>
                         <p className="text-xs text-gray-400 mt-1 truncate"><strong>Address:</strong> {course.address}</p>
                         <p className="text-[10px] text-gray-400 font-semibold font-mono leading-none mt-0.5">Location: {course.lat}, {course.lng}</p>
-                        <p className="text-xs font-bold text-gray-700 mt-2">Total Par: {course.totalPar || 72}</p>
                       </div>
                       
-                      <div className="text-right text-[10px] rounded-lg bg-emerald-50/50 px-2.5 py-1.5 min-w-[105px] border border-emerald-100/30 flex flex-col gap-0.5">
+                      <div className="text-right text-[10px] rounded-lg bg-emerald-50/50 px-2.5 py-1.5 min-w-[105px] border border-emerald-100/30 flex flex-col gap-0.5 shadow-sm">
                         <span className="font-bold text-rose-700">Lady: {Number(course.ladyRating || 72.0).toFixed(1)} (S:{course.ladySlope || 113})</span>
                         <span className="font-bold text-blue-700">Blue: {Number(course.blueRating || 72.0).toFixed(1)} (S:{course.blueSlope || 113})</span>
                       </div>
                     </div>
 
-                    {/* Detailed Pars Display grid */}
-                    <div className="bg-gray-50/70 p-3 rounded-xl border border-gray-100 space-y-1.5">
-                      <span className="text-[9px] font-bold text-gray-400 block uppercase tracking-wider">⛳ Detailed Hole Pars</span>
-                      
-                      {/* Row 1-9 */}
-                      <div className="grid grid-cols-9 gap-1 text-center font-semibold">
-                        {displayPars.slice(0, 9).map((p, idx) => (
-                          <div key={idx} className="bg-white p-1 rounded border border-gray-150">
-                            <span className="text-[7px] text-gray-400 block font-bold mt-0.5">H{idx+1}</span>
-                            <span className="text-[11px] font-extrabold text-emerald-700 leading-tight">{p}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Row 10-18 */}
-                      <div className="grid grid-cols-9 gap-1 text-center font-semibold">
-                        {displayPars.slice(9, 18).map((p, idx) => (
-                          <div key={idx + 9} className="bg-white p-1 rounded border border-gray-150">
-                            <span className="text-[7px] text-gray-400 block font-bold mt-0.5">H{idx + 10}</span>
-                            <span className="text-[11px] font-extrabold text-emerald-700 leading-tight">{p}</span>
-                          </div>
-                        ))}
-                      </div>
+                    <div className="flex justify-between items-center text-xs bg-gray-50/70 p-3 rounded-xl border border-gray-100">
+                      <span className="font-bold text-gray-600">⛳ 총 파수 (Total Par)</span>
+                      <span className="font-black text-emerald-700 text-sm">{course.totalPar || 72} Par</span>
                     </div>
 
-                    {/* Historical Runs play list */}
-                    <div className="border-t border-gray-100 pt-3">
-                      <span className="text-xs font-extrabold text-gray-500 mb-2 block uppercase tracking-wide">🏆 Play History ({courseHistories.length} games)</span>
-                      
-                      {courseHistories.length === 0 ? (
-                        <p className="text-xs text-gray-300">No scorecards recorded for this club yet.</p>
-                      ) : (
-                        <div className="space-y-2 max-h-36 overflow-y-auto pr-0.5">
-                          {courseHistories.map(h => {
-                            const totalStrokesP1 = (h.holes || []).reduce((sum, hole) => sum + (hole.iron || 0) + (hole.putt || 0), 0);
-                            const totalPuttsP1 = (h.holes || []).reduce((sum, hole) => sum + (hole.putt || 0), 0);
-                            
-                            const totalStrokesP2 = (h.holes || []).reduce((sum, hole) => sum + (hole.iron2 || 0) + (hole.putt2 || 0), 0);
-                            const totalPuttsP2 = (h.holes || []).reduce((sum, hole) => sum + (hole.putt2 || 0), 0);
-
-                            return (
-                              <div key={h.id} className="text-xs bg-gray-50/70 p-2.5 rounded-xl border border-gray-100/80 flex flex-col gap-1 shadow-sm font-medium">
-                                <div className="text-[9px] text-gray-400 font-bold font-mono">{formatPlayDate(h.date)}</div>
-                                <div className="flex justify-between items-center text-gray-700 text-[11px]">
-                                  <span>👤 Player 1: <strong className="font-extrabold text-emerald-700">{totalStrokesP1} Strokes</strong> ({totalPuttsP1} Putts)</span>
-                                  {totalStrokesP2 > 0 && (
-                                    <span>👤 Player 2: <strong className="font-extrabold text-teal-700">{totalStrokesP2} Strokes</strong> ({totalPuttsP2} Putts)</span>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
+                    <div className="flex justify-between items-center text-xs bg-emerald-50/30 p-3 rounded-xl border border-emerald-150/30">
+                      <span className="font-bold text-emerald-800">🏆 지금까지 경기한 총 횟수</span>
+                      <span className="font-black text-emerald-700 text-sm">{courseHistories.length}회 라운딩</span>
                     </div>
 
                   </div>
@@ -1024,44 +1016,97 @@ export default function App() {
                 .sort((a, b) => new Date(b.date) - new Date(a.date))
                 .map(score => {
                   const totalStrokesP1 = (score.holes || []).reduce((sum, h) => sum + (h.iron || 0) + (h.putt || 0), 0);
-                  const totalPuttsP1 = (score.holes || []).reduce((sum, h) => sum + (h.putt || 0), 0);
-
                   const totalStrokesP2 = (score.holes || []).reduce((sum, h) => sum + (h.iron2 || 0) + (h.putt2 || 0), 0);
-                  const totalPuttsP2 = (score.holes || []).reduce((sum, h) => sum + (h.putt2 || 0), 0);
 
                   return (
-                    <div key={score.id} className="bg-white rounded-2xl shadow-sm border border-gray-150 overflow-hidden">
-                      
-                      {/* Card Header */}
-                      <div className="bg-gray-50/80 p-4 border-b border-gray-100 flex justify-between items-center text-xs">
-                        <div>
-                          <h3 className="font-bold text-gray-850 text-sm leading-snug">{score.courseName}</h3>
-                          <p className="text-[10px] text-gray-400 font-bold mt-0.5">📅 {formatPlayDate(score.date)}</p>
-                        </div>
-                        <div className="text-right flex flex-col gap-0.5 shrink-0 select-none">
-                          <span className="text-[11px] text-emerald-800 font-bold">
-                            Player 1: <strong className="font-black text-emerald-700 text-sm">{totalStrokesP1}</strong> Strokes ({totalPuttsP1} P)
+                    <div 
+                      key={score.id} 
+                      onClick={() => setSelectedHistoryScore(score)}
+                      className="bg-white rounded-2xl shadow-sm border border-gray-150 p-4 flex justify-between items-center cursor-pointer hover:bg-emerald-50/10 active:scale-[0.99] transition-all"
+                    >
+                      <div>
+                        <h3 className="font-extrabold text-gray-805 text-sm leading-snug">{score.courseName}</h3>
+                        <p className="text-[10px] text-gray-400 font-bold mt-1">📅 {formatPlayDate(score.date)}</p>
+                      </div>
+                      <div className="text-right flex flex-col gap-0.5 shrink-0 select-none border-l border-gray-100 pl-3.5">
+                        <span className="text-[11px] text-emerald-800 font-bold">
+                          SK: <strong className="font-black text-emerald-700 text-sm">{totalStrokesP1}</strong>타
+                        </span>
+                        {totalStrokesP2 > 0 && (
+                          <span className="text-[11px] text-teal-800 font-bold">
+                            KY: <strong className="font-black text-teal-700 text-sm">{totalStrokesP2}</strong>타
                           </span>
-                          {totalStrokesP2 > 0 && (
-                            <span className="text-[11px] text-teal-800 font-bold">
-                              Player 2: <strong className="font-black text-teal-700 text-sm">{totalStrokesP2}</strong> Strokes ({totalPuttsP2} P)
-                            </span>
-                          )}
-                        </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+            )}
+
+            {/* Scorecard detail & photo upload popup */}
+            {selectedHistoryScore && (() => {
+              const activeDetailScore = scores.find(s => s.id === selectedHistoryScore.id);
+              if (!activeDetailScore) return null;
+
+              const holes = activeDetailScore.holes || [];
+              const totalStrokesP1 = holes.reduce((sum, h) => sum + (h.iron || 0) + (h.putt || 0), 0);
+              const totalPuttsP1 = holes.reduce((sum, h) => sum + (h.putt || 0), 0);
+
+              const totalStrokesP2 = holes.reduce((sum, h) => sum + (h.iron2 || 0) + (h.putt2 || 0), 0);
+              const totalPuttsP2 = holes.reduce((sum, h) => sum + (h.putt2 || 0), 0);
+
+              return (
+                <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
+                  <div className="bg-white rounded-2xl w-full max-w-sm max-h-[85vh] overflow-y-auto p-5 shadow-2xl border border-gray-100 flex flex-col space-y-4">
+                    
+                    {/* Modal Header */}
+                    <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                      <div>
+                        <h3 className="text-sm font-extrabold text-emerald-800 leading-snug">
+                          ⛳ {activeDetailScore.courseName}
+                        </h3>
+                        <p className="text-[10px] text-gray-400 font-bold mt-0.5">
+                          📅 {formatPlayDate(activeDetailScore.date)} 상세 정보
+                        </p>
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={() => setSelectedHistoryScore(null)}
+                        className="text-gray-400 hover:text-gray-600 font-bold text-lg p-1"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    {/* Photos Gallery Section */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[11px] font-extrabold text-emerald-850 uppercase tracking-wider">📷 라운딩 사진 및 추억</span>
+                        <label className="text-[10px] text-emerald-700 font-black bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-lg border border-emerald-200/50 cursor-pointer transition select-none flex items-center gap-0.5">
+                          <span>➕ 사진 등록</span>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={(e) => handlePhotoUpload(activeDetailScore.id, e)} 
+                          />
+                        </label>
                       </div>
 
-                      {/* Photo Gallery details */}
-                      <div className="p-4 space-y-3 bg-white">
-                        <div className="grid grid-cols-3 gap-2">
-                          {score.photos && score.photos.map((photo, i) => (
-                            <div key={i} className="aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-150 shadow-sm relative group">
+                      {!activeDetailScore.photos || activeDetailScore.photos.length === 0 ? (
+                        <div className="text-center py-6 text-gray-300 bg-gray-50/70 border border-dotted border-gray-200 rounded-xl">
+                          <p className="text-xs">등록된 사진이 없습니다. 첫 사진을 등록해보세요!</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-3 gap-2 py-0.5">
+                          {activeDetailScore.photos.map((photo, i) => (
+                            <div key={i} className="aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-150 relative group">
                               <img src={photo} alt="round memorial" className="w-full h-full object-cover" />
                               <button 
                                 type="button"
                                 onClick={() => {
-                                  // Easy deletion helper
                                   setScores(prev => prev.map(s => {
-                                    if (s.id === score.id) {
+                                    if (s.id === activeDetailScore.id) {
                                       const u = [...s.photos];
                                       u.splice(i, 1);
                                       return { ...s, photos: u };
@@ -1069,31 +1114,78 @@ export default function App() {
                                     return s;
                                   }))
                                 }}
-                                className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center hover:bg-black/80 shadow transition-opacity opacity-0 group-hover:opacity-100"
+                                className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center hover:bg-black/80 shadow"
                               >
                                 ✕
                               </button>
                             </div>
                           ))}
-                          
-                          {/* File Uploader Input Frame */}
-                          <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 hover:border-emerald-500 hover:bg-emerald-50/30 flex flex-col items-center justify-center cursor-pointer bg-gray-50/50 transition-all p-2 text-center select-none active:scale-95">
-                            <span className="text-lg text-gray-400 font-extrabold leading-none">+</span>
-                            <span className="text-[9px] text-gray-400 font-bold block mt-0.5">Add Photo</span>
-                            <input 
-                              type="file" 
-                              accept="image/*" 
-                              className="hidden" 
-                              onChange={(e) => handlePhotoUpload(score.id, e)} 
-                            />
-                          </label>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Final Score Card Badge */}
+                    <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100/50 text-center space-y-2.5">
+                      <span className="text-[11px] font-extrabold text-emerald-850 uppercase tracking-widest block">🏆 최종 스코어 결과</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex flex-col text-center">
+                          <span className="text-[9px] font-bold text-emerald-850 uppercase">👤 SK Score</span>
+                          <span className="text-base font-black text-emerald-700 mt-0.5">{totalStrokesP1}타 <span className="text-[10px] font-normal text-emerald-600">({totalPuttsP1}P)</span></span>
+                        </div>
+                        <div className="flex flex-col text-center border-l border-emerald-100/80">
+                          <span className="text-[9px] font-bold text-teal-850 uppercase">👤 KY Score</span>
+                          <span className="text-base font-black text-teal-700 mt-0.5">
+                            {totalStrokesP2 > 0 ? `${totalStrokesP2}타 (${totalPuttsP2}P)` : '-'}
+                          </span>
                         </div>
                       </div>
-
                     </div>
-                  );
-                })
-            )}
+
+                    {/* 18-hole detailed Scorecard Table */}
+                    <div className="space-y-2">
+                      <span className="text-[11px] font-extrabold text-emerald-850 uppercase tracking-wider block">📊 홀별 상세 스코어카드</span>
+                      <div className="border border-gray-150 rounded-xl overflow-hidden flex flex-col bg-white text-center text-xs">
+                        {/* Table Header */}
+                        <div className="bg-emerald-600 text-white py-2 px-3 font-bold flex text-center items-center font-mono">
+                          <div className="w-12 text-[10px]">홀</div>
+                          <div className="flex-1 text-[11px]">SK (퍼팅)</div>
+                          <div className="flex-1 text-[11px]">KY (퍼팅)</div>
+                        </div>
+                        
+                        {/* Scrollable list items rows */}
+                        <div className="max-h-40 overflow-y-auto divide-y divide-gray-100 font-medium font-mono">
+                          {holes.map((h, k) => {
+                            const p1T = h.iron + h.putt;
+                            const p2T = h.iron2 + h.putt2;
+                            return (
+                              <div key={k} className="flex py-2 px-3 hover:bg-gray-50/50 items-center justify-between text-center leading-none">
+                                <div className="w-12 font-bold text-gray-400">{h.hole}H</div>
+                                <div className="flex-1 font-semibold text-emerald-800">
+                                  {p1T > 0 ? `${p1T}타 (${h.putt}P)` : '-'}
+                                </div>
+                                <div className="flex-1 font-semibold text-teal-800">
+                                  {p2T > 0 ? `${p2T}타 (${h.putt2}P)` : '-'}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Close Button at bottom */}
+                    <button 
+                      type="button"
+                      onClick={() => setSelectedHistoryScore(null)}
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs transition active:scale-95 shadow"
+                    >
+                      확인 / 닫기
+                    </button>
+
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
