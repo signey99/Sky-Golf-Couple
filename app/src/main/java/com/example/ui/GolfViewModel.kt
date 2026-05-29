@@ -7,8 +7,11 @@ import com.example.data.AppDatabase
 import com.example.data.CourseEntity
 import com.example.data.GolfRepository
 import com.example.data.ScoreEntity
+import com.example.data.HoleScore
+import com.example.utils.JsonUtils
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -33,6 +36,52 @@ class GolfViewModel(application: Application) : AndroidViewModel(application) {
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+        // Seed default course & play history if empty to maintain consistency with the web preview
+        viewModelScope.launch {
+            try {
+                val courses = repository.allCourses.first()
+                if (courses.isEmpty()) {
+                    val courseId = repository.insertCourse(
+                        CourseEntity(
+                            name = "Jeju Nine Bridges CC",
+                            address = "Jeju, South Korea",
+                            totalPar = 72,
+                            ladyRating = 72.1,
+                            ladySlope = 130,
+                            blueRating = 73.5,
+                            blueSlope = 135,
+                            lat = 33.3541,
+                            lng = 126.3712,
+                            holeParsJson = "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4"
+                        )
+                    )
+
+                    val defaultHolesList = List(18) { index ->
+                        HoleScore(
+                            hole = index + 1,
+                            iron = 3,
+                            putt = 2,
+                            iron2 = 4,
+                            putt2 = 2
+                        )
+                    }
+                    val holesJson = JsonUtils.holeScoreListAdapter.toJson(defaultHolesList)
+
+                    repository.insertScore(
+                        ScoreEntity(
+                            courseId = courseId,
+                            courseName = "Jeju Nine Bridges CC",
+                            date = "05/10/2026",
+                            holesJson = holesJson,
+                            photosJson = "[]"
+                        )
+                    )
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     fun addCourse(
