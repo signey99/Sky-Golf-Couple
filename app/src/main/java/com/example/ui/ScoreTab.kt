@@ -40,7 +40,7 @@ fun ScoreTab(
     var isNewCourse by remember { mutableStateOf(false) }
     var newCourseName by remember { mutableStateOf("") }
     
-    val defaultDate = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
+    val defaultDate = remember { SimpleDateFormat("MM/dd/yyyy", Locale.getDefault()).format(Date()) }
     var date by remember { mutableStateOf(defaultDate) }
 
     val holes = remember { mutableStateListOf(*Array(18) { HoleScore(it + 1, 0, 0, 0, 0) }) }
@@ -121,7 +121,7 @@ fun ScoreTab(
                     OutlinedTextField(
                         value = date,
                         onValueChange = { date = it },
-                        label = { Text("Play Date (YYYY-MM-DD)") },
+                        label = { Text("Play Date (MM/DD/YYYY)") },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -419,7 +419,7 @@ fun ScoreTab(
                                 // Reset
                                 newCourseName = ""
                                 isNewCourse = false
-                                date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                                date = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault()).format(Date())
                                 holes.forEachIndexed { i, _ -> holes[i] = HoleScore(i+1, 0, 0, 0, 0) }
                                 activeHoleIndex = 0
                             } else if (selectedCourseId != null) {
@@ -427,7 +427,7 @@ fun ScoreTab(
                                 onSaveScore(selectedCourseId!!, cName, date, holesJson)
                                 // Reset
                                 selectedCourseId = null
-                                date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                                date = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault()).format(Date())
                                 holes.forEachIndexed { i, _ -> holes[i] = HoleScore(i+1, 0, 0, 0, 0) }
                                 activeHoleIndex = 0
                             }

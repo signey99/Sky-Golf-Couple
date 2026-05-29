@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  if (dateStr.includes('/')) return dateStr;
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    return `${parts[1]}/${parts[2]}/${parts[0]}`;
+  }
+  return dateStr;
+};
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('score'); // 'score', 'course', 'history'
 
@@ -554,7 +564,7 @@ export default function App() {
                             const totalPutts = h.holes.reduce((sum, hole) => sum + (hole.putt || 0), 0);
                             return (
                               <div key={h.id} className="flex justify-between items-center text-xs bg-gray-50/70 p-2 rounded-xl border border-gray-100">
-                                <span className="text-gray-400 font-mono font-bold">{h.date}</span>
+                                <span className="text-gray-400 font-mono font-bold">{formatDate(h.date)}</span>
                                 <span className="font-bold text-gray-700">
                                   {totalStrokes} Strokes <span className="text-emerald-600 font-normal">({totalPutts} Putts)</span>
                                 </span>
@@ -598,7 +608,7 @@ export default function App() {
                       <div className="bg-gray-50/80 p-4 border-b border-gray-100 flex justify-between items-center">
                         <div>
                           <h3 className="font-bold text-gray-800 text-base leading-snug">{score.courseName}</h3>
-                          <p className="text-xs text-gray-400 font-bold mt-0.5">📅 {score.date}</p>
+                          <p className="text-xs text-gray-400 font-bold mt-0.5">📅 {formatDate(score.date)}</p>
                         </div>
                         <div className="text-right">
                           <span className="text-xl font-black text-emerald-600 leading-none">{totalStrokes}</span>
