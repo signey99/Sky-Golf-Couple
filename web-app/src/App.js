@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 // Main Golf Diary React Application - Sync trigger to push App.js to GitHub
 // Common date helper matching Android format
@@ -90,6 +90,8 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false); // Settings modal
 
   const syncChannel = 'skky_golf_live_sync_signey99';
+  const isIncomingCloudUpdate = useRef(false);
+  const isFirebaseListening = useRef(false);
 
   useEffect(() => {
     localStorage.setItem('golf_diary_fb_url', firebaseUrl);
@@ -126,7 +128,16 @@ export default function App() {
     // B. Push to Firebase Realtime Database
     try {
       if (window.firebase && firebaseUrl.trim()) {
-        const db = window.firebase.database();
+        let app;
+        if (!window.firebase.apps.length) {
+          app = window.firebase.initializeApp({
+            databaseURL: firebaseUrl,
+            projectId: firebaseUrl.split('//')[1]?.split('.')[0] || 'skky-golf'
+          });
+        } else {
+          app = window.firebase.app();
+        }
+        const db = window.firebase.database(app);
         await db.ref(syncChannel).set({
           scores: currentScores,
           courses: currentCourses,
@@ -142,55 +153,59 @@ export default function App() {
   useEffect(() => {
     let fbRef = null;
     let fallbackInterval = null;
-    let isFirebaseActivelySyncing = false;
+    isFirebaseListening.current = false;
 
     const startDualSync = async () => {
-      // 1. Establish Firebase Realtime Database listener
-      try {
+      const tryConnectFirebase = () => {
+        if (isFirebaseListening.current) return;
         if (window.firebase && firebaseUrl.trim()) {
-          // Initialize app if needed
-          let app;
-          if (!window.firebase.apps.length) {
-            app = window.firebase.initializeApp({
-              databaseURL: firebaseUrl,
-              projectId: firebaseUrl.split('//')[1]?.split('.')[0] || 'skky-golf'
-            });
-          } else {
-            app = window.firebase.app();
-          }
-
-          const db = window.firebase.database(app);
-          fbRef = db.ref(syncChannel);
-
-          fbRef.on('value', (snapshot) => {
-            const cloudData = snapshot.val();
-            if (cloudData && cloudData.updatedAt) {
-              isFirebaseActivelySyncing = true;
-              const localTimestamp = Number(localStorage.getItem('golf_diary_last_sync_timestamp') || '0');
-
-              if (cloudData.updatedAt > localTimestamp) {
-                console.log("[Firebase RTDB] Live sync update received!", cloudData);
-                if (cloudData.scores) setScores(cloudData.scores);
-                if (cloudData.courses) setCourses(cloudData.courses);
-                localStorage.setItem('golf_diary_scores', JSON.stringify(cloudData.scores));
-                localStorage.setItem('golf_diary_courses', JSON.stringify(cloudData.courses));
-                localStorage.setItem('golf_diary_last_sync_timestamp', String(cloudData.updatedAt));
-                setLastSyncedTime(new Date(cloudData.updatedAt).toLocaleTimeString() + ' (Firebase)');
-                setSyncStatus('synced');
-              }
+          try {
+            let app;
+            if (!window.firebase.apps.length) {
+              app = window.firebase.initializeApp({
+                databaseURL: firebaseUrl,
+                projectId: firebaseUrl.split('//')[1]?.split('.')[0] || 'skky-golf'
+              });
+            } else {
+              app = window.firebase.app();
             }
-          }, (err) => {
-            console.warn("Firebase reference error, fallback sync handling active.", err);
-          });
 
-          isFirebaseActivelySyncing = true;
+            const db = window.firebase.database(app);
+            fbRef = db.ref(syncChannel);
+
+            fbRef.on('value', (snapshot) => {
+              const cloudData = snapshot.val();
+              if (cloudData && cloudData.updatedAt) {
+                const localTimestamp = Number(localStorage.getItem('golf_diary_last_sync_timestamp') || '0');
+
+                if (cloudData.updatedAt > localTimestamp) {
+                  console.log("[Firebase RTDB] Live sync update received!", cloudData);
+                  isIncomingCloudUpdate.current = true;
+                  if (cloudData.scores) setScores(cloudData.scores);
+                  if (cloudData.courses) setCourses(cloudData.courses);
+                  localStorage.setItem('golf_diary_scores', JSON.stringify(cloudData.scores));
+                  localStorage.setItem('golf_diary_courses', JSON.stringify(cloudData.courses));
+                  localStorage.setItem('golf_diary_last_sync_timestamp', String(cloudData.updatedAt));
+                  setLastSyncedTime(new Date(cloudData.updatedAt).toLocaleTimeString() + ' (Firebase)');
+                  setSyncStatus('synced');
+                }
+              }
+            }, (err) => {
+              console.warn("Firebase reference error", err);
+            });
+
+            isFirebaseListening.current = true;
+            console.log("[Firebase] Registered active listener successfully.");
+          } catch (err) {
+            console.warn("Firebase attachment failed/skipped", err);
+          }
         }
-      } catch (err) {
-        console.warn("Firebase connection skipped, fallback sync active.", err);
-      }
+      };
 
       // 2. Fetch and initialize fallback sync
       const queryFallbackSync = async () => {
+        tryConnectFirebase();
+
         try {
           const res = await fetch(`https://kvdb.io/K9m8b8M8PnHpMhpbUfHqpS/${syncChannel}`);
           if (res.ok) {
@@ -200,6 +215,7 @@ export default function App() {
 
               if (cloudData.updatedAt > localTimestamp) {
                 console.log("[Web Sync Fallback] Newer data loaded!", cloudData);
+                isIncomingCloudUpdate.current = true;
                 if (cloudData.scores) setScores(cloudData.scores);
                 if (cloudData.courses) setCourses(cloudData.courses);
                 localStorage.setItem('golf_diary_scores', JSON.stringify(cloudData.scores));
@@ -207,8 +223,8 @@ export default function App() {
                 localStorage.setItem('golf_diary_last_sync_timestamp', String(cloudData.updatedAt));
                 setLastSyncedTime(new Date(cloudData.updatedAt).toLocaleTimeString() + ' (대기 서버)');
                 setSyncStatus('synced');
-              } else if (!isFirebaseActivelySyncing && localTimestamp > cloudData.updatedAt) {
-                // Upload our newer local data to fallback server
+              } else if (!isFirebaseListening.current && localTimestamp > cloudData.updatedAt) {
+                // Upload our newer local data to fallback server only when Firebase is inactive
                 await silentUploadToFallback(scores, courses, localTimestamp);
               } else {
                 setSyncStatus('synced');
@@ -227,6 +243,8 @@ export default function App() {
         }
       };
 
+      tryConnectFirebase();
+
       // Set fallback fast-polling watcher every 2.0 seconds for instant bidirectional sync
       fallbackInterval = setInterval(queryFallbackSync, 2000);
       queryFallbackSync();
@@ -243,6 +261,12 @@ export default function App() {
   // Push local changes up immediately with a light debounce
   useEffect(() => {
     if (!isInitialLoadDone) return;
+
+    if (isIncomingCloudUpdate.current) {
+      console.log("[Sync Loop Prevented] Skipping pushing downloaded data payload back up.");
+      isIncomingCloudUpdate.current = false;
+      return;
+    }
 
     const changeTime = Date.now();
     const delayDebounce = setTimeout(async () => {
