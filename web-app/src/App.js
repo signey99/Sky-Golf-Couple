@@ -667,7 +667,7 @@ export default function App() {
                 <div className="z-10 bg-white px-3.5 py-1.5 rounded-full shadow-md border border-gray-100 text-xs text-gray-700 flex items-center space-x-1.5 transition-all">
                   <span>📍</span> 
                   <span className="font-bold text-emerald-800">
-                    Lat: {mapClickedCoords.lat.toFixed(4)}, Lng: {mapClickedCoords.lng.toFixed(4)}
+                    Lat: {Number(mapClickedCoords?.lat || 33.3541).toFixed(4)}, Lng: {Number(mapClickedCoords?.lng || 126.3712).toFixed(4)}
                   </span>
                 </div>
                 <div className="absolute bottom-2 text-[9px] text-gray-400 font-bold uppercase tracking-widest text-center select-none">
@@ -767,15 +767,15 @@ export default function App() {
                           <div className="flex justify-between items-center font-bold mt-1">
                             <button
                               type="button"
-                              onClick={() => setNewCourse(p => ({ ...p, ladyRating: Math.max(1, p.ladyRating - 0.1) }))}
+                              onClick={() => setNewCourse(p => ({ ...p, ladyRating: Math.max(1, (p.ladyRating || 72.0) - 0.1) }))}
                               className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs"
                             >
                               ▼
                             </button>
-                            <span className="font-black text-pink-600">{newCourse.ladyRating.toFixed(1)}</span>
+                            <span className="font-black text-pink-600">{Number(newCourse?.ladyRating || 72.0).toFixed(1)}</span>
                             <button
                               type="button"
-                              onClick={() => setNewCourse(p => ({ ...p, ladyRating: Math.min(150, p.ladyRating + 0.1) }))}
+                              onClick={() => setNewCourse(p => ({ ...p, ladyRating: Math.min(150, (p.ladyRating || 72.0) + 0.1) }))}
                               className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs"
                             >
                               ▲
@@ -812,15 +812,15 @@ export default function App() {
                           <div className="flex justify-between items-center font-bold mt-1">
                             <button
                               type="button"
-                              onClick={() => setNewCourse(p => ({ ...p, blueRating: Math.max(1, p.blueRating - 0.1) }))}
+                              onClick={() => setNewCourse(p => ({ ...p, blueRating: Math.max(1, (p.blueRating || 72.0) - 0.1) }))}
                               className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs"
                             >
                               ▼
                             </button>
-                            <span className="font-black text-blue-600">{newCourse.blueRating.toFixed(1)}</span>
+                            <span className="font-black text-blue-600">{Number(newCourse?.blueRating || 72.0).toFixed(1)}</span>
                             <button
                               type="button"
-                              onClick={() => setNewCourse(p => ({ ...p, blueRating: Math.min(150, p.blueRating + 0.1) }))}
+                              onClick={() => setNewCourse(p => ({ ...p, blueRating: Math.min(150, (p.blueRating || 72.0) + 0.1) }))}
                               className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs"
                             >
                               ▲
@@ -938,8 +938,8 @@ export default function App() {
                       </div>
                       
                       <div className="text-right text-[10px] rounded-lg bg-emerald-50/50 px-2.5 py-1.5 min-w-[105px] border border-emerald-100/30 flex flex-col gap-0.5">
-                        <span className="font-bold text-rose-700">Lady: {course.ladyRating.toFixed(1)} (S:{course.ladySlope})</span>
-                        <span className="font-bold text-blue-700">Blue: {course.blueRating.toFixed(1)} (S:{course.blueSlope})</span>
+                        <span className="font-bold text-rose-700">Lady: {Number(course.ladyRating || 72.0).toFixed(1)} (S:{course.ladySlope || 113})</span>
+                        <span className="font-bold text-blue-700">Blue: {Number(course.blueRating || 72.0).toFixed(1)} (S:{course.blueSlope || 113})</span>
                       </div>
                     </div>
 
@@ -977,11 +977,11 @@ export default function App() {
                       ) : (
                         <div className="space-y-2 max-h-36 overflow-y-auto pr-0.5">
                           {courseHistories.map(h => {
-                            const totalStrokesP1 = h.holes.reduce((sum, hole) => sum + (hole.iron || 0) + (hole.putt || 0), 0);
-                            const totalPuttsP1 = h.holes.reduce((sum, hole) => sum + (hole.putt || 0), 0);
+                            const totalStrokesP1 = (h.holes || []).reduce((sum, hole) => sum + (hole.iron || 0) + (hole.putt || 0), 0);
+                            const totalPuttsP1 = (h.holes || []).reduce((sum, hole) => sum + (hole.putt || 0), 0);
                             
-                            const totalStrokesP2 = h.holes.reduce((sum, hole) => sum + (hole.iron2 || 0) + (hole.putt2 || 0), 0);
-                            const totalPuttsP2 = h.holes.reduce((sum, hole) => sum + (hole.putt2 || 0), 0);
+                            const totalStrokesP2 = (h.holes || []).reduce((sum, hole) => sum + (hole.iron2 || 0) + (hole.putt2 || 0), 0);
+                            const totalPuttsP2 = (h.holes || []).reduce((sum, hole) => sum + (hole.putt2 || 0), 0);
 
                             return (
                               <div key={h.id} className="text-xs bg-gray-50/70 p-2.5 rounded-xl border border-gray-100/80 flex flex-col gap-1 shadow-sm font-medium">
@@ -1023,11 +1023,11 @@ export default function App() {
               [...scores]
                 .sort((a, b) => new Date(b.date) - new Date(a.date))
                 .map(score => {
-                  const totalStrokesP1 = score.holes.reduce((sum, h) => sum + (h.iron || 0) + (h.putt || 0), 0);
-                  const totalPuttsP1 = score.holes.reduce((sum, h) => sum + (h.putt || 0), 0);
+                  const totalStrokesP1 = (score.holes || []).reduce((sum, h) => sum + (h.iron || 0) + (h.putt || 0), 0);
+                  const totalPuttsP1 = (score.holes || []).reduce((sum, h) => sum + (h.putt || 0), 0);
 
-                  const totalStrokesP2 = score.holes.reduce((sum, h) => sum + (h.iron2 || 0) + (h.putt2 || 0), 0);
-                  const totalPuttsP2 = score.holes.reduce((sum, h) => sum + (h.putt2 || 0), 0);
+                  const totalStrokesP2 = (score.holes || []).reduce((sum, h) => sum + (h.iron2 || 0) + (h.putt2 || 0), 0);
+                  const totalPuttsP2 = (score.holes || []).reduce((sum, h) => sum + (h.putt2 || 0), 0);
 
                   return (
                     <div key={score.id} className="bg-white rounded-2xl shadow-sm border border-gray-150 overflow-hidden">

@@ -12,7 +12,7 @@ module.exports = {
           200: '#bae8cb',
           300: '#89d7a6',
           400: '#52bd7a',
-          50: '#107c41', // Emerald Golf Green
+          500: '#107c41', // Emerald Golf Green
           600: '#156b3b',
           700: '#115531',
           800: '#104429',
