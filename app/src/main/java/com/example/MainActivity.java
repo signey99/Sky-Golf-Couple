@@ -80,12 +80,13 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == FILE_CHOOSER_RESULT_CODE) {
             if (uploadMessage == null) return;
-            Uri result = (data == null || resultCode != Activity.RESULT_OK) ? null : data.getData();
-            if (result != null) {
-                uploadMessage.onReceiveValue(new Uri[]{result});
-            } else {
-                uploadMessage.onReceiveValue(null);
+            Uri[] result = null;
+            try {
+                result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+            } catch (Exception e) {
+                // fallback
             }
+            uploadMessage.onReceiveValue(result);
             uploadMessage = null;
         }
     }
