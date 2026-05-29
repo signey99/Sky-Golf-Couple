@@ -1,11 +1,40 @@
 {
-  "name": "golf-diary-root",
-  "version": "1.0.0",
+  "name": "golf-diary-web",
+  "version": "0.1.0",
   "private": true,
-  "description": "Root router for Couple's Golf Diary React Web App",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "web-vitals": "^2.1.4"
+  },
   "scripts": {
-    "install-all": "npm install --prefix web-app",
-    "build": "CI=false npm install --prefix web-app && CI=false npm run build --prefix web-app",
-    "start": "npm run start --prefix web-app"
+    "start": "react-scripts start",
+    "build": "CI=false react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.24",
+    "tailwindcss": "^3.3.2"
   }
 }
