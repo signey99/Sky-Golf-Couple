@@ -1,0 +1,10 @@
+{
+  "name": "golf-diary-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "npm run start --prefix web-app",
+    "build": "npm install --prefix web-app && npm run build --prefix web-app",
+    "test": "npm run test --prefix web-app"
+  }
+}
