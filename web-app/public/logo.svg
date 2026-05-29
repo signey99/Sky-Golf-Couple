@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#15803d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#14532d;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="100%" height="100%" rx="128" fill="url(#grad)" />
+  
+  <!-- Golf Flag & Hole -->
+  <g transform="translate(256, 230)">
+    <!-- Green terrain line curves -->
+    <path d="M -180,120 Q 0,160 180,120" stroke="#22c55e" stroke-width="8" fill="none" opacity="0.6"/>
+    
+    <!-- Flag Pole -->
+    <line x1="10" y1="-140" x2="10" y2="140" stroke="#f8fafc" stroke-width="12" stroke-linecap="round"/>
+    
+    <!-- Red Flag -->
+    <path d="M 10,-140 L 130,-90 L 10,-40 Z" fill="#ef4444" stroke="#ef4444" stroke-width="4" stroke-linejoin="round"/>
+    
+    <!-- Golf Hole -->
+    <ellipse cx="10" cy="140" rx="35" ry="12" fill="#0c2d1c"/>
+    <ellipse cx="10" cy="140" rx="25" ry="8" fill="#040f0a"/>
+    
+    <!-- Golf Ball -->
+    <circle cx="-60" cy="115" r="16" fill="#ffffff" />
+    <circle cx="-60" cy="115" r="16" fill="none" stroke="#e2e8f0" stroke-width="1" />
+    
+    <!-- Dimples on ball (small dots for details) -->
+    <circle cx="-64" cy="111" r="1.5" fill="#cbd5e1" />
+    <circle cx="-56" cy="111" r="1.5" fill="#cbd5e1" />
+    <circle cx="-60" cy="115" r="1.5" fill="#cbd5e1" />
+    <circle cx="-65" cy="118" r="1.5" fill="#cbd5e1" />
+    <circle cx="-55" cy="118" r="1.5" fill="#cbd5e1" />
+    
+    <!-- Golf Ball Motion Swish -->
+    <path d="M -150,90 Q -100,85 -65,110" stroke="#ffffff" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.5" stroke-dasharray="6,6"/>
+  </g>
+  <!-- Sync logo to GitHub -->
+</svg>
