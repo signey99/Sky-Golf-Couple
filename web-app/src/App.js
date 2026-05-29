@@ -86,7 +86,7 @@ export default function App() {
   });
   const [isInitialLoadDone, setIsInitialLoadDone] = useState(false);
   const [syncStatus, setSyncStatus] = useState('syncing'); // 'syncing', 'synced', 'error'
-  const [lastSyncedTime, setLastSyncedTime] = useState('연결 중...');
+  const [lastSyncedTime, setLastSyncedTime] = useState('Connecting...');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false); // Settings modal
 
   const syncChannel = 'skky_golf_live_sync_signey99';
@@ -112,7 +112,7 @@ export default function App() {
       });
       if (res.ok) {
         localStorage.setItem('golf_diary_last_sync_timestamp', String(timestamp));
-        setLastSyncedTime(new Date(timestamp).toLocaleTimeString() + ' (실시간)');
+        setLastSyncedTime(new Date(timestamp).toLocaleTimeString() + ' (Live)');
         setSyncStatus('synced');
       }
     } catch (e) {
@@ -221,7 +221,7 @@ export default function App() {
                 localStorage.setItem('golf_diary_scores', JSON.stringify(cloudData.scores));
                 localStorage.setItem('golf_diary_courses', JSON.stringify(cloudData.courses));
                 localStorage.setItem('golf_diary_last_sync_timestamp', String(cloudData.updatedAt));
-                setLastSyncedTime(new Date(cloudData.updatedAt).toLocaleTimeString() + ' (대기 서버)');
+                setLastSyncedTime(new Date(cloudData.updatedAt).toLocaleTimeString() + ' (Fallback)');
                 setSyncStatus('synced');
               } else if (!isFirebaseListening.current && localTimestamp > cloudData.updatedAt) {
                 // Upload our newer local data to fallback server only when Firebase is inactive
@@ -419,7 +419,7 @@ export default function App() {
   };
 
   const handleDeleteCourse = (courseId) => {
-    if (window.confirm("정말로 이 골프장을 삭제하시겠습니까? 등록된 라운드 기록에는 영향이 없지만 선택 옵션에서 더이상 나타나지 않습니다.")) {
+    if (window.confirm("Are you sure you want to delete this golf course? Existing round records will not be affected, but it will no longer appear in the options.")) {
       setCourses(prev => prev.filter(c => c.id !== courseId));
       if (Number(selectedCourseId) === courseId) {
         setSelectedCourseId('');
@@ -524,23 +524,10 @@ export default function App() {
           type="button"
           onClick={() => setIsSettingsOpen(true)}
           className="absolute right-4 top-4 p-1.5 hover:bg-teal-800/40 rounded-full transition active:scale-90 text-lg flex items-center justify-center outline-none"
-          title="Firebase 및 클라우드 연동 설정"
+          title="Firebase and Cloud Sync Settings"
         >
           ⚙️
         </button>
-
-        {/* Real-time Cloud status indicator HUD badge */}
-        <div className="flex items-center justify-center gap-1.5 mt-2 mx-auto bg-teal-950/40 backdrop-blur-sm px-3 py-1 rounded-full w-fit border border-teal-500/10">
-          <span className={`w-1.5 h-1.5 rounded-full inline-block ${
-            syncStatus === 'syncing' ? 'bg-amber-400 animate-pulse' :
-            syncStatus === 'synced' ? 'bg-emerald-400' : 'bg-rose-400'
-          }`}></span>
-          <span className="text-[10px] font-bold text-teal-100 tracking-wider">
-            {syncStatus === 'syncing' ? '온라인 실시간 동기화 중...' : 
-             syncStatus === 'synced' ? `실시간 온라인 연동됨 (${lastSyncedTime})` : 
-             '네트워크 대기 중...'}
-          </span>
-        </div>
       </header>
 
       {/* Main Content Area */}
@@ -685,7 +672,7 @@ export default function App() {
 
                   {/* Strokes */}
                   <div className="w-full flex flex-col items-center text-center">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase">Stroke (기본타)</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase">Stroke</span>
                     <div className="flex items-center gap-1.5 bg-emerald-50/40 p-1 rounded-full border border-emerald-100/50 mt-1">
                       <button
                         type="button"
@@ -709,7 +696,7 @@ export default function App() {
 
                   {/* Putts */}
                   <div className="w-full flex flex-col items-center text-center">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase">Putt (퍼팅)</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase">Putt</span>
                     <div className="flex items-center gap-1.5 bg-emerald-50/40 p-1 rounded-full border border-emerald-100/50 mt-1">
                       <button
                         type="button"
@@ -744,7 +731,7 @@ export default function App() {
 
                   {/* Strokes */}
                   <div className="w-full flex flex-col items-center text-center">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase">Stroke (기본타)</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase">Stroke</span>
                     <div className="flex items-center gap-1.5 bg-teal-50/40 p-1 rounded-full border border-teal-100/50 mt-1">
                       <button
                         type="button"
@@ -768,7 +755,7 @@ export default function App() {
 
                   {/* Putts */}
                   <div className="w-full flex flex-col items-center text-center">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase">Putt (퍼팅)</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase">Putt</span>
                     <div className="flex items-center gap-1.5 bg-teal-50/40 p-1 rounded-full border border-teal-100/50 mt-1">
                       <button
                         type="button"
@@ -899,7 +886,7 @@ export default function App() {
                 disabled={(!isNewCourse && !selectedCourseId) || (isNewCourse && !newCourseNameInput.trim())}
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 px-4 rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-40 select-none text-sm"
               >
-                Save Round Record / 라운드 저장하기
+                Save Round Record
               </button>
             </div>
 
@@ -953,12 +940,12 @@ export default function App() {
                   {/* Modal Header */}
                   <div className="flex justify-between items-center pb-3 border-b border-gray-100 mb-4">
                     <h3 className="text-base font-bold text-gray-800 flex items-center">
-                      <span className="mr-2">⛳</span> {editingCourseId ? '골프장 정보 수정' : '등록할 골프장 정보 입력'}
+                      <span className="mr-2">⛳</span> {editingCourseId ? 'Edit Golf Course Info' : 'Enter New Golf Course Info'}
                     </h3>
                     <button 
                       type="button"
                       onClick={closeCourseModal}
-                      className="text-gray-400 hover:text-gray-600 font-bold text-lg p-1"
+                      className="text-gray-400 hover:text-gray-650 font-bold text-lg p-1"
                     >
                       ✕
                     </button>
@@ -970,10 +957,10 @@ export default function App() {
 
                   <form onSubmit={handleSaveCourse} className="space-y-4 text-left">
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">골프장 이름 *</label>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">Golf Course Name *</label>
                       <input 
                         type="text" 
-                        placeholder="예: Nine Bridges CC" 
+                        placeholder="e.g. Nine Bridges CC" 
                         className="w-full p-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         value={newCourse.name}
                         onChange={(e) => setNewCourse({ ...newCourse, name: e.target.value })}
@@ -982,10 +969,10 @@ export default function App() {
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">골프장 주소</label>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">Golf Course Address</label>
                       <input 
                         type="text" 
-                        placeholder="예: 제주 안덕면 광평리" 
+                        placeholder="e.g. Jeju, South Korea" 
                         className="w-full p-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         value={newCourse.address}
                         onChange={(e) => setNewCourse({ ...newCourse, address: e.target.value })}
@@ -1019,7 +1006,7 @@ export default function App() {
 
                     {/* Difficulty adjusters */}
                     <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-150 space-y-3">
-                      <span className="block text-[10px] font-bold text-gray-500 uppercase">티박스 난이도 정보 (Tee Info)</span>
+                      <span className="block text-[10px] font-bold text-gray-500 uppercase">Tee-box Ratings & Slopes (Tee Info)</span>
                       
                       {/* Lady Tee */}
                       <div className="grid grid-cols-2 gap-2 text-xs">
@@ -1119,13 +1106,13 @@ export default function App() {
                         onClick={closeCourseModal}
                         className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-4 rounded-xl text-xs transition"
                       >
-                        취소 (Cancel)
+                        Cancel
                       </button>
                       <button 
                         type="submit" 
                         className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs transition active:scale-95"
                       >
-                        등록하기 (Register)
+                        Register
                       </button>
                     </div>
 
@@ -1196,17 +1183,17 @@ export default function App() {
                             type="button"
                             onClick={() => handleStartEditCourse(course)}
                             className="px-2 py-0.5 text-xs text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200/50 flex items-center justify-center transition"
-                            title="수정하기"
+                            title="Edit"
                           >
-                            ✏️ 수정
+                            ✏️ Edit
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDeleteCourse(course.id)}
                             className="px-2 py-0.5 text-xs text-rose-700 font-bold bg-rose-50 hover:bg-rose-100 rounded-lg border border-rose-200/50 flex items-center justify-center transition"
-                            title="삭제하기"
+                            title="Delete"
                           >
-                            🗑️ 삭제
+                            🗑️ Delete
                           </button>
                         </div>
                         <p className="text-xs text-gray-400 mt-1 truncate"><strong>Address:</strong> {course.address}</p>
@@ -1220,13 +1207,13 @@ export default function App() {
                     </div>
 
                     <div className="flex justify-between items-center text-xs bg-gray-50/70 p-3 rounded-xl border border-gray-100">
-                      <span className="font-bold text-gray-600">⛳ 총 파수 (Total Par)</span>
+                      <span className="font-bold text-gray-600">⛳ Total Par</span>
                       <span className="font-black text-emerald-700 text-sm">{course.totalPar || 72} Par</span>
                     </div>
 
                     <div className="flex justify-between items-center text-xs bg-emerald-50/30 p-3 rounded-xl border border-emerald-150/30">
-                      <span className="font-bold text-emerald-800">🏆 지금까지 경기한 총 횟수</span>
-                      <span className="font-black text-emerald-700 text-sm">{courseHistories.length}회 라운딩</span>
+                      <span className="font-bold text-emerald-800">🏆 Total Played Rounds</span>
+                      <span className="font-black text-emerald-700 text-sm">{courseHistories.length} Rounds</span>
                     </div>
 
                   </div>
@@ -1268,11 +1255,11 @@ export default function App() {
                       </div>
                       <div className="text-right flex flex-col gap-0.5 shrink-0 select-none border-l border-gray-100 pl-3.5">
                         <span className="text-[11px] text-emerald-800 font-bold">
-                          SK: <strong className="font-black text-emerald-700 text-sm">{totalStrokesP1}</strong>타
+                          SK: <strong className="font-black text-emerald-700 text-sm">{totalStrokesP1}</strong> Str
                         </span>
                         {totalStrokesP2 > 0 && (
                           <span className="text-[11px] text-teal-800 font-bold">
-                            KY: <strong className="font-black text-teal-700 text-sm">{totalStrokesP2}</strong>타
+                            KY: <strong className="font-black text-teal-700 text-sm">{totalStrokesP2}</strong> Str
                           </span>
                         )}
                       </div>
@@ -1304,7 +1291,7 @@ export default function App() {
                           ⛳ {activeDetailScore.courseName}
                         </h3>
                         <p className="text-[10px] text-gray-400 font-bold mt-0.5">
-                          📅 {formatPlayDate(activeDetailScore.date)} 상세 정보
+                          📅 {formatPlayDate(activeDetailScore.date)} Detailed Stats
                         </p>
                       </div>
                       <button 
@@ -1319,9 +1306,9 @@ export default function App() {
                     {/* Photos Gallery Section */}
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-[11px] font-extrabold text-emerald-850 uppercase tracking-wider">📷 라운딩 사진 및 추억</span>
+                        <span className="text-[11px] font-extrabold text-emerald-850 uppercase tracking-wider">📷 Photos & Memories</span>
                         <label className="text-[10px] text-emerald-700 font-black bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-lg border border-emerald-200/50 cursor-pointer transition select-none flex items-center gap-0.5">
-                          <span>➕ 사진 등록</span>
+                          <span>➕ Add Photo</span>
                           <input 
                             type="file" 
                             accept="image/*" 
@@ -1333,7 +1320,7 @@ export default function App() {
 
                       {!activeDetailScore.photos || activeDetailScore.photos.length === 0 ? (
                         <div className="text-center py-6 text-gray-300 bg-gray-50/70 border border-dotted border-gray-200 rounded-xl">
-                          <p className="text-xs">등록된 사진이 없습니다. 첫 사진을 등록해보세요!</p>
+                          <p className="text-xs">No registered photos. Feel free to upload your first photo!</p>
                         </div>
                       ) : (
                         <div className="grid grid-cols-3 gap-2 py-0.5">
@@ -1364,16 +1351,16 @@ export default function App() {
 
                     {/* Final Score Card Badge */}
                     <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100/50 text-center space-y-2.5">
-                      <span className="text-[11px] font-extrabold text-emerald-850 uppercase tracking-widest block">🏆 최종 스코어 결과</span>
+                      <span className="text-[11px] font-extrabold text-emerald-850 uppercase tracking-widest block">🏆 Final Scoreboard Summary</span>
                       <div className="grid grid-cols-2 gap-2">
                         <div className="flex flex-col text-center">
                           <span className="text-[9px] font-bold text-emerald-850 uppercase">👤 SK Score</span>
-                          <span className="text-base font-black text-emerald-700 mt-0.5">{totalStrokesP1}타 <span className="text-[10px] font-normal text-emerald-600">({totalPuttsP1}P)</span></span>
+                          <span className="text-base font-black text-emerald-700 mt-0.5">{totalStrokesP1} Str <span className="text-[10px] font-normal text-emerald-600">({totalPuttsP1}P)</span></span>
                         </div>
                         <div className="flex flex-col text-center border-l border-emerald-100/80">
                           <span className="text-[9px] font-bold text-teal-850 uppercase">👤 KY Score</span>
                           <span className="text-base font-black text-teal-700 mt-0.5">
-                            {totalStrokesP2 > 0 ? `${totalStrokesP2}타 (${totalPuttsP2}P)` : '-'}
+                            {totalStrokesP2 > 0 ? `${totalStrokesP2} Str (${totalPuttsP2}P)` : '-'}
                           </span>
                         </div>
                       </div>
@@ -1381,13 +1368,13 @@ export default function App() {
 
                     {/* 18-hole detailed Scorecard Table */}
                     <div className="space-y-2">
-                      <span className="text-[11px] font-extrabold text-emerald-850 uppercase tracking-wider block">📊 홀별 상세 스코어카드</span>
+                      <span className="text-[11px] font-extrabold text-emerald-850 uppercase tracking-wider block">📊 Detailed Scorecard per Hole</span>
                       <div className="border border-gray-150 rounded-xl overflow-hidden flex flex-col bg-white text-center text-xs">
                         {/* Table Header */}
                         <div className="bg-emerald-600 text-white py-2 px-3 font-bold flex text-center items-center font-mono">
-                          <div className="w-12 text-[10px]">홀</div>
-                          <div className="flex-1 text-[11px]">SK (퍼팅)</div>
-                          <div className="flex-1 text-[11px]">KY (퍼팅)</div>
+                          <div className="w-12 text-[10px]">Hole</div>
+                          <div className="flex-1 text-[11px]">SK (Putts)</div>
+                          <div className="flex-1 text-[11px]">KY (Putts)</div>
                         </div>
                         
                         {/* Scrollable list items rows */}
@@ -1399,10 +1386,10 @@ export default function App() {
                               <div key={k} className="flex py-2 px-3 hover:bg-gray-50/50 items-center justify-between text-center leading-none">
                                 <div className="w-12 font-bold text-gray-400">{h.hole}H</div>
                                 <div className="flex-1 font-semibold text-emerald-800">
-                                  {p1T > 0 ? `${p1T}타 (${h.putt}P)` : '-'}
+                                  {p1T > 0 ? `${p1T} Str (${h.putt}P)` : '-'}
                                 </div>
                                 <div className="flex-1 font-semibold text-teal-800">
-                                  {p2T > 0 ? `${p2T}타 (${h.putt2}P)` : '-'}
+                                  {p2T > 0 ? `${p2T} Str (${h.putt2}P)` : '-'}
                                 </div>
                               </div>
                             );
@@ -1417,7 +1404,7 @@ export default function App() {
                       onClick={() => setSelectedHistoryScore(null)}
                       className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs transition active:scale-95 shadow"
                     >
-                      확인 / 닫기
+                      Confirm / Close
                     </button>
 
                   </div>
@@ -1447,7 +1434,7 @@ export default function App() {
         </button>
         <button 
           onClick={() => setActiveTab('history')}
-          className={`flex flex-col items-center space-y-1 transition-all active:scale-95 ${activeTab === 'history' ? 'text-emerald-600 scale-105 font-bold' : 'text-gray-400 hover:text-gray-650'}`}
+          className={`flex flex-col items-center space-y-1 transition-all active:scale-105 ${activeTab === 'history' ? 'text-emerald-600 scale-105 font-bold' : 'text-gray-400 hover:text-gray-650'}`}
         >
           <span className="text-lg leading-tight">📸</span>
           <span className="text-xs font-bold leading-tight">History</span>
@@ -1460,12 +1447,12 @@ export default function App() {
           <div className="bg-white rounded-3xl p-6 w-full max-w-sm border border-gray-150 shadow-2xl space-y-4 animate-fade-in text-left">
             <div className="flex justify-between items-center pb-2 border-b border-gray-100">
               <h3 className="font-extrabold text-gray-800 flex items-center gap-1.5">
-                <span>🔥</span> Firebase 실시간 연동
+                <span>🔥</span> Firebase Dynamic Sync
               </h3>
               <button 
                 type="button"
                 onClick={() => setIsSettingsOpen(false)}
-                className="text-gray-400 hover:text-gray-600 text-lg font-bold p-1 outline-none"
+                className="text-gray-400 hover:text-gray-650 text-lg font-bold p-1 outline-none"
               >
                 ✕
               </button>
@@ -1482,13 +1469,13 @@ export default function App() {
                   placeholder="https://your-project-rtdb.firebaseio.com"
                 />
                 <p className="text-[9px] text-gray-400 mt-1 leading-relaxed">
-                  * 공란 제출 시 기본 실시간 채널로 자동 전환됩니다.
+                  * Leaving it empty automatically reverts to default live channel.
                 </p>
               </div>
 
               <div className="bg-emerald-50/50 p-3.5 rounded-2xl border border-emerald-100 text-[10px] text-emerald-950 leading-relaxed font-semibold">
-                📌 <strong>실시간 쌍방향 자동 연동 안내:</strong><br/>
-                전화기 앱과 AI Studio 화면이 동일한 Firebase URL을 사용합니다. 한쪽에서 점수를 입력하거나 코스를 저장하면, 다른 장치에서도 <strong>즉시 실시간으로 화면이 갱신</strong>됩니다!
+                📌 <strong>Real-time Bidirectional Auto Sync:</strong><br/>
+                Both phone and AI Studio screens utilize the same Firebase URL. Saving scores or courses on one device <strong>instantly refreshes the screens dynamically</strong> on all other devices in real-time!
               </div>
             </div>
 
@@ -1497,7 +1484,7 @@ export default function App() {
               onClick={() => setIsSettingsOpen(false)}
               className="w-full py-3 bg-emerald-600 hover:bg-emerald-750 text-white font-extrabold text-xs rounded-xl shadow-md transition active:scale-95 outline-none"
             >
-              설정 저장 및 즉시 동기화
+              Save Settings & Sync
             </button>
           </div>
         </div>
