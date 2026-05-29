@@ -58,7 +58,7 @@ jobs:
           
           echo "=== Attempting to generate wrapper using local system gradle ==="
           if command -v gradle >/dev/null 2>&1; then
-            gradle wrapper --gradle-version 8.10.2 --distribution-type bin || true
+            gradle wrapper --gradle-version 9.3.1 --distribution-type bin || true
           fi
           
           # Check if the jar was successfully created and of valid integrity
@@ -70,8 +70,8 @@ jobs:
             rm -f gradle/wrapper/gradle-wrapper.jar
             
             # Direct link to official gradle-wrapper.jar wrapper bin from official GitHub repository
-            curl -sSLo gradle/wrapper/gradle-wrapper.jar "https://github.com/gradle/gradle/raw/v8.10.2/gradle/wrapper/gradle-wrapper.jar" || \
-            curl -sSLo gradle/wrapper/gradle-wrapper.jar "https://raw.githubusercontent.com/gradle/gradle/v8.10.2/gradle/wrapper/gradle-wrapper.jar" || true
+            curl -sSLo gradle/wrapper/gradle-wrapper.jar "https://github.com/gradle/gradle/raw/v9.3.1/gradle/wrapper/gradle-wrapper.jar" || \
+            curl -sSLo gradle/wrapper/gradle-wrapper.jar "https://raw.githubusercontent.com/gradle/gradle/v9.3.1/gradle/wrapper/gradle-wrapper.jar" || true
           fi
           
           # Final validation and fallback
