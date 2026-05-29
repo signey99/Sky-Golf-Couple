@@ -92,6 +92,7 @@ export default function App() {
   const syncChannel = 'skky_golf_live_sync_signey99';
   const isIncomingCloudUpdate = useRef(false);
   const isFirebaseListening = useRef(false);
+  const hasUserMutated = useRef(false);
 
   useEffect(() => {
     localStorage.setItem('golf_diary_fb_url', firebaseUrl);
@@ -146,6 +147,81 @@ export default function App() {
       }
     } catch (e) {
       console.warn("Firebase set skipped or failed", e);
+    }
+  };
+
+  // Force download the absolute latest data from the Cloud Sync Channel immediately
+  const handleForceCloudDownload = async () => {
+    setSyncStatus('syncing');
+    setLastSyncedTime('Loading...');
+    try {
+      // 1. Fetch from Fallback DB
+      const res = await fetch(`https://kvdb.io/K9m8b8M8PnHpMhpbUfHqpS/${syncChannel}`);
+      if (res.ok) {
+        const cloudData = await res.json();
+        if (cloudData && cloudData.updatedAt) {
+          isIncomingCloudUpdate.current = true;
+          if (cloudData.scores) setScores(cloudData.scores);
+          if (cloudData.courses) setCourses(cloudData.courses);
+          localStorage.setItem('golf_diary_scores', JSON.stringify(cloudData.scores || []));
+          localStorage.setItem('golf_diary_courses', JSON.stringify(cloudData.courses || []));
+          localStorage.setItem('golf_diary_last_sync_timestamp', String(cloudData.updatedAt));
+          setLastSyncedTime(new Date(cloudData.updatedAt).toLocaleTimeString() + ' (Fallback Forced)');
+          setSyncStatus('synced');
+          alert('🔄 클라우드 강제 동기화 완료!\n서버에서 가장 최근 코스 및 점수판 데이터를 완벽하게 동기화했습니다.');
+          return;
+        }
+      }
+
+      // 2. Fallback to Firebase
+      if (window.firebase && firebaseUrl.trim()) {
+        let app;
+        if (!window.firebase.apps.length) {
+          app = window.firebase.initializeApp({
+            databaseURL: firebaseUrl,
+            projectId: firebaseUrl.split('//')[1]?.split('.')[0] || 'skky-golf'
+          });
+        } else {
+          app = window.firebase.app();
+        }
+        const db = window.firebase.database(app);
+        const snapshot = await db.ref(syncChannel).once('value');
+        const cloudData = snapshot.val();
+        if (cloudData && cloudData.updatedAt) {
+          isIncomingCloudUpdate.current = true;
+          if (cloudData.scores) setScores(cloudData.scores);
+          if (cloudData.courses) setCourses(cloudData.courses);
+          localStorage.setItem('golf_diary_scores', JSON.stringify(cloudData.scores || []));
+          localStorage.setItem('golf_diary_courses', JSON.stringify(cloudData.courses || []));
+          localStorage.setItem('golf_diary_last_sync_timestamp', String(cloudData.updatedAt));
+          setLastSyncedTime(new Date(cloudData.updatedAt).toLocaleTimeString() + ' (Firebase Forced)');
+          setSyncStatus('synced');
+          alert('🔄 Firebase 강제 동기화 완료!\nFirebase 실시간 데이터베이스에서 성적표 데이터를 불러왔습니다.');
+          return;
+        }
+      }
+
+      alert('⚠️ 클라우드 서버에 동기화할 데이터가 존재하지 않거나 일시적 오류입니다. 먼저 다른 휴대폰 등에서 데이터를 등록해 주세요.');
+      setSyncStatus('error');
+    } catch (err) {
+      console.error("Manual forced sync download failed", err);
+      alert('❌ 동기화 실패: 네트워크 연결이나 서버 상태를 확인해 주세요.');
+      setSyncStatus('error');
+    }
+  };
+
+  // Force upload present local state to Cloud Sync Channel immediately
+  const handleForceCloudUpload = async () => {
+    setSyncStatus('syncing');
+    setLastSyncedTime('Uploading...');
+    try {
+      const timestamp = Date.now();
+      await uploadToCloud(scores, courses, timestamp);
+      alert('📤 클라우드 백업 성공!\n현재 휴대폰/화면에 있는 모든 코스 및 점수 데이터를 클라우드로 내보냈습니다.');
+    } catch (err) {
+      console.error("Manual forced sync upload failed", err);
+      alert('❌ 백업 업로드 실패: 네트워크 연결 상태를 확인해 주세요.');
+      setSyncStatus('error');
     }
   };
 
@@ -223,8 +299,8 @@ export default function App() {
                 localStorage.setItem('golf_diary_last_sync_timestamp', String(cloudData.updatedAt));
                 setLastSyncedTime(new Date(cloudData.updatedAt).toLocaleTimeString() + ' (Fallback)');
                 setSyncStatus('synced');
-              } else if (!isFirebaseListening.current && localTimestamp > cloudData.updatedAt) {
-                // Upload our newer local data to fallback server only when Firebase is inactive
+              } else if (localTimestamp > cloudData.updatedAt) {
+                // Upload our newer local data to fallback server to maintain backup parity
                 await silentUploadToFallback(scores, courses, localTimestamp);
               } else {
                 setSyncStatus('synced');
@@ -245,8 +321,8 @@ export default function App() {
 
       tryConnectFirebase();
 
-      // Set fallback fast-polling watcher every 2.0 seconds for instant bidirectional sync
-      fallbackInterval = setInterval(queryFallbackSync, 2000);
+      // Set fallback safe polling watcher every 10 seconds to avoid 429 rate limits
+      fallbackInterval = setInterval(queryFallbackSync, 10000);
       queryFallbackSync();
     };
 
@@ -261,12 +337,16 @@ export default function App() {
   // Push local changes up immediately with a light debounce
   useEffect(() => {
     if (!isInitialLoadDone) return;
+    if (!hasUserMutated.current) return;
 
     if (isIncomingCloudUpdate.current) {
       console.log("[Sync Loop Prevented] Skipping pushing downloaded data payload back up.");
       isIncomingCloudUpdate.current = false;
       return;
     }
+
+    // Reset loop flag BEFORE dispatching/debouncing to prevent any simultaneous triggers
+    hasUserMutated.current = false;
 
     const changeTime = Date.now();
     const delayDebounce = setTimeout(async () => {
@@ -364,6 +444,7 @@ export default function App() {
         lng: 126.9780,
         holePars: Array(18).fill(4)
       };
+      hasUserMutated.current = true;
       setCourses(prev => [...prev, newCreatedCourse]);
       courseIdVal = newCreatedCourse.id;
       courseNameVal = newCreatedCourse.name;
@@ -381,6 +462,7 @@ export default function App() {
       photos: []
     };
 
+    hasUserMutated.current = true;
     setScores(prev => [scoreData, ...prev]);
     alert('Golf score saved successfully!');
     
@@ -420,6 +502,7 @@ export default function App() {
 
   const handleDeleteCourse = (courseId) => {
     if (window.confirm("Are you sure you want to delete this golf course? Existing round records will not be affected, but it will no longer appear in the options.")) {
+      hasUserMutated.current = true;
       setCourses(prev => prev.filter(c => c.id !== courseId));
       if (Number(selectedCourseId) === courseId) {
         setSelectedCourseId('');
@@ -464,6 +547,7 @@ export default function App() {
       holePars: [...courseHolePars]
     };
 
+    hasUserMutated.current = true;
     if (editingCourseId) {
       setCourses(prev => prev.map(c => c.id === editingCourseId ? courseData : c));
       // Proactively update cached course names in historic scores so name changes propagate instantly
@@ -486,6 +570,7 @@ export default function App() {
       }
       const reader = new FileReader();
       reader.onloadend = () => {
+        hasUserMutated.current = true;
         setScores(prevScores => 
           prevScores.map(score => {
             if (score.id === scoreId) {
@@ -1330,6 +1415,7 @@ export default function App() {
                               <button 
                                 type="button"
                                 onClick={() => {
+                                  hasUserMutated.current = true;
                                   setScores(prev => prev.map(s => {
                                     if (s.id === activeDetailScore.id) {
                                       const u = [...s.photos];
@@ -1474,17 +1560,43 @@ export default function App() {
               </div>
 
               <div className="bg-emerald-50/50 p-3.5 rounded-2xl border border-emerald-100 text-[10px] text-emerald-950 leading-relaxed font-semibold">
-                📌 <strong>Real-time Bidirectional Auto Sync:</strong><br/>
-                Both phone and AI Studio screens utilize the same Firebase URL. Saving scores or courses on one device <strong>instantly refreshes the screens dynamically</strong> on all other devices in real-time!
+                📌 <strong>실시간 자동 동기화 안내:</strong><br/>
+                휴대폰 앱과 AI Studio 화면이 동일한 데이터베이스 채널을 사용합니다. 한쪽에서 점수를 입력하거나 코스를 저장하면, 실시간으로 다른 화면이 동기화됩니다!
+              </div>
+
+              {/* Manual Force Sync Controls */}
+              <div className="pt-2 border-t border-gray-100 space-y-2">
+                <p className="text-[11px] font-bold text-gray-500 uppercase">수동 동기화 제어</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={handleForceCloudDownload}
+                    className="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-705 text-white font-extrabold text-[11px] rounded-xl shadow-sm transition active:scale-95 outline-none flex items-center justify-center gap-1"
+                    title="클라우드에서 최신 데이터를 강제 가져오기"
+                  >
+                    <span>🔄</span> 클라우드 수신
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleForceCloudUpload}
+                    className="py-2.5 px-3 bg-teal-600 hover:bg-teal-705 text-white font-extrabold text-[11px] rounded-xl shadow-sm transition active:scale-95 outline-none flex items-center justify-center gap-1"
+                    title="현재 기기의 데이터를 클라우드로 강제 내보내기"
+                  >
+                    <span>📤</span> 클라우드 송신
+                  </button>
+                </div>
+                <p className="text-[9px] text-gray-400 mt-1 leading-normal text-center">
+                  * 실시간 연동이 지연되거나 휴대폰의 최신 코스 정보가 보이지 않을 때 <strong>[클라우드 수신]</strong> 버튼을 누르면 즉시 동기화됩니다.
+                </p>
               </div>
             </div>
 
             <button
               type="button"
               onClick={() => setIsSettingsOpen(false)}
-              className="w-full py-3 bg-emerald-600 hover:bg-emerald-750 text-white font-extrabold text-xs rounded-xl shadow-md transition active:scale-95 outline-none"
+              className="w-full py-3 bg-gray-800 hover:bg-gray-900 text-white font-extrabold text-xs rounded-xl shadow-md transition active:scale-95 outline-none"
             >
-              Save Settings & Sync
+              닫기 (Close)
             </button>
           </div>
         </div>
