@@ -32,12 +32,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd web-app
           npm install
 
       - name: Build
         run: |
-          cd web-app
           npm run build
 
       - name: Setup Pages
@@ -46,7 +44,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'web-app/build'
+          path: 'build'
 
       - name: Deploy to GitHub Pages
         id: deployment
