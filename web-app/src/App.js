@@ -67,7 +67,12 @@ export default function App() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (parsed) return parsed;
+        if (parsed && Array.isArray(parsed)) {
+          // Dynamically filter out 'Jeju' game record as requested
+          const filtered = parsed.filter(score => score && (!score.courseName || !score.courseName.toLowerCase().includes('jeju')));
+          localStorage.setItem('golf_diary_scores', JSON.stringify(filtered));
+          return filtered;
+        }
       } catch (e) {
         console.error("Error reading scores from localStorage", e);
       }
@@ -80,7 +85,7 @@ export default function App() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (parsed) return parsed;
+        if (parsed && Array.isArray(parsed)) return parsed;
       } catch (e) {
         console.error("Error reading courses from localStorage", e);
       }
@@ -679,7 +684,92 @@ export default function App() {
       
       {/* Top Header App Bar */}
       <header className="text-white py-4 px-5 text-left shadow-md select-none relative animate-fade-in pr-20" style={{ backgroundColor: '#0f766e' }}>
-        <h1 className="text-3xl font-black tracking-wide text-[#f8fafc]" style={{ fontFamily: '"Outfit", "Noto Sans KR", sans-serif' }}>SkKy Golf</h1>
+        <h1 className="text-3xl font-black tracking-wide text-[#f8fafc] flex items-center" style={{ fontFamily: '"Outfit", "Noto Sans KR", sans-serif' }}>
+          {/* Custom Stylized Couple SVG Icon representing the couple */}
+          <svg 
+            className="w-10 h-10 mr-2.5 rounded-full border border-emerald-500 shadow-md bg-emerald-800 p-0.5 shrink-0" 
+            viewBox="0 0 120 120" 
+            fill="none" 
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              <linearGradient id="golfParkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#34d399" />
+                <stop offset="50%" stopColor="#10b981" />
+                <stop offset="100%" stopColor="#047857" />
+              </linearGradient>
+              <linearGradient id="manGlasses" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#10b981" />
+                <stop offset="50%" stopColor="#22c55e" />
+                <stop offset="100%" stopColor="#facc15" />
+              </linearGradient>
+              <linearGradient id="womanGlasses" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#a855f7" />
+                <stop offset="50%" stopColor="#d946ef" />
+                <stop offset="100%" stopColor="#6366f1" />
+              </linearGradient>
+            </defs>
+
+            {/* Background emerald grass circle */}
+            <circle cx="60" cy="60" r="58" fill="url(#golfParkGradient)" />
+
+            {/* Stylized trees icon inside background */}
+            <circle cx="30" cy="35" r="12" fill="#065f46" opacity="0.3" />
+            <circle cx="90" cy="40" r="10" fill="#065f46" opacity="0.3" />
+
+            {/* Male Figure (Left) */}
+            <g id="man-group">
+              {/* Body / Shirt */}
+              <path d="M15 120 C15 90, 30 80, 52 80 C58 90, 55 105, 52 110 L15 120 Z" fill="#ffffff" />
+              <path d="M40 80 L44 95 L48 80 Z" fill="#cbd5e1" />
+              
+              {/* Face / Chin */}
+              <path d="M26 50 C26 72, 52 72, 52 50" fill="#fed7aa" />
+              
+              {/* Sunglasses (Green reflection sports) */}
+              <path d="M25 48 Q39 53, 53 48 C51 55, 27 55, 25 48 Z" fill="url(#manGlasses)" />
+              <path d="M38 48 Q39 51, 40 48" stroke="#1e293b" strokeWidth="1.5" />
+              
+              {/* Cap (White sports cap with black Nike swoosh) */}
+              <path d="M24 45 C24 25, 54 25, 54 45 Z" fill="#ffffff" />
+              <path d="M35 34 Q40 31, 44 32 Q39 35, 34 37 Z" fill="#0f172a" />
+              <path d="M20 44 Q35 46, 52 46 Q55 42, 53 41 L22 41 Z" fill="#e2e8f0" />
+            </g>
+
+            {/* Female Figure (Right) */}
+            <g id="woman-group">
+              {/* Body / Shirt */}
+              <path d="M55 120 C57 95, 80 82, 105 82 C105 100, 100 110, 105 120 Z" fill="#ffffff" />
+              <path d="M72 82 L76 96 L80 82 Z" fill="#1e293b" />
+              
+              {/* Face */}
+              <path d="M58 52 C58 74, 84 74, 84 52" fill="#ffedd5" />
+              
+              {/* Sunglasses (Purple sports) */}
+              <path d="M57 51 Q71 55, 85 51 C83 58, 59 58, 57 51 Z" fill="url(#womanGlasses)" />
+              <path d="M70 51 Q71 54, 72 51" stroke="#1e293b" strokeWidth="1.5" />
+              
+              {/* Visor Cap (White PING cap) */}
+              <path d="M52 49 Q75 51, 88 47 Q85 41, 80 43 L54 44 Z" fill="#ffffff" />
+              <path d="M52 49 Q75 51, 88 47" stroke="#cbd5e1" strokeWidth="2" />
+              <path d="M58 45 C58 35, 82 35, 82 45 Z" fill="#ffffff" />
+              <rect x="64" y="38" width="12" height="4" rx="1" fill="#1e293b" />
+            </g>
+          </svg>
+          
+          <span>SkKy Golf</span>
+          
+          {/* Subtle sync settings gear to provide access to cloud sync */}
+          <button 
+            type="button"
+            onClick={() => setIsSettingsOpen(true)}
+            className="ml-2.5 text-lg opacity-85 hover:opacity-100 active:scale-90 transition duration-150 p-1 bg-[#115e59] hover:bg-[#134e4a] rounded-lg shadow-sm flex items-center justify-center border-0"
+            style={{ minHeight: '32px', minWidth: '32px' }}
+            title="Dynamic Sync Settings"
+          >
+            ⚙️
+          </button>
+        </h1>
         <p className="text-xl text-emerald-50 mt-1 font-bold leading-none animate-fadeIn" style={{ fontFamily: '"Nanum Pen Script", cursive' }}>시근이와 계영이의 골프 여행기</p>
         
         {/* Save button positioned in top right instead of gear settings icon */}
@@ -706,7 +796,9 @@ export default function App() {
             <div className="grid grid-cols-2 gap-3.5">
               {/* Course Box Card */}
               <div className="bg-white p-4 rounded-none shadow-sm border border-gray-200 flex flex-col justify-between">
-                <label className="block text-xs font-black text-emerald-800 uppercase tracking-wider mb-1.5">Course</label>
+                <label className="block text-xs font-black text-emerald-800 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                  <span>📍</span> Golf Course
+                </label>
                 <select 
                   className="w-full p-2.5 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-sm shadow-none transition-all text-gray-800 font-bold"
                   value={isNewCourse ? 'new' : selectedCourseId}
@@ -730,7 +822,9 @@ export default function App() {
 
               {/* Play Date Box Card */}
               <div className="bg-white p-4 rounded-none shadow-sm border border-gray-200 flex flex-col justify-between">
-                <label className="block text-xs font-black text-emerald-800 uppercase tracking-wider mb-1.5">Play Date</label>
+                <label className="block text-xs font-black text-emerald-800 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                  <span>📅</span> Play Date
+                </label>
                 <input 
                   type="date" 
                   className="w-full p-2.5 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-sm text-gray-800 font-bold font-sans"
@@ -755,115 +849,128 @@ export default function App() {
             )}
 
             {/* Live Matrix Section (Split tables in UI Grid) - Positioned immediately under setup */}
-            <div className="bg-transparent p-0 rounded-none border-0 shadow-none space-y-3.5">
-              <span className="text-sm font-black text-emerald-800 flex items-center px-1 tracking-wider uppercase">
-                ⛳ Live Scoreboard
+            <div className="bg-transparent p-0 rounded-none border-0 shadow-none space-y-3.5 w-full">
+              <span className="text-lg font-black text-emerald-800 flex items-center px-1 tracking-wider uppercase">
+                Live Scoreboard
               </span>
 
               {/* Front Nine layout */}
-              <div>
-                <span className="text-xs font-black text-gray-500 block mb-1.5 px-1 tracking-wide">⛳ FRONT NINE (Holes 1 - 9)</span>
-                <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center">
-                  <div className="w-12 bg-gray-50 flex flex-col justify-around text-xs font-extrabold text-gray-500 py-1.5 border-r border-gray-300">
+              <div className="w-full">
+                <span className="text-xs font-black text-gray-500 block mb-1.5 px-1 tracking-wide">Front</span>
+                <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center w-full">
+                  <div className="w-12 bg-gray-50 flex flex-col justify-around text-xs font-extrabold text-gray-500 py-1.5 border-r border-gray-300 shrink-0 select-none">
                     <span className="h-5 flex items-center justify-center text-gray-600 font-extrabold">Hole</span>
                     <span className="h-4 flex items-center justify-center text-red-600 font-black tracking-normal">Par</span>
                     <span className="h-6 flex items-center justify-center text-emerald-800 font-black">SK</span>
                     <span className="h-6 flex items-center justify-center text-teal-800 font-black">KY</span>
                   </div>
-                  {scoreboardHoles.slice(0, 9).map((h, k) => {
-                    const isClickable = (k === currentFocusedIndex);
-                    const p1T = h.iron + h.putt;
-                    const p2T = h.iron2 + h.putt2;
-                    const holePar = courseHolePars[k] || 4;
-                    return (
-                      <div 
-                        key={k}
-                        onClick={isClickable ? () => openScoreModal(k) : undefined}
-                        className={`flex-1 py-1 flex flex-col justify-around transition-all border-r last:border-r-0 border-gray-100 ${
-                          isClickable 
-                            ? 'cursor-pointer bg-amber-50/30 hover:bg-amber-50/60 ring-2 ring-amber-400 ring-inset animate-pulse-slow' 
-                            : 'cursor-default grayscale-[20%] opacity-85'
-                        }`}
-                      >
-                        <span className={`text-xs font-bold h-5 flex items-center justify-center ${isClickable ? 'text-amber-800 font-black' : 'text-gray-500'}`}>
-                          {h.hole}
-                        </span>
-                        <span className="text-xs font-black text-red-500 h-4 flex items-center justify-center">
-                          {holePar}
-                        </span>
-                        <div className="h-6 flex items-center justify-center">
-                          {renderScoreSymbol(p1T, holePar, isClickable, isClickable && p1T === 0)}
+                  {/* Grid for 9 holes + OUT + Spacer column (11 columns total) */}
+                  <div className="flex-1 grid grid-cols-11 divide-x divide-gray-200">
+                    {scoreboardHoles.slice(0, 9).map((h, k) => {
+                      const isClickable = (k === currentFocusedIndex);
+                      const p1T = h.iron + h.putt;
+                      const p2T = h.iron2 + h.putt2;
+                      const holePar = courseHolePars[k] || 4;
+                      return (
+                        <div 
+                          key={k}
+                          onClick={isClickable ? () => openScoreModal(k) : undefined}
+                          className={`py-1 flex flex-col justify-around transition-all ${
+                            isClickable 
+                              ? 'cursor-pointer bg-amber-50/30 hover:bg-amber-50/60 ring-2 ring-amber-400 ring-inset animate-pulse-slow' 
+                              : 'cursor-default grayscale-[20%] opacity-85'
+                          }`}
+                        >
+                          <span className={`text-xs font-bold h-5 flex items-center justify-center ${isClickable ? 'text-amber-800 font-black' : 'text-gray-500'}`}>
+                            {h.hole}
+                          </span>
+                          <span className="text-xs font-black text-red-500 h-4 flex items-center justify-center">
+                            {holePar}
+                          </span>
+                          <div className="h-6 flex items-center justify-center">
+                            {renderScoreSymbol(p1T, holePar, isClickable, isClickable && p1T === 0)}
+                          </div>
+                          <div className="h-6 flex items-center justify-center">
+                            {renderScoreSymbol(p2T, holePar, isClickable, isClickable && p2T === 0)}
+                          </div>
                         </div>
-                        <div className="h-6 flex items-center justify-center">
-                          {renderScoreSymbol(p2T, holePar, isClickable, isClickable && p2T === 0)}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {/* OUT subtotal column */}
-                  <div className="w-12 bg-gray-55 flex flex-col justify-around py-1.5 border-l border-gray-350 text-center select-none font-bold">
-                    <span className="text-xs font-black h-5 flex items-center justify-center text-gray-700 bg-gray-100/50">OUT</span>
-                    <span className="text-[11px] font-black text-red-600 h-4 flex items-center justify-center">{parOut}</span>
-                    <span className="text-[11px] font-black text-emerald-800 h-6 flex items-center justify-center bg-emerald-50/40">{p1Out > 0 ? p1Out : '-'}</span>
-                    <span className="text-[11px] font-black text-teal-850 h-6 flex items-center justify-center bg-teal-50/40">{p2Out > 0 ? p2Out : '-'}</span>
+                      );
+                    })}
+                    {/* OUT subtotal column (occupies 10th col) */}
+                    <div className="bg-gray-50 flex flex-col justify-around py-1.5 text-center select-none font-bold">
+                      <span className="text-xs font-black h-5 flex items-center justify-center text-gray-700 bg-gray-100/50">OUT</span>
+                      <span className="text-[11px] font-black text-red-600 h-4 flex items-center justify-center">{parOut}</span>
+                      <span className="text-[11px] font-black text-emerald-800 h-6 flex items-center justify-center bg-emerald-50/40">{p1Out > 0 ? p1Out : '-'}</span>
+                      <span className="text-[11px] font-black text-teal-850 h-6 flex items-center justify-center bg-teal-50/40">{p2Out > 0 ? p2Out : '-'}</span>
+                    </div>
+                    {/* Empty placeholder spacer (occupies 11th col to align precisely with back TOT) */}
+                    <div className="bg-gray-50/20 flex flex-col justify-around py-1.5 text-center select-none opacity-40">
+                      <span className="text-xs font-medium h-5 flex items-center justify-center text-gray-400">-</span>
+                      <span className="text-[11px] font-medium text-gray-400 h-4 flex items-center justify-center">-</span>
+                      <span className="text-[11px] font-medium text-gray-400 h-6 flex items-center justify-center">-</span>
+                      <span className="text-[11px] font-medium text-gray-400 h-6 flex items-center justify-center">-</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Back Nine layout */}
-              <div>
-                <span className="text-xs font-black text-gray-500 block mb-1.5 px-1 tracking-wide">⛳ BACK NINE (Holes 10 - 18)</span>
-                <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center">
-                  <div className="w-12 bg-gray-50 flex flex-col justify-around text-xs font-extrabold text-gray-500 py-1.5 border-r border-gray-300">
+              <div className="w-full">
+                <span className="text-xs font-black text-gray-500 block mb-1.5 px-1 tracking-wide">Back</span>
+                <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center w-full">
+                  <div className="w-12 bg-gray-50 flex flex-col justify-around text-xs font-extrabold text-gray-500 py-1.5 border-r border-gray-300 shrink-0 select-none">
                     <span className="h-5 flex items-center justify-center text-gray-600 font-extrabold">Hole</span>
                     <span className="h-4 flex items-center justify-center text-red-600 font-black tracking-normal">Par</span>
                     <span className="h-6 flex items-center justify-center text-emerald-800 font-black">SK</span>
                     <span className="h-6 flex items-center justify-center text-teal-800 font-black">KY</span>
                   </div>
-                  {scoreboardHoles.slice(9, 18).map((h, k) => {
-                    const globalK = k + 9;
-                    const isClickable = (globalK === currentFocusedIndex);
-                    const p1T = h.iron + h.putt;
-                    const p2T = h.iron2 + h.putt2;
-                    const holePar = courseHolePars[globalK] || 4;
-                    return (
-                      <div 
-                        key={globalK}
-                        onClick={isClickable ? () => openScoreModal(globalK) : undefined}
-                        className={`flex-1 py-1 flex flex-col justify-around transition-all border-r last:border-r-0 border-gray-100 ${
-                          isClickable 
-                            ? 'cursor-pointer bg-amber-50/30 hover:bg-amber-50/60 ring-2 ring-amber-400 ring-inset animate-pulse-slow' 
-                            : 'cursor-default grayscale-[20%] opacity-85'
-                        }`}
-                      >
-                        <span className={`text-xs font-bold h-5 flex items-center justify-center ${isClickable ? 'text-amber-800 font-black' : 'text-gray-500'}`}>
-                          {h.hole}
-                        </span>
-                        <span className="text-xs font-black text-red-500 h-4 flex items-center justify-center">
-                          {holePar}
-                        </span>
-                        <div className="h-6 flex items-center justify-center">
-                          {renderScoreSymbol(p1T, holePar, isClickable, isClickable && p1T === 0)}
+                  {/* Grid for 9 holes + IN + TOT column (11 columns total) */}
+                  <div className="flex-1 grid grid-cols-11 divide-x divide-gray-200">
+                    {scoreboardHoles.slice(9, 18).map((h, k) => {
+                      const globalK = k + 9;
+                      const isClickable = (globalK === currentFocusedIndex);
+                      const p1T = h.iron + h.putt;
+                      const p2T = h.iron2 + h.putt2;
+                      const holePar = courseHolePars[globalK] || 4;
+                      return (
+                        <div 
+                          key={globalK}
+                          onClick={isClickable ? () => openScoreModal(globalK) : undefined}
+                          className={`py-1 flex flex-col justify-around transition-all ${
+                            isClickable 
+                              ? 'cursor-pointer bg-amber-50/30 hover:bg-amber-50/60 ring-2 ring-amber-400 ring-inset animate-pulse-slow' 
+                              : 'cursor-default grayscale-[20%] opacity-85'
+                          }`}
+                        >
+                          <span className={`text-xs font-bold h-5 flex items-center justify-center ${isClickable ? 'text-amber-800 font-black' : 'text-gray-500'}`}>
+                            {h.hole}
+                          </span>
+                          <span className="text-xs font-black text-red-500 h-4 flex items-center justify-center">
+                            {holePar}
+                          </span>
+                          <div className="h-6 flex items-center justify-center">
+                            {renderScoreSymbol(p1T, holePar, isClickable, isClickable && p1T === 0)}
+                          </div>
+                          <div className="h-6 flex items-center justify-center">
+                            {renderScoreSymbol(p2T, holePar, isClickable, isClickable && p2T === 0)}
+                          </div>
                         </div>
-                        <div className="h-6 flex items-center justify-center">
-                          {renderScoreSymbol(p2T, holePar, isClickable, isClickable && p2T === 0)}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {/* IN subtotal column */}
-                  <div className="w-12 bg-gray-55 flex flex-col justify-around py-1.5 border-l border-gray-350 text-center select-none font-bold">
-                    <span className="text-xs font-black h-5 flex items-center justify-center text-gray-700 bg-gray-100/50">IN</span>
-                    <span className="text-[11px] font-black text-red-600 h-4 flex items-center justify-center">{parIn}</span>
-                    <span className="text-[11px] font-black text-emerald-800 h-6 flex items-center justify-center bg-emerald-50/40">{p1In > 0 ? p1In : '-'}</span>
-                    <span className="text-[11px] font-black text-teal-850 h-6 flex items-center justify-center bg-teal-50/40">{p2In > 0 ? p2In : '-'}</span>
-                  </div>
-                  {/* TOT total column */}
-                  <div className="w-12 bg-indigo-50/40 flex flex-col justify-around py-1.5 border-l border-indigo-200 text-center select-none font-bold">
-                    <span className="text-xs font-black h-5 flex items-center justify-center text-indigo-900 bg-indigo-100/40">TOT</span>
-                    <span className="text-[11px] font-black text-red-650 h-4 flex items-center justify-center">{parTotal}</span>
-                    <span className="text-xs font-black text-emerald-800 h-6 flex items-center justify-center bg-emerald-100/55">{p1Total > 0 ? p1Total : '-'}</span>
-                    <span className="text-xs font-black text-teal-800 h-6 flex items-center justify-center bg-teal-100/55">{p2Total > 0 ? p2Total : '-'}</span>
+                      );
+                    })}
+                    {/* IN subtotal column (occupies 10th col) */}
+                    <div className="bg-gray-50 flex flex-col justify-around py-1.5 text-center select-none font-bold">
+                      <span className="text-xs font-black h-5 flex items-center justify-center text-gray-700 bg-gray-100/50">IN</span>
+                      <span className="text-[11px] font-black text-red-600 h-4 flex items-center justify-center">{parIn}</span>
+                      <span className="text-[11px] font-black text-emerald-800 h-6 flex items-center justify-center bg-emerald-50/40">{p1In > 0 ? p1In : '-'}</span>
+                      <span className="text-[11px] font-black text-teal-855 h-6 flex items-center justify-center bg-teal-50/40">{p2In > 0 ? p2In : '-'}</span>
+                    </div>
+                    {/* TOT total column (occupies 11th col) */}
+                    <div className="bg-indigo-50/40 flex flex-col justify-around py-1.5 text-center select-none font-bold">
+                      <span className="text-xs font-black h-5 flex items-center justify-center text-indigo-900 bg-indigo-100/40">TOT</span>
+                      <span className="text-[11px] font-black text-red-655 h-4 flex items-center justify-center">{parTotal}</span>
+                      <span className="text-xs font-black text-emerald-800 h-6 flex items-center justify-center bg-emerald-100/55">{p1Total > 0 ? p1Total : '-'}</span>
+                      <span className="text-xs font-black text-teal-800 h-6 flex items-center justify-center bg-teal-100/55">{p2Total > 0 ? p2Total : '-'}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1563,14 +1670,31 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Close Button at bottom */}
-                    <button 
-                      type="button"
-                      onClick={() => setSelectedHistoryScore(null)}
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs transition active:scale-95 shadow"
-                    >
-                      Confirm / Close
-                    </button>
+                    {/* Action buttons at bottom */}
+                    <div className="flex gap-2.5">
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm("Are you sure you want to delete this round log permanently?")) {
+                            const updated = scores.filter(s => s.id !== activeDetailScore.id);
+                            setScores(updated);
+                            localStorage.setItem('golf_diary_scores', JSON.stringify(updated));
+                            setSelectedHistoryScore(null);
+                          }
+                        }}
+                        className="bg-red-50 hover:bg-red-100 text-red-650 font-bold py-2.5 px-4 rounded-xl text-xs transition active:scale-95 border border-red-200"
+                      >
+                        🗑️ Delete
+                      </button>
+                      
+                      <button 
+                        type="button"
+                        onClick={() => setSelectedHistoryScore(null)}
+                        className="flex-grow bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs transition active:scale-95 shadow"
+                      >
+                        Confirm / Close
+                      </button>
+                    </div>
 
                   </div>
                 </div>

@@ -23,6 +23,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         try {
+            // Pre-create WebView cache directories to prevent Chromium opendir errors on startup
+            ensureCacheDirs();
+
             // Set up a container
             FrameLayout container = new FrameLayout(this);
             container.setLayoutParams(new FrameLayout.LayoutParams(
@@ -66,6 +69,26 @@ public class MainActivity extends AppCompatActivity {
                     // Return false so WebView handles the navigation itself.
                     // This preserves session-state, POST request bodies, and cookie handshakes correctly!
                     return false;
+                }
+
+                @Override
+                public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                    super.onPageStarted(view, url, favicon);
+                    ensureCacheDirs();
+                }
+
+                @Override
+                public void onPageFinished(WebView view, String url) {
+                    super.onPageFinished(view, url);
+                    ensureCacheDirs();
+                    // Also run a delayed check to make sure any lazily initialized background tasks
+                    // find the directories ready!
+                    view.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            ensureCacheDirs();
+                        }
+                    }, 1000);
                 }
             });
 
@@ -141,6 +164,27 @@ public class MainActivity extends AppCompatActivity {
             webView.goBack();
         } else {
             super.onBackPressed();
+        }
+    }
+
+    /**
+     * Pre-creates WebView caching directories to prevent harmless but annoying 
+     * Chromium simple_file_enumerator E/chromium logging warnings on startup and run.
+     */
+    private void ensureCacheDirs() {
+        try {
+            java.io.File cacheDir = getCacheDir();
+            if (cacheDir != null) {
+                // HTTP Cache / Code Cache
+                new java.io.File(cacheDir, "WebView/Default/HTTP Cache/Code Cache/js").mkdirs();
+                new java.io.File(cacheDir, "WebView/Default/HTTP Cache/Code Cache/wasm").mkdirs();
+                
+                // standard Code Cache
+                new java.io.File(cacheDir, "WebView/Default/Code Cache/js").mkdirs();
+                new java.io.File(cacheDir, "WebView/Default/Code Cache/wasm").mkdirs();
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
         }
     }
 }
