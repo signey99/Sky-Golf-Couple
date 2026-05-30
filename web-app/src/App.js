@@ -14,45 +14,45 @@ const formatPlayDate = (dateStr) => {
 
 // Render score symbol based on standard golf scoring notation
 const renderScoreSymbol = (score, par, isSelected) => {
-  if (!score || score <= 0) return <span className="text-gray-300 text-xs">-</span>;
+  if (!score || score <= 0) return <span className="text-gray-300 text-sm font-medium">-</span>;
   
   const diff = score - par;
   
   if (diff === -1) {
     // Birdie: 빨간색 동그라미 안에 숫자
     return (
-      <div className="w-5 h-5 rounded-full border border-red-500 bg-red-50/30 flex items-center justify-center">
-        <span className="text-[10px] font-black text-red-500 leading-none">{score}</span>
+      <div className="w-5.5 h-5.5 rounded-full border border-red-500 bg-red-50/30 flex items-center justify-center">
+        <span className="text-[11px] font-black text-red-500 leading-none">{score}</span>
       </div>
     );
   } else if (diff <= -2) {
     // Eagle or Albatross: 두줄짜리 빨간색 동그라미
     return (
-      <div className="relative w-5 h-5 flex items-center justify-center">
+      <div className="relative w-5.5 h-5.5 flex items-center justify-center">
         <div className="absolute inset-0 border border-red-500 rounded-full"></div>
         <div className="absolute inset-[2.5px] border border-red-500 rounded-full"></div>
-        <span className="text-[10px] font-black text-red-500 z-10 leading-none">{score}</span>
+        <span className="text-[11px] font-black text-red-500 z-10 leading-none">{score}</span>
       </div>
     );
   } else if (diff === 1) {
     // Bogey: 파란색 네모 안에 숫자
     return (
-      <div className="w-5 h-5 border border-blue-500 bg-blue-50/20 rounded-[2px] flex items-center justify-center">
-        <span className="text-[10px] font-black text-blue-500 leading-none">{score}</span>
+      <div className="w-5.5 h-5.5 border border-blue-500 bg-blue-50/20 rounded-[2px] flex items-center justify-center">
+        <span className="text-[11px] font-black text-blue-500 leading-none">{score}</span>
       </div>
     );
   } else if (diff >= 2) {
     // Double bogey and more: 두줄짜리 네모 안에 숫자
     return (
-      <div className="relative w-5 h-5 flex items-center justify-center">
+      <div className="relative w-5.5 h-5.5 flex items-center justify-center">
         <div className="absolute inset-0 border border-blue-600 rounded-[2px]"></div>
         <div className="absolute inset-[2.5px] border border-blue-600 rounded-[2px]"></div>
-        <span className="text-[10px] font-black text-blue-600 z-10 leading-none">{score}</span>
+        <span className="text-[11px] font-black text-blue-600 z-10 leading-none">{score}</span>
       </div>
     );
   } else {
     // Par
-    return <span className={`text-xs font-bold leading-none ${isSelected ? 'text-emerald-800' : 'text-gray-700'}`}>{score}</span>;
+    return <span className={`text-sm font-bold leading-none ${isSelected ? 'text-emerald-800' : 'text-gray-700'}`}>{score}</span>;
   }
 };
 
@@ -69,7 +69,7 @@ export default function App() {
         const parsed = JSON.parse(saved);
         if (parsed && Array.isArray(parsed)) {
           // Dynamically filter out 'Jeju' game record as requested
-          const filtered = parsed.filter(score => score && (!score.courseName || !score.courseName.toLowerCase().includes('jeju')));
+          const filtered = parsed.filter(score => score && (!score.courseName || typeof score.courseName !== 'string' || !score.courseName.toLowerCase().includes('jeju')));
           localStorage.setItem('golf_diary_scores', JSON.stringify(filtered));
           return filtered;
         }
@@ -771,18 +771,6 @@ export default function App() {
           </button>
         </h1>
         <p className="text-xl text-emerald-50 mt-1 font-bold leading-none animate-fadeIn" style={{ fontFamily: '"Nanum Pen Script", cursive' }}>시근이와 계영이의 골프 여행기</p>
-        
-        {/* Save button positioned in top right instead of gear settings icon */}
-        {activeTab === 'score' && (
-          <button 
-            type="button"
-            onClick={handleSaveScore}
-            disabled={(!isNewCourse && !selectedCourseId) || (isNewCourse && !newCourseNameInput.trim())}
-            className="absolute right-4 top-1/2 -translate-y-1/2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-extrabold px-3.5 py-1.5 rounded-xl text-xs shadow-md transition active:scale-95 outline-none select-none"
-          >
-            Save
-          </button>
-        )}
       </header>
 
       {/* Main Content Area */}
@@ -795,12 +783,12 @@ export default function App() {
             {/* Decoupled Round Setup Boxes */}
             <div className="grid grid-cols-2 gap-3.5">
               {/* Course Box Card */}
-              <div className="bg-white p-4 rounded-none shadow-sm border border-gray-200 flex flex-col justify-between">
+              <div className="bg-transparent p-0 border-0 shadow-none flex flex-col justify-between">
                 <label className="block text-xs font-black text-emerald-800 uppercase tracking-wider mb-1.5 flex items-center gap-1">
                   <span>📍</span> Golf Course
                 </label>
                 <select 
-                  className="w-full p-2.5 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-sm shadow-none transition-all text-gray-800 font-bold"
+                  className="w-full p-3.5 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-base shadow-sm transition-all text-gray-800 font-bold"
                   value={isNewCourse ? 'new' : selectedCourseId}
                   onChange={(e) => {
                     if (e.target.value === 'new') {
@@ -821,13 +809,13 @@ export default function App() {
               </div>
 
               {/* Play Date Box Card */}
-              <div className="bg-white p-4 rounded-none shadow-sm border border-gray-200 flex flex-col justify-between">
+              <div className="bg-transparent p-0 border-0 shadow-none flex flex-col justify-between">
                 <label className="block text-xs font-black text-emerald-800 uppercase tracking-wider mb-1.5 flex items-center gap-1">
                   <span>📅</span> Play Date
                 </label>
                 <input 
                   type="date" 
-                  className="w-full p-2.5 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-sm text-gray-800 font-bold font-sans"
+                  className="w-full p-3.5 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-base shadow-sm text-gray-800 font-bold font-sans"
                   value={playDate}
                   onChange={(e) => setPlayDate(e.target.value)}
                 />
@@ -850,22 +838,32 @@ export default function App() {
 
             {/* Live Matrix Section (Split tables in UI Grid) - Positioned immediately under setup */}
             <div className="bg-transparent p-0 rounded-none border-0 shadow-none space-y-3.5 w-full">
-              <span className="text-lg font-black text-emerald-800 flex items-center px-1 tracking-wider uppercase">
-                Live Scoreboard
-              </span>
+              <div className="flex items-center justify-between px-1 w-full">
+                <span className="text-lg font-black text-emerald-800 tracking-wider uppercase">
+                  Live Scoreboard
+                </span>
+                <button 
+                  type="button"
+                  onClick={handleSaveScore}
+                  disabled={(!isNewCourse && !selectedCourseId) || (isNewCourse && !newCourseNameInput.trim())}
+                  className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-extrabold px-3.5 py-1.5 rounded-xl text-xs shadow-md transition active:scale-95 outline-none select-none"
+                >
+                  Save
+                </button>
+              </div>
 
               {/* Front Nine layout */}
               <div className="w-full">
-                <span className="text-xs font-black text-gray-500 block mb-1.5 px-1 tracking-wide">Front</span>
-                <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center w-full">
+                <span className="text-xs font-black text-gray-500 block mb-1.5 px-1 tracking-wide">⛳ Front</span>
+                <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center" style={{ width: 'calc(3rem + (100% - 3rem) * 10 / 11)' }}>
                   <div className="w-12 bg-gray-50 flex flex-col justify-around text-xs font-extrabold text-gray-500 py-1.5 border-r border-gray-300 shrink-0 select-none">
-                    <span className="h-5 flex items-center justify-center text-gray-600 font-extrabold">Hole</span>
-                    <span className="h-4 flex items-center justify-center text-red-600 font-black tracking-normal">Par</span>
-                    <span className="h-6 flex items-center justify-center text-emerald-800 font-black">SK</span>
-                    <span className="h-6 flex items-center justify-center text-teal-800 font-black">KY</span>
+                    <span className="h-5 flex items-center justify-center text-gray-600 font-extrabold text-sm">Hole</span>
+                    <span className="h-4 flex items-center justify-center text-red-600 font-black tracking-normal text-xs">Par</span>
+                    <span className="h-6 flex items-center justify-center text-emerald-800 font-black text-sm">SK</span>
+                    <span className="h-6 flex items-center justify-center text-teal-800 font-black text-sm">KY</span>
                   </div>
-                  {/* Grid for 9 holes + OUT + Spacer column (11 columns total) */}
-                  <div className="flex-1 grid grid-cols-11 divide-x divide-gray-200">
+                  {/* Grid for 9 holes + OUT (10 columns total) */}
+                  <div className="flex-1 grid grid-cols-10 divide-x divide-gray-200">
                     {scoreboardHoles.slice(0, 9).map((h, k) => {
                       const isClickable = (k === currentFocusedIndex);
                       const p1T = h.iron + h.putt;
@@ -881,7 +879,7 @@ export default function App() {
                               : 'cursor-default grayscale-[20%] opacity-85'
                           }`}
                         >
-                          <span className={`text-xs font-bold h-5 flex items-center justify-center ${isClickable ? 'text-amber-800 font-black' : 'text-gray-500'}`}>
+                          <span className={`text-sm font-bold h-5 flex items-center justify-center ${isClickable ? 'text-amber-800 font-black text-sm' : 'text-gray-500'}`}>
                             {h.hole}
                           </span>
                           <span className="text-xs font-black text-red-500 h-4 flex items-center justify-center">
@@ -898,17 +896,10 @@ export default function App() {
                     })}
                     {/* OUT subtotal column (occupies 10th col) */}
                     <div className="bg-gray-50 flex flex-col justify-around py-1.5 text-center select-none font-bold">
-                      <span className="text-xs font-black h-5 flex items-center justify-center text-gray-700 bg-gray-100/50">OUT</span>
+                      <span className="text-sm font-black h-5 flex items-center justify-center text-gray-700 bg-gray-100/50">OUT</span>
                       <span className="text-[11px] font-black text-red-600 h-4 flex items-center justify-center">{parOut}</span>
-                      <span className="text-[11px] font-black text-emerald-800 h-6 flex items-center justify-center bg-emerald-50/40">{p1Out > 0 ? p1Out : '-'}</span>
-                      <span className="text-[11px] font-black text-teal-850 h-6 flex items-center justify-center bg-teal-50/40">{p2Out > 0 ? p2Out : '-'}</span>
-                    </div>
-                    {/* Empty placeholder spacer (occupies 11th col to align precisely with back TOT) */}
-                    <div className="bg-gray-50/20 flex flex-col justify-around py-1.5 text-center select-none opacity-40">
-                      <span className="text-xs font-medium h-5 flex items-center justify-center text-gray-400">-</span>
-                      <span className="text-[11px] font-medium text-gray-400 h-4 flex items-center justify-center">-</span>
-                      <span className="text-[11px] font-medium text-gray-400 h-6 flex items-center justify-center">-</span>
-                      <span className="text-[11px] font-medium text-gray-400 h-6 flex items-center justify-center">-</span>
+                      <span className="text-sm font-black text-emerald-800 h-6 flex items-center justify-center bg-emerald-50/40">{p1Out > 0 ? p1Out : '-'}</span>
+                      <span className="text-sm font-black text-teal-850 h-6 flex items-center justify-center bg-teal-50/40">{p2Out > 0 ? p2Out : '-'}</span>
                     </div>
                   </div>
                 </div>
@@ -916,13 +907,13 @@ export default function App() {
 
               {/* Back Nine layout */}
               <div className="w-full">
-                <span className="text-xs font-black text-gray-500 block mb-1.5 px-1 tracking-wide">Back</span>
+                <span className="text-xs font-black text-gray-500 block mb-1.5 px-1 tracking-wide">⛳ Back</span>
                 <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center w-full">
                   <div className="w-12 bg-gray-50 flex flex-col justify-around text-xs font-extrabold text-gray-500 py-1.5 border-r border-gray-300 shrink-0 select-none">
-                    <span className="h-5 flex items-center justify-center text-gray-600 font-extrabold">Hole</span>
-                    <span className="h-4 flex items-center justify-center text-red-600 font-black tracking-normal">Par</span>
-                    <span className="h-6 flex items-center justify-center text-emerald-800 font-black">SK</span>
-                    <span className="h-6 flex items-center justify-center text-teal-800 font-black">KY</span>
+                    <span className="h-5 flex items-center justify-center text-gray-600 font-extrabold text-sm">Hole</span>
+                    <span className="h-4 flex items-center justify-center text-red-600 font-black tracking-normal text-xs">Par</span>
+                    <span className="h-6 flex items-center justify-center text-emerald-800 font-black text-sm">SK</span>
+                    <span className="h-6 flex items-center justify-center text-teal-800 font-black text-sm">KY</span>
                   </div>
                   {/* Grid for 9 holes + IN + TOT column (11 columns total) */}
                   <div className="flex-1 grid grid-cols-11 divide-x divide-gray-200">
@@ -942,7 +933,7 @@ export default function App() {
                               : 'cursor-default grayscale-[20%] opacity-85'
                           }`}
                         >
-                          <span className={`text-xs font-bold h-5 flex items-center justify-center ${isClickable ? 'text-amber-800 font-black' : 'text-gray-500'}`}>
+                          <span className={`text-sm font-bold h-5 flex items-center justify-center ${isClickable ? 'text-amber-800 font-black text-sm' : 'text-gray-500'}`}>
                             {h.hole}
                           </span>
                           <span className="text-xs font-black text-red-500 h-4 flex items-center justify-center">
@@ -959,17 +950,17 @@ export default function App() {
                     })}
                     {/* IN subtotal column (occupies 10th col) */}
                     <div className="bg-gray-50 flex flex-col justify-around py-1.5 text-center select-none font-bold">
-                      <span className="text-xs font-black h-5 flex items-center justify-center text-gray-700 bg-gray-100/50">IN</span>
+                      <span className="text-sm font-black h-5 flex items-center justify-center text-gray-700 bg-gray-100/50">IN</span>
                       <span className="text-[11px] font-black text-red-600 h-4 flex items-center justify-center">{parIn}</span>
-                      <span className="text-[11px] font-black text-emerald-800 h-6 flex items-center justify-center bg-emerald-50/40">{p1In > 0 ? p1In : '-'}</span>
-                      <span className="text-[11px] font-black text-teal-855 h-6 flex items-center justify-center bg-teal-50/40">{p2In > 0 ? p2In : '-'}</span>
+                      <span className="text-sm font-black text-emerald-800 h-6 flex items-center justify-center bg-emerald-50/40">{p1In > 0 ? p1In : '-'}</span>
+                      <span className="text-sm font-black text-teal-855 h-6 flex items-center justify-center bg-teal-50/40">{p2In > 0 ? p2In : '-'}</span>
                     </div>
                     {/* TOT total column (occupies 11th col) */}
                     <div className="bg-indigo-50/40 flex flex-col justify-around py-1.5 text-center select-none font-bold">
-                      <span className="text-xs font-black h-5 flex items-center justify-center text-indigo-900 bg-indigo-100/40">TOT</span>
+                      <span className="text-sm font-black h-5 flex items-center justify-center text-indigo-900 bg-indigo-100/40">TOT</span>
                       <span className="text-[11px] font-black text-red-655 h-4 flex items-center justify-center">{parTotal}</span>
-                      <span className="text-xs font-black text-emerald-800 h-6 flex items-center justify-center bg-emerald-100/55">{p1Total > 0 ? p1Total : '-'}</span>
-                      <span className="text-xs font-black text-teal-800 h-6 flex items-center justify-center bg-teal-100/55">{p2Total > 0 ? p2Total : '-'}</span>
+                      <span className="text-sm font-black text-emerald-800 h-6 flex items-center justify-center bg-emerald-100/55">{p1Total > 0 ? p1Total : '-'}</span>
+                      <span className="text-sm font-black text-teal-800 h-6 flex items-center justify-center bg-teal-100/55">{p2Total > 0 ? p2Total : '-'}</span>
                     </div>
                   </div>
                 </div>
@@ -988,7 +979,7 @@ export default function App() {
                       <h3 className="text-xl font-black text-emerald-800 tracking-wide">
                         ⛳ HOLE {editingHoleIndex + 1}
                       </h3>
-                      <span className="text-[12px] uppercase font-bold text-gray-500">
+                      <span className="text-sm font-extrabold text-emerald-700 uppercase">
                         Par {courseHolePars[editingHoleIndex] || 4}
                       </span>
                     </div>
@@ -998,29 +989,6 @@ export default function App() {
                       className="text-gray-400 hover:text-gray-600 font-bold text-2xl p-1"
                     >
                       ✕
-                    </button>
-                  </div>
-
-                  {/* Hole Navigator within modal for ease of use */}
-                  <div className="flex justify-between items-center bg-gray-50 p-2.5 rounded-none border border-gray-200">
-                    <button
-                      type="button"
-                      onClick={() => setEditingHoleIndex(prev => Math.max(0, prev - 1))}
-                      disabled={editingHoleIndex === 0}
-                      className="text-xs text-emerald-600 font-bold hover:text-emerald-800 disabled:opacity-30 px-3 py-1.5 bg-white border border-gray-200 shadow-none rounded-none transition"
-                    >
-                      ◀ Prev
-                    </button>
-                    <span className="text-xs font-black text-gray-600">
-                      Record scores
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setEditingHoleIndex(prev => Math.min(17, prev + 1))}
-                      disabled={editingHoleIndex === 17}
-                      className="text-xs text-emerald-600 font-bold hover:text-emerald-800 disabled:opacity-30 px-3 py-1.5 bg-white border border-gray-200 shadow-none rounded-none transition"
-                    >
-                      Next ▶
                     </button>
                   </div>
 
@@ -1036,7 +1004,7 @@ export default function App() {
                       {/* SK Strokes */}
                       <div className="w-full flex flex-col items-center text-center">
                         <span className="text-[11px] font-extrabold text-gray-500 uppercase">Strokes</span>
-                        <div className="flex items-center gap-1.5 bg-emerald-50/40 p-1 rounded-none border border-emerald-200 mt-1">
+                        <div className="w-28 h-10 flex justify-between items-center bg-emerald-50/40 p-1 rounded-none border border-emerald-200 mt-1">
                           <button
                             type="button"
                             onClick={() => modifyScoreboardHoleIndex(editingHoleIndex, 'iron', -1)}
@@ -1044,7 +1012,7 @@ export default function App() {
                           >
                             −
                           </button>
-                          <span className="w-6 text-center font-black text-lg text-emerald-800">
+                          <span className="flex-1 text-center font-black text-lg text-emerald-800">
                             {scoreboardHoles[editingHoleIndex].iron}
                           </span>
                           <button
@@ -1060,7 +1028,7 @@ export default function App() {
                       {/* SK Putts */}
                       <div className="w-full flex flex-col items-center text-center">
                         <span className="text-[11px] font-extrabold text-gray-500 uppercase">Putts</span>
-                        <div className="flex items-center gap-1.5 bg-emerald-50/40 p-1 rounded-none border border-emerald-200 mt-1">
+                        <div className="w-28 h-10 flex justify-between items-center bg-emerald-50/40 p-1 rounded-none border border-emerald-200 mt-1">
                           <button
                             type="button"
                             onClick={() => modifyScoreboardHoleIndex(editingHoleIndex, 'putt', -1)}
@@ -1068,7 +1036,7 @@ export default function App() {
                           >
                             −
                           </button>
-                          <span className="w-6 text-center font-black text-lg text-emerald-800">
+                          <span className="flex-1 text-center font-black text-lg text-emerald-800">
                             {scoreboardHoles[editingHoleIndex].putt}
                           </span>
                           <button
@@ -1081,8 +1049,8 @@ export default function App() {
                         </div>
                       </div>
 
-                      <div className="text-sm font-bold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-none border border-emerald-200">
-                        Total: <strong className="font-extrabold">{scoreboardHoles[editingHoleIndex].iron + scoreboardHoles[editingHoleIndex].putt}</strong>
+                      <div className="w-28 h-10 flex justify-center items-center bg-emerald-50 p-1 rounded-none border border-emerald-200 mt-1 text-sm font-bold text-emerald-800 text-center">
+                        Total: &nbsp;<strong className="font-extrabold text-base">{scoreboardHoles[editingHoleIndex].iron + scoreboardHoles[editingHoleIndex].putt}</strong>
                       </div>
                     </div>
 
@@ -1095,7 +1063,7 @@ export default function App() {
                       {/* KY Strokes */}
                       <div className="w-full flex flex-col items-center text-center">
                         <span className="text-[11px] font-extrabold text-gray-500 uppercase">Strokes</span>
-                        <div className="flex items-center gap-1.5 bg-teal-50/40 p-1 rounded-none border border-teal-200 mt-1">
+                        <div className="w-28 h-10 flex justify-between items-center bg-teal-50/40 p-1 rounded-none border border-teal-200 mt-1">
                           <button
                             type="button"
                             onClick={() => modifyScoreboardHoleIndex(editingHoleIndex, 'iron2', -1)}
@@ -1103,7 +1071,7 @@ export default function App() {
                           >
                             −
                           </button>
-                          <span className="w-6 text-center font-black text-lg text-teal-800">
+                          <span className="flex-1 text-center font-black text-lg text-teal-800">
                             {scoreboardHoles[editingHoleIndex].iron2}
                           </span>
                           <button
@@ -1119,7 +1087,7 @@ export default function App() {
                       {/* KY Putts */}
                       <div className="w-full flex flex-col items-center text-center">
                         <span className="text-[11px] font-extrabold text-gray-500 uppercase">Putts</span>
-                        <div className="flex items-center gap-1.5 bg-teal-50/40 p-1 rounded-none border border-teal-200 mt-1">
+                        <div className="w-28 h-10 flex justify-between items-center bg-teal-50/40 p-1 rounded-none border border-teal-200 mt-1">
                           <button
                             type="button"
                             onClick={() => modifyScoreboardHoleIndex(editingHoleIndex, 'putt2', -1)}
@@ -1127,7 +1095,7 @@ export default function App() {
                           >
                             −
                           </button>
-                          <span className="w-6 text-center font-black text-lg text-teal-800">
+                          <span className="flex-1 text-center font-black text-lg text-teal-800">
                             {scoreboardHoles[editingHoleIndex].putt2}
                           </span>
                           <button
@@ -1140,8 +1108,8 @@ export default function App() {
                         </div>
                       </div>
 
-                      <div className="text-sm font-bold text-teal-800 bg-teal-50 px-3 py-1 rounded-none border border-teal-200">
-                        Total: <strong className="font-extrabold">{scoreboardHoles[editingHoleIndex].iron2 + scoreboardHoles[editingHoleIndex].putt2}</strong>
+                      <div className="w-28 h-10 flex justify-center items-center bg-teal-50 p-1 rounded-none border border-teal-200 mt-1 text-sm font-bold text-teal-800 text-center">
+                        Total: &nbsp;<strong className="font-extrabold text-base">{scoreboardHoles[editingHoleIndex].iron2 + scoreboardHoles[editingHoleIndex].putt2}</strong>
                       </div>
                     </div>
 
