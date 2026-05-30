@@ -72,22 +72,7 @@ export default function App() {
         console.error("Error reading scores from localStorage", e);
       }
     }
-    return [
-      {
-        id: 1,
-        courseId: 1,
-        courseName: 'Jeju Nine Bridges CC',
-        date: '05/10/2026',
-        holes: Array.from({ length: 18 }, (_, i) => ({
-          hole: i + 1,
-          iron: 3,
-          putt: 2,
-          iron2: 4,
-          putt2: 2
-        })),
-        photos: []
-      }
-    ];
+    return [];
   });
 
   const [courses, setCourses] = useState(() => {
@@ -140,6 +125,9 @@ export default function App() {
   const [syncStatus, setSyncStatus] = useState('syncing'); // 'syncing', 'synced', 'error'
   const [lastSyncedTime, setLastSyncedTime] = useState('Connecting...');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false); // Settings modal
+  const [cloudCoursesCount, setCloudCoursesCount] = useState('-');
+  const [cloudScoresCount, setCloudScoresCount] = useState('-');
+  const [settingsMessage, setSettingsMessage] = useState('');
 
   const syncChannel = 'skky_golf_live_sync_signey99';
   const isFirebaseListening = useRef(false);
@@ -200,6 +188,56 @@ export default function App() {
     }
   };
 
+  // Handle manual force upload to cloud
+  const handleForceUpload = async () => {
+    try {
+      setSettingsMessage('Uploading data to cloud...');
+      const timestamp = Date.now();
+      localStorage.setItem('golf_diary_last_sync_timestamp', String(timestamp));
+      await uploadToCloud(scores, courses, timestamp);
+      
+      setCloudCoursesCount(courses.length);
+      setCloudScoresCount(scores.length);
+      setSettingsMessage('📤 Successfully uploaded local data to cloud database!');
+      setTimeout(() => setSettingsMessage(''), 4500);
+    } catch (e) {
+      console.error(e);
+      setSettingsMessage('❌ Upload failed: ' + e.message);
+    }
+  };
+
+  // Handle manual force download from cloud
+  const handleForceDownload = async () => {
+    try {
+      setSettingsMessage('Downloading data from cloud...');
+      const res = await fetch(`https://kvdb.io/K9m8b8M8PnHpMhpbUfHqpS/${syncChannel}`);
+      if (res.ok) {
+        const cloudData = await res.json();
+        if (cloudData && cloudData.updatedAt) {
+          lastDownloadedDataStringRef.current = JSON.stringify({
+            scores: cloudData.scores || [],
+            courses: cloudData.courses || []
+          });
+          setScores(cloudData.scores || []);
+          setCourses(cloudData.courses || []);
+          localStorage.setItem('golf_diary_scores', JSON.stringify(cloudData.scores || []));
+          localStorage.setItem('golf_diary_courses', JSON.stringify(cloudData.courses || []));
+          localStorage.setItem('golf_diary_last_sync_timestamp', String(cloudData.updatedAt));
+          
+          setCloudCoursesCount((cloudData.courses || []).length);
+          setCloudScoresCount((cloudData.scores || []).length);
+          setSettingsMessage('📥 Successfully downloaded cloud database to this device!');
+          setTimeout(() => setSettingsMessage(''), 4500);
+          return;
+        }
+      }
+      setSettingsMessage('❌ No backup data found in the cloud.');
+    } catch (e) {
+      console.error(e);
+      setSettingsMessage('❌ Download failed: ' + e.message);
+    }
+  };
+
   // Launch Dual Sync Observers
   useEffect(() => {
     let fbRef = null;
@@ -226,22 +264,27 @@ export default function App() {
 
             fbRef.on('value', (snapshot) => {
               const cloudData = snapshot.val();
-              if (cloudData && cloudData.updatedAt) {
-                const localTimestamp = Number(localStorage.getItem('golf_diary_last_sync_timestamp') || '0');
+              if (cloudData) {
+                if (cloudData.courses) setCloudCoursesCount(cloudData.courses.length);
+                if (cloudData.scores) setCloudScoresCount(cloudData.scores.length);
+                
+                if (cloudData.updatedAt) {
+                  const localTimestamp = Number(localStorage.getItem('golf_diary_last_sync_timestamp') || '0');
 
-                if (cloudData.updatedAt > localTimestamp) {
-                  console.log("[Firebase RTDB] Live sync update received!", cloudData);
-                  lastDownloadedDataStringRef.current = JSON.stringify({
-                    scores: cloudData.scores || [],
-                    courses: cloudData.courses || []
-                  });
-                  if (cloudData.scores) setScores(cloudData.scores);
-                  if (cloudData.courses) setCourses(cloudData.courses);
-                  localStorage.setItem('golf_diary_scores', JSON.stringify(cloudData.scores));
-                  localStorage.setItem('golf_diary_courses', JSON.stringify(cloudData.courses));
-                  localStorage.setItem('golf_diary_last_sync_timestamp', String(cloudData.updatedAt));
-                  setLastSyncedTime(new Date(cloudData.updatedAt).toLocaleTimeString() + ' (Firebase)');
-                  setSyncStatus('synced');
+                  if (cloudData.updatedAt > localTimestamp) {
+                    console.log("[Firebase RTDB] Live sync update received!", cloudData);
+                    lastDownloadedDataStringRef.current = JSON.stringify({
+                      scores: cloudData.scores || [],
+                      courses: cloudData.courses || []
+                    });
+                    if (cloudData.scores) setScores(cloudData.scores);
+                    if (cloudData.courses) setCourses(cloudData.courses);
+                    localStorage.setItem('golf_diary_scores', JSON.stringify(cloudData.scores));
+                    localStorage.setItem('golf_diary_courses', JSON.stringify(cloudData.courses));
+                    localStorage.setItem('golf_diary_last_sync_timestamp', String(cloudData.updatedAt));
+                    setLastSyncedTime(new Date(cloudData.updatedAt).toLocaleTimeString() + ' (Firebase)');
+                    setSyncStatus('synced');
+                  }
                 }
               }
             }, (err) => {
@@ -264,34 +307,42 @@ export default function App() {
           const res = await fetch(`https://kvdb.io/K9m8b8M8PnHpMhpbUfHqpS/${syncChannel}`);
           if (res.ok) {
             const cloudData = await res.json();
-            if (cloudData && cloudData.updatedAt) {
-              const localTimestamp = Number(localStorage.getItem('golf_diary_last_sync_timestamp') || '0');
+            if (cloudData) {
+              if (cloudData.courses) setCloudCoursesCount(cloudData.courses.length);
+              if (cloudData.scores) setCloudScoresCount(cloudData.scores.length);
 
-              if (cloudData.updatedAt > localTimestamp) {
-                console.log("[Web Sync Fallback] Newer data loaded!", cloudData);
-                lastDownloadedDataStringRef.current = JSON.stringify({
-                  scores: cloudData.scores || [],
-                  courses: cloudData.courses || []
-                });
-                if (cloudData.scores) setScores(cloudData.scores);
-                if (cloudData.courses) setCourses(cloudData.courses);
-                localStorage.setItem('golf_diary_scores', JSON.stringify(cloudData.scores));
-                localStorage.setItem('golf_diary_courses', JSON.stringify(cloudData.courses));
-                localStorage.setItem('golf_diary_last_sync_timestamp', String(cloudData.updatedAt));
-                setLastSyncedTime(new Date(cloudData.updatedAt).toLocaleTimeString() + ' (Fallback)');
-                setSyncStatus('synced');
-              } else if (localTimestamp > cloudData.updatedAt) {
-                // Upload our newer local data to fallback server to maintain backup parity
-                await silentUploadToFallback(scoresRef.current, coursesRef.current, localTimestamp);
-              } else {
-                setSyncStatus('synced');
-                setLastSyncedTime(new Date(cloudData.updatedAt).toLocaleTimeString());
+              if (cloudData.updatedAt) {
+                const localTimestamp = Number(localStorage.getItem('golf_diary_last_sync_timestamp') || '0');
+
+                if (cloudData.updatedAt > localTimestamp) {
+                  console.log("[Web Sync Fallback] Newer data loaded!", cloudData);
+                  lastDownloadedDataStringRef.current = JSON.stringify({
+                    scores: cloudData.scores || [],
+                    courses: cloudData.courses || []
+                  });
+                  if (cloudData.scores) setScores(cloudData.scores);
+                  if (cloudData.courses) setCourses(cloudData.courses);
+                  localStorage.setItem('golf_diary_scores', JSON.stringify(cloudData.scores));
+                  localStorage.setItem('golf_diary_courses', JSON.stringify(cloudData.courses));
+                  localStorage.setItem('golf_diary_last_sync_timestamp', String(cloudData.updatedAt));
+                  setLastSyncedTime(new Date(cloudData.updatedAt).toLocaleTimeString() + ' (Fallback)');
+                  setSyncStatus('synced');
+                } else if (localTimestamp > cloudData.updatedAt) {
+                  // Upload our newer local data to fallback server to maintain backup parity
+                  await silentUploadToFallback(scoresRef.current, coursesRef.current, localTimestamp);
+                } else {
+                  setSyncStatus('synced');
+                  setLastSyncedTime(new Date(cloudData.updatedAt).toLocaleTimeString());
+                }
               }
             }
           } else if (res.status === 404) {
             // First time bootstrapping
             const localTimestamp = Number(localStorage.getItem('golf_diary_last_sync_timestamp') || '0');
-            await silentUploadToFallback(scoresRef.current, coursesRef.current, localTimestamp || Date.now());
+            // ONLY upload if the user actually has local data to avoid overriding cloud with empty state
+            if (scoresRef.current.length > 0 || coursesRef.current.length > 1) {
+              await silentUploadToFallback(scoresRef.current, coursesRef.current, localTimestamp || Date.now());
+            }
           }
         } catch (e) {
           // quiet error handling on timer
@@ -1558,45 +1609,84 @@ export default function App() {
       {/* Firebase Database Settings Modal */}
       {isSettingsOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-sm border border-gray-150 shadow-2xl space-y-4 animate-fade-in text-left">
-            <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-              <h3 className="font-extrabold text-gray-800 flex items-center gap-1.5">
-                <span>🔥</span> Firebase Dynamic Sync
+          <div className="bg-white rounded-none p-6 w-full max-w-sm border border-gray-300 shadow-2xl space-y-4 animate-fade-in text-left">
+            <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+              <h3 className="font-extrabold text-emerald-800 flex items-center gap-1.5 uppercase tracking-wide">
+                <span>🔥</span> Dynamic Sync Settings
               </h3>
               <button 
                 type="button"
                 onClick={() => setIsSettingsOpen(false)}
-                className="text-gray-400 hover:text-gray-650 text-lg font-bold p-1 outline-none"
+                className="text-gray-400 hover:text-gray-650 text-lg font-bold p-1 outline-none animate-fadeIn"
               >
                 ✕
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3.5 pb-2">
               <div>
-                <label className="block text-[11px] font-bold text-gray-400 uppercase mb-1">Firebase Realtime DB URL</label>
+                <label className="block text-[11px] font-black text-gray-500 uppercase mb-1 tracking-wider">Firebase Realtime DB URL</label>
                 <input 
                   type="text" 
-                  className="w-full text-xs font-semibold p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 text-gray-800"
+                  className="w-full text-xs font-semibold p-2.5 border border-gray-300 rounded-none focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-white text-gray-850"
                   value={firebaseUrl}
                   onChange={(e) => setFirebaseUrl(e.target.value)}
                   placeholder="https://your-project-rtdb.firebaseio.com"
                 />
-                <p className="text-[9px] text-gray-400 mt-1 leading-relaxed">
-                  * Leaving it empty automatically reverts to default live channel.
+                <p className="text-[10px] text-gray-400 mt-1 leading-relaxed">
+                  * Leaving empty defaults to global high-speed channel.
                 </p>
               </div>
 
-              <div className="bg-emerald-50/50 p-3.5 rounded-2xl border border-emerald-100 text-[10px] text-emerald-950 leading-relaxed font-semibold">
-                📌 <strong>실시간 자동 동기화 안내:</strong><br/>
-                휴대폰 앱과 AI Studio 화면이 동일한 데이터베이스 채널을 사용합니다. 한쪽에서 점수를 입력하거나 코스를 저장하면, 실시간으로 다른 화면이 동기화됩니다!
+              {/* Dynamic comparison card */}
+              <div className="p-3 bg-gray-50 border border-gray-200 rounded-none text-xs space-y-1.5">
+                <div className="font-black text-emerald-800 text-[11px] uppercase tracking-wider">📊 SYNC STATUS (실시간 모니터)</div>
+                <div className="flex justify-between font-bold text-gray-700">
+                  <span>📱 이 전화기 / 기기:</span>
+                  <span className="font-black text-gray-950">코스 {courses.length}개 | 라운드 {scores.length}개</span>
+                </div>
+                <div className="flex justify-between font-bold text-teal-800">
+                  <span>☁️ 클라우드 서버:</span>
+                  <span className="font-black text-teal-950">코스 {cloudCoursesCount}개 | 라운드 {cloudScoresCount}개</span>
+                </div>
+              </div>
+
+              {/* Action Message Log */}
+              {settingsMessage && (
+                <div className="p-2.5 bg-emerald-50 border border-emerald-250 text-[11px] text-emerald-950 font-extrabold text-center animate-pulse leading-snug">
+                  {settingsMessage}
+                </div>
+              )}
+
+              {/* Force sync buttons */}
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleForceUpload}
+                  className="py-2.5 px-2 bg-emerald-800 hover:bg-emerald-700 active:scale-[0.98] transition-all text-white font-black text-xs text-center border-0 shadow-none rounded-none"
+                >
+                  📤 강제 업로드<br/>
+                  <span className="text-[9px] opacity-80 font-normal">(Phone → Cloud)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleForceDownload}
+                  className="py-2.5 px-2 bg-indigo-800 hover:bg-indigo-750 active:scale-[0.98] transition-all text-white font-black text-xs text-center border-0 shadow-none rounded-none"
+                >
+                  📥 강제 다운로드<br/>
+                  <span className="text-[9px] opacity-80 font-normal">(Cloud → Phone)</span>
+                </button>
+              </div>
+
+              <div className="text-[10px] leading-relaxed text-gray-500 font-semibold mt-1 bg-gray-50/70 p-2 border border-gray-150 font-sans">
+                💡 <strong>동기화 방법:</strong> 프리뷰웹에 폰에서 넣은 코스가 안보인다면, <b>전화기(에뮬레이터) 앱의 설정(우측상단 톱니바퀴)에서 <span className="text-emerald-800 font-black">📤 강제 업로드</span></b>를 클릭 후, <b>프리뷰웹에서 설정 열고 <span className="text-indigo-800 font-black">📥 강제 다운로드</span></b>를 클릭하세요!
               </div>
             </div>
 
             <button
               type="button"
               onClick={() => setIsSettingsOpen(false)}
-              className="w-full py-3 bg-gray-800 hover:bg-gray-900 text-white font-extrabold text-xs rounded-xl shadow-md transition active:scale-95 outline-none"
+              className="w-full py-3 bg-gray-800 hover:bg-gray-900 text-white font-black text-sm rounded-none shadow transition active:scale-95 outline-none"
             >
               닫기 (Close)
             </button>
