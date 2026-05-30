@@ -66,7 +66,8 @@ export default function App() {
     const saved = localStorage.getItem('golf_diary_scores');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (parsed) return parsed;
       } catch (e) {
         console.error("Error reading scores from localStorage", e);
       }
@@ -93,7 +94,8 @@ export default function App() {
     const saved = localStorage.getItem('golf_diary_courses');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (parsed) return parsed;
       } catch (e) {
         console.error("Error reading courses from localStorage", e);
       }
