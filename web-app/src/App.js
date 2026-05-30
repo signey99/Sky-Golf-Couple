@@ -683,94 +683,33 @@ export default function App() {
     >
       
       {/* Top Header App Bar */}
-      <header className="text-white py-4 px-5 text-left shadow-md select-none relative animate-fade-in pr-20" style={{ backgroundColor: '#0f766e' }}>
-        <h1 className="text-3xl font-black tracking-wide text-[#f8fafc] flex items-center" style={{ fontFamily: '"Outfit", "Noto Sans KR", sans-serif' }}>
-          {/* Custom Stylized Couple SVG Icon representing the couple */}
-          <svg 
-            className="w-10 h-10 mr-2.5 rounded-full border border-emerald-500 shadow-md bg-emerald-800 p-0.5 shrink-0" 
-            viewBox="0 0 120 120" 
-            fill="none" 
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <defs>
-              <linearGradient id="golfParkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#34d399" />
-                <stop offset="50%" stopColor="#10b981" />
-                <stop offset="100%" stopColor="#047857" />
-              </linearGradient>
-              <linearGradient id="manGlasses" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#10b981" />
-                <stop offset="50%" stopColor="#22c55e" />
-                <stop offset="100%" stopColor="#facc15" />
-              </linearGradient>
-              <linearGradient id="womanGlasses" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#a855f7" />
-                <stop offset="50%" stopColor="#d946ef" />
-                <stop offset="100%" stopColor="#6366f1" />
-              </linearGradient>
-            </defs>
-
-            {/* Background emerald grass circle */}
-            <circle cx="60" cy="60" r="58" fill="url(#golfParkGradient)" />
-
-            {/* Stylized trees icon inside background */}
-            <circle cx="30" cy="35" r="12" fill="#065f46" opacity="0.3" />
-            <circle cx="90" cy="40" r="10" fill="#065f46" opacity="0.3" />
-
-            {/* Male Figure (Left) */}
-            <g id="man-group">
-              {/* Body / Shirt */}
-              <path d="M15 120 C15 90, 30 80, 52 80 C58 90, 55 105, 52 110 L15 120 Z" fill="#ffffff" />
-              <path d="M40 80 L44 95 L48 80 Z" fill="#cbd5e1" />
-              
-              {/* Face / Chin */}
-              <path d="M26 50 C26 72, 52 72, 52 50" fill="#fed7aa" />
-              
-              {/* Sunglasses (Green reflection sports) */}
-              <path d="M25 48 Q39 53, 53 48 C51 55, 27 55, 25 48 Z" fill="url(#manGlasses)" />
-              <path d="M38 48 Q39 51, 40 48" stroke="#1e293b" strokeWidth="1.5" />
-              
-              {/* Cap (White sports cap with black Nike swoosh) */}
-              <path d="M24 45 C24 25, 54 25, 54 45 Z" fill="#ffffff" />
-              <path d="M35 34 Q40 31, 44 32 Q39 35, 34 37 Z" fill="#0f172a" />
-              <path d="M20 44 Q35 46, 52 46 Q55 42, 53 41 L22 41 Z" fill="#e2e8f0" />
-            </g>
-
-            {/* Female Figure (Right) */}
-            <g id="woman-group">
-              {/* Body / Shirt */}
-              <path d="M55 120 C57 95, 80 82, 105 82 C105 100, 100 110, 105 120 Z" fill="#ffffff" />
-              <path d="M72 82 L76 96 L80 82 Z" fill="#1e293b" />
-              
-              {/* Face */}
-              <path d="M58 52 C58 74, 84 74, 84 52" fill="#ffedd5" />
-              
-              {/* Sunglasses (Purple sports) */}
-              <path d="M57 51 Q71 55, 85 51 C83 58, 59 58, 57 51 Z" fill="url(#womanGlasses)" />
-              <path d="M70 51 Q71 54, 72 51" stroke="#1e293b" strokeWidth="1.5" />
-              
-              {/* Visor Cap (White PING cap) */}
-              <path d="M52 49 Q75 51, 88 47 Q85 41, 80 43 L54 44 Z" fill="#ffffff" />
-              <path d="M52 49 Q75 51, 88 47" stroke="#cbd5e1" strokeWidth="2" />
-              <path d="M58 45 C58 35, 82 35, 82 45 Z" fill="#ffffff" />
-              <rect x="64" y="38" width="12" height="4" rx="1" fill="#1e293b" />
-            </g>
-          </svg>
+      <header className="text-white py-3.5 px-5 text-left shadow-md select-none relative animate-fade-in" style={{ backgroundColor: '#0f766e' }}>
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-3">
+            <img 
+              src={process.env.PUBLIC_URL + '/logo.svg'} 
+              alt="SkKy Golf Logo" 
+              className="w-14 h-14 object-contain rounded-xl shadow-md border border-emerald-500/20 bg-emerald-800/10 p-0.5 shrink-0"
+            />
+            <div>
+              <h1 className="text-3xl font-black tracking-wide text-[#f8fafc] leading-tight" style={{ fontFamily: '"Outfit", "Noto Sans KR", sans-serif' }}>
+                SkKy Golf
+              </h1>
+              <p className="text-xl text-emerald-50 mt-0.5 font-bold leading-none animate-fadeIn" style={{ fontFamily: '"Nanum Pen Script", cursive' }}>시근이와 계영이의 골프 여행기</p>
+            </div>
+          </div>
           
-          <span>SkKy Golf</span>
-          
-          {/* Subtle sync settings gear to provide access to cloud sync */}
+          {/* Subtle sync settings gear positioned on the far right */}
           <button 
             type="button"
             onClick={() => setIsSettingsOpen(true)}
-            className="ml-2.5 text-lg opacity-85 hover:opacity-100 active:scale-90 transition duration-150 p-1 bg-[#115e59] hover:bg-[#134e4a] rounded-lg shadow-sm flex items-center justify-center border-0"
-            style={{ minHeight: '32px', minWidth: '32px' }}
+            className="text-lg opacity-85 hover:opacity-100 active:scale-90 transition duration-150 p-1.5 bg-[#115e59] hover:bg-[#134e4a] rounded-xl shadow-sm flex items-center justify-center border-0 shrink-0"
+            style={{ minHeight: '36px', minWidth: '36px' }}
             title="Dynamic Sync Settings"
           >
             ⚙️
           </button>
-        </h1>
-        <p className="text-xl text-emerald-50 mt-1 font-bold leading-none animate-fadeIn" style={{ fontFamily: '"Nanum Pen Script", cursive' }}>시근이와 계영이의 골프 여행기</p>
+        </div>
       </header>
 
       {/* Main Content Area */}
