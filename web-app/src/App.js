@@ -725,7 +725,22 @@ export default function App() {
         {activeTab === 'score' && (
           <div className="space-y-4 fade-in">
             
-            {/* Decoupled Round Setup Boxes */}
+            {/* Live Scoreboard Header & Save Button at the very top */}
+            <div className="flex items-center justify-between px-1 w-full">
+              <span className="text-lg font-black text-emerald-800 tracking-wider uppercase flex items-center">
+                <span className="mr-2">📝</span>Live Scoreboard
+              </span>
+              <button 
+                type="button"
+                onClick={handleSaveScore}
+                disabled={(!isNewCourse && !selectedCourseId) || (isNewCourse && !newCourseNameInput.trim())}
+                className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-extrabold px-3.5 py-1.5 rounded-xl text-xs shadow-md transition active:scale-95 outline-none select-none"
+              >
+                Save
+              </button>
+            </div>
+
+            {/* Decoupled Round Setup Boxes (under the header) */}
             <div className="grid grid-cols-2 gap-3.5">
               {/* Course Box Card */}
               <div className="bg-transparent p-0 border-0 shadow-none flex flex-col justify-between">
@@ -781,21 +796,9 @@ export default function App() {
               </div>
             )}
 
-            {/* Live Matrix Section (Split tables in UI Grid) - Positioned immediately under setup */}
+            {/* Live Matrix Section (Split tables in UI Grid) */}
             <div className="bg-transparent p-0 rounded-none border-0 shadow-none space-y-3.5 w-full">
-              <div className="flex items-center justify-between px-1 w-full">
-                <span className="text-lg font-black text-emerald-800 tracking-wider uppercase flex items-center">
-                  <span className="mr-2">📝</span>Live Scoreboard
-                </span>
-                <button 
-                  type="button"
-                  onClick={handleSaveScore}
-                  disabled={(!isNewCourse && !selectedCourseId) || (isNewCourse && !newCourseNameInput.trim())}
-                  className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-extrabold px-3.5 py-1.5 rounded-xl text-xs shadow-md transition active:scale-95 outline-none select-none"
-                >
-                  Save
-                </button>
-              </div>
+
 
               {/* Front Nine layout */}
               <div className="w-full">
@@ -1341,20 +1344,35 @@ export default function App() {
                     </div>
 
                     {/* Form Controls */}
-                    <div className="flex gap-2.5 pt-2">
-                      <button 
-                        type="button"
-                        onClick={closeCourseModal}
-                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-4 rounded-xl text-xs transition"
-                      >
-                        Cancel
-                      </button>
-                      <button 
-                        type="submit" 
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs transition active:scale-95"
-                      >
-                        Register
-                      </button>
+                    <div className="flex flex-col gap-2 pt-2">
+                      <div className="flex gap-2.5">
+                        <button 
+                          type="button"
+                          onClick={closeCourseModal}
+                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-4 rounded-xl text-xs transition"
+                        >
+                          Cancel
+                        </button>
+                        <button 
+                          type="submit" 
+                          className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs transition active:scale-95"
+                        >
+                          {editingCourseId ? 'Save' : 'Register'}
+                        </button>
+                      </div>
+
+                      {editingCourseId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleDeleteCourse(editingCourseId);
+                            closeCourseModal();
+                          }}
+                          className="w-full mt-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold py-2 px-4 rounded-xl text-xs transition-all flex items-center justify-center gap-1"
+                        >
+                          🗑️ Delete This Course
+                        </button>
+                      )}
                     </div>
 
                   </form>
@@ -1413,34 +1431,19 @@ export default function App() {
                 const courseHistories = scores.filter(s => s.courseId === course.id);
 
                 return (
-                  <div key={course.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3.5 relative">
+                  <div key={course.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3 relative">
                     
-                    {/* Row 1: Course Name (left) and Total Played Rounds (right) */}
+                    {/* Row 1: Course Name (left) and Edit button (right) */}
                     <div className="flex justify-between items-center gap-2">
-                      <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                        <h4 className="font-extrabold text-gray-800 text-base leading-snug truncate">{course.name}</h4>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => handleStartEditCourse(course)}
-                            className="px-2 py-1 text-xs text-emerald-700 font-extrabold bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200/50 flex items-center justify-center transition active:scale-95"
-                            title="Edit"
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteCourse(course.id)}
-                            className="px-2 py-1 text-xs text-rose-700 font-extrabold bg-rose-50 hover:bg-rose-100 rounded-lg border border-rose-200/50 flex items-center justify-center transition active:scale-95"
-                            title="Delete"
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      </div>
-                      <span className="shrink-0 text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">
-                        🏆 {courseHistories.length} Rounds
-                      </span>
+                      <h4 className="font-extrabold text-gray-800 text-base leading-snug truncate">{course.name}</h4>
+                      <button
+                        type="button"
+                        onClick={() => handleStartEditCourse(course)}
+                        className="px-2.5 py-1 text-xs text-emerald-700 font-extrabold bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200/50 flex items-center justify-center gap-1 transition active:scale-95 shrink-0"
+                        title="Edit"
+                      >
+                        ✏️ Edit
+                      </button>
                     </div>
 
                     {/* Row 2: Address */}
@@ -1448,30 +1451,29 @@ export default function App() {
                       <span className="text-emerald-600 scale-110">📍</span> {course.address || 'No address registered'}
                     </p>
 
-                    {/* Row 3: Telephone */}
-                    <p className="text-xs text-gray-500 font-bold flex items-center gap-1.5 mt-0.5 truncate">
-                      <span className="text-emerald-500 scale-110">📞</span> {course.phone || 'No phone number'}
-                    </p>
+                    {/* Row 3: Telephone (left) and Total Played Rounds (right) */}
+                    <div className="flex justify-between items-center text-xs text-gray-500 font-bold mt-0.5">
+                      <p className="flex items-center gap-1.5 truncate">
+                        <span className="text-emerald-500 scale-110">📞</span> {course.phone || 'No phone number'}
+                      </p>
+                      <span className="shrink-0 text-[11px] font-extrabold text-emerald-850 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100/50 flex items-center gap-0.5 select-none">
+                        🏆 {courseHistories.length} Rounds
+                      </span>
+                    </div>
 
-                    {/* Row 4: Total Par, Blue Rating/Slope, Lady Rating/Slope */}
-                    <div className="grid grid-cols-3 gap-2 text-xs bg-gray-50 p-2.5 rounded-xl border border-gray-150 text-center font-bold">
-                      <div className="flex flex-col items-center justify-center bg-white py-1.5 px-2 rounded-lg border border-gray-100 shadow-sm">
-                        <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-wider">Total Par</span>
-                        <span className="font-extrabold text-emerald-800 text-[13px] mt-1 flex items-center gap-0.5">
-                          <span>⛳</span> {course.totalPar || 72}
-                        </span>
+                    {/* Row 4: Total Par, Blue Course Rating/Slope, Lady Course Rating/Slope */}
+                    <div className="grid grid-cols-3 gap-2 text-xs bg-gray-50 p-2 rounded-xl border border-gray-150 text-center font-bold text-gray-700">
+                      <div className="flex flex-col items-center justify-center bg-white py-1.5 px-1 rounded-lg border border-gray-100 shadow-sm">
+                        <span className="text-[10px] text-gray-400 font-extrabold uppercase block leading-none">Total Par</span>
+                        <span className="text-emerald-800 text-xs font-black mt-1 block">par {course.totalPar || 72}</span>
                       </div>
-                      <div className="flex flex-col items-center justify-center bg-white py-1.5 px-2 rounded-lg border border-gray-100 shadow-sm">
-                        <span className="text-[10px] text-blue-500 font-extrabold uppercase tracking-wider">Blue Course</span>
-                        <span className="font-black text-blue-800 text-[11px] mt-1">
-                          {Number(course.blueRating || 72.0).toFixed(1)} (S:{course.blueSlope || 113})
-                        </span>
+                      <div className="flex flex-col items-center justify-center bg-white py-1.5 px-1 rounded-lg border border-gray-100 shadow-sm">
+                        <span className="text-[10px] text-blue-500 font-extrabold uppercase block leading-none">Blue Rating</span>
+                        <span className="text-blue-800 text-[11px] font-black mt-1 block">Blue {Number(course.blueRating || 72.0).toFixed(1)}/{course.blueSlope || 113}</span>
                       </div>
-                      <div className="flex flex-col items-center justify-center bg-white py-1.5 px-2 rounded-lg border border-gray-100 shadow-sm">
-                        <span className="text-[10px] text-pink-500 font-extrabold uppercase tracking-wider">Lady Course</span>
-                        <span className="font-black text-pink-800 text-[11px] mt-1">
-                          {Number(course.ladyRating || 72.0).toFixed(1)} (S:{course.ladySlope || 113})
-                        </span>
+                      <div className="flex flex-col items-center justify-center bg-white py-1.5 px-1 rounded-lg border border-gray-100 shadow-sm">
+                        <span className="text-[10px] text-pink-500 font-extrabold uppercase block leading-none">Lady Rating</span>
+                        <span className="text-pink-850 text-[11px] font-black mt-1 block">Lady {Number(course.ladyRating || 72.0).toFixed(1)}/{course.ladySlope || 113}</span>
                       </div>
                     </div>
 
@@ -1507,25 +1509,41 @@ export default function App() {
                   const totalIronsP2 = (score.holes || []).reduce((sum, h) => sum + (h.iron2 || 0), 0);
                   const totalPuttsP2 = (score.holes || []).reduce((sum, h) => sum + (h.putt2 || 0), 0);
 
+                  const formattedDate = formatPlayDate(score.date);
+                  const dateParts = formattedDate.split('/');
+                  const displayMonthDay = dateParts.length === 3 ? `${dateParts[0]}/${dateParts[1]}` : formattedDate;
+                  const displayYear = dateParts.length === 3 ? dateParts[2] : '';
+
                   return (
                     <div 
                       key={score.id} 
                       onClick={() => setSelectedHistoryScore(score)}
-                      className="bg-white rounded-2xl shadow-sm border border-gray-150 p-4 flex justify-between items-center cursor-pointer hover:bg-emerald-50/10 active:scale-[0.99] transition-all"
+                      className="bg-white rounded-2xl shadow-sm border border-gray-150 p-4 flex items-center gap-3.5 cursor-pointer hover:bg-emerald-50/10 active:scale-[0.99] transition-all"
                     >
-                      <div>
-                        <h3 className="font-extrabold text-gray-800 text-base leading-snug">{score.courseName}</h3>
-                        <p className="text-base text-gray-500 font-bold mt-1">{formatPlayDate(score.date)}</p>
+                      {/* Left: Two-line Date block */}
+                      <div className="flex flex-col items-center justify-center bg-emerald-50 text-emerald-800 rounded-xl px-2.5 py-1.5 min-w-[65px] border border-emerald-100/50 shrink-0 select-none text-center">
+                        <span className="text-sm font-black tracking-tight text-emerald-850 leading-none">{displayMonthDay}</span>
+                        <span className="text-[10px] text-emerald-600 font-bold mt-0.5 leading-none">{displayYear}</span>
                       </div>
-                      <div className="text-right flex flex-col gap-1 shrink-0 select-none border-l border-gray-100 pl-3.5">
-                        <span className="text-xs text-emerald-800 font-bold">
-                          SK: <strong className="font-black text-emerald-700 text-sm">{totalStrokesP1}</strong> <span className="text-[10px] text-gray-400 font-normal">({totalIronsP1} Strokes / {totalPuttsP1} Putts)</span>
-                        </span>
-                        {totalStrokesP2 > 0 && (
-                          <span className="text-xs text-teal-800 font-bold">
-                            KY: <strong className="font-black text-teal-700 text-sm">{totalStrokesP2}</strong> <span className="text-[10px] text-gray-400 font-normal">({totalIronsP2} Strokes / {totalPuttsP2} Putts)</span>
+
+                      {/* Right: Info Area (Course Name and Score Details below) */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-extrabold text-gray-800 text-base leading-snug truncate">{score.courseName}</h3>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs">
+                          <span className="text-emerald-800 font-bold">
+                            SK: <strong className="font-extrabold text-emerald-700 text-sm">{totalStrokesP1}</strong> <span className="text-[10.5px] text-gray-400 font-semibold">({totalIronsP1}/{totalPuttsP1})</span>
                           </span>
-                        )}
+                          {totalStrokesP2 > 0 && (
+                            <span className="text-teal-800 font-bold border-l border-gray-200 pl-3">
+                              KY: <strong className="font-extrabold text-teal-700 text-sm">{totalStrokesP2}</strong> <span className="text-[10.5px] text-gray-400 font-semibold">({totalIronsP2}/{totalPuttsP2})</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Chevron-style indicator */}
+                      <div className="text-gray-300 font-bold text-sm shrink-0 pl-1 select-none">
+                        ❯
                       </div>
                     </div>
                   );
