@@ -36,6 +36,12 @@ dependencies {
 }
 
 tasks.register<Exec>("buildWebAssets") {
+    inputs.dir(file("../web-app/src"))
+    inputs.dir(file("../web-app/public"))
+    inputs.file(file("../web-app/package.json"))
+    inputs.file(file("../web-app/tailwind.config.js"))
+    outputs.dir(file("../web-app/build"))
+
     workingDir = file("../web-app")
     val isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows
     if (isWindows) {
