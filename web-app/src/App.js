@@ -21,38 +21,38 @@ const renderScoreSymbol = (score, par, isSelected) => {
   if (diff === -1) {
     // Birdie: 빨간색 동그라미 안에 숫자
     return (
-      <div className="w-7 h-7 rounded-full border-2 border-red-500 bg-red-50/40 flex items-center justify-center shadow-sm animate-fadeIn">
-        <span className="text-[13px] font-black text-red-500 leading-none">{score}</span>
+      <div className="w-8 h-8 rounded-full border-2 border-red-500 bg-red-50/40 flex items-center justify-center shadow-sm animate-fadeIn">
+        <span className="text-[16px] font-black text-red-500 leading-none">{score}</span>
       </div>
     );
   } else if (diff <= -2) {
     // Eagle or Albatross: 두줄짜리 빨간색 동그라미
     return (
-      <div className="relative w-7 h-7 flex items-center justify-center shadow-sm animate-fadeIn">
+      <div className="relative w-8 h-8 flex items-center justify-center shadow-sm animate-fadeIn">
         <div className="absolute inset-0 border-2 border-red-500 rounded-full"></div>
         <div className="absolute inset-[2.5px] border border-red-500 rounded-full"></div>
-        <span className="text-[13px] font-black text-red-500 z-10 leading-none">{score}</span>
+        <span className="text-[16px] font-black text-red-500 z-10 leading-none">{score}</span>
       </div>
     );
   } else if (diff === 1) {
     // Bogey: 파란색 네모 안에 숫자
     return (
-      <div className="w-7 h-7 border-2 border-blue-500 bg-blue-50/30 rounded-[2px] flex items-center justify-center shadow-sm animate-fadeIn">
-        <span className="text-[13px] font-black text-blue-500 leading-none">{score}</span>
+      <div className="w-8 h-8 border-2 border-blue-500 bg-blue-50/30 rounded-[2px] flex items-center justify-center shadow-sm animate-fadeIn">
+        <span className="text-[16px] font-black text-blue-500 leading-none">{score}</span>
       </div>
     );
   } else if (diff >= 2) {
     // Double bogey and more: 두줄짜리 네모 안에 숫자
     return (
-      <div className="relative w-7 h-7 flex items-center justify-center shadow-sm animate-fadeIn">
+      <div className="relative w-8 h-8 flex items-center justify-center shadow-sm animate-fadeIn">
         <div className="absolute inset-0 border-2 border-blue-600 rounded-[2px]"></div>
         <div className="absolute inset-[2.5px] border border-blue-600 rounded-[2px]"></div>
-        <span className="text-[13px] font-black text-blue-600 z-10 leading-none">{score}</span>
+        <span className="text-[16px] font-black text-blue-600 z-10 leading-none">{score}</span>
       </div>
     );
   } else {
     // Par
-    return <span className={`text-[15px] font-extrabold leading-none ${isSelected ? 'text-emerald-800 font-black' : 'text-gray-800'}`}>{score}</span>;
+    return <span className={`text-[18px] font-extrabold leading-none ${isSelected ? 'text-emerald-800 font-black' : 'text-gray-800'}`}>{score}</span>;
   }
 };
 
@@ -275,9 +275,10 @@ export default function App() {
                 
                 if (cloudData.updatedAt) {
                   const localTimestamp = Number(localStorage.getItem('golf_diary_last_sync_timestamp') || '0');
+                  const isLocalEmpty = (scoresRef.current.length === 0);
 
-                  if (cloudData.updatedAt > localTimestamp) {
-                    console.log("[Firebase RTDB] Live sync update received!", cloudData);
+                  if (cloudData.updatedAt > localTimestamp || isLocalEmpty) {
+                    console.log("[Firebase RTDB] Live sync update received (forced overwrite due to empty scores or newer cloud date)!", cloudData);
                     lastDownloadedDataStringRef.current = JSON.stringify({
                       scores: cloudData.scores || [],
                       courses: cloudData.courses || []
@@ -318,9 +319,10 @@ export default function App() {
 
               if (cloudData.updatedAt) {
                 const localTimestamp = Number(localStorage.getItem('golf_diary_last_sync_timestamp') || '0');
+                const isLocalEmpty = (scoresRef.current.length === 0);
 
-                if (cloudData.updatedAt > localTimestamp) {
-                  console.log("[Web Sync Fallback] Newer data loaded!", cloudData);
+                if (cloudData.updatedAt > localTimestamp || isLocalEmpty) {
+                  console.log("[Web Sync Fallback] Newer/forced sync update loaded!", cloudData);
                   lastDownloadedDataStringRef.current = JSON.stringify({
                     scores: cloudData.scores || [],
                     courses: cloudData.courses || []
@@ -434,6 +436,7 @@ export default function App() {
   const [newCourse, setNewCourse] = useState({
     name: '',
     address: '',
+    phone: '', // Phone number field
     ladyRating: 72.0,
     ladySlope: 113,
     blueRating: 72.0,
@@ -546,6 +549,7 @@ export default function App() {
     setNewCourse({
       name: course.name,
       address: course.address,
+      phone: course.phone || '', // Load phone number properties
       ladyRating: course.ladyRating || 72.0,
       ladySlope: course.ladySlope || 113,
       blueRating: course.blueRating || 72.0,
@@ -573,6 +577,7 @@ export default function App() {
     setNewCourse({
       name: '',
       address: '',
+      phone: '', // Reset phone
       ladyRating: 72.0,
       ladySlope: 113,
       blueRating: 72.0,
@@ -594,6 +599,7 @@ export default function App() {
       id: editingCourseId ? editingCourseId : Date.now(),
       name: newCourse.name,
       address: newCourse.address || 'Unknown Address',
+      phone: newCourse.phone || '', // Persist phone number
       totalPar: sumTotalPar,
       ladyRating: Number(newCourse.ladyRating) || 72.0,
       ladySlope: Number(newCourse.ladySlope) || 113,
@@ -713,7 +719,7 @@ export default function App() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
+      <main className={`flex-1 p-4 ${activeTab === 'score' ? 'overflow-y-hidden pb-16 space-y-3' : 'overflow-y-auto pb-24 space-y-4'}`}>
         
         {/* --- TAB 1: SCOREBOARD --- */}
         {activeTab === 'score' && (
@@ -794,17 +800,17 @@ export default function App() {
               {/* Front Nine layout */}
               <div className="w-full">
                 <span className="text-xs font-black text-gray-500 block mb-1.5 px-1 tracking-wide">⛳ Front</span>
-                <div className="border-2 border-gray-600 rounded-none overflow-hidden flex bg-white text-center shadow-sm" style={{ width: 'calc(3rem + (100% - 3rem) * 10 / 11)' }}>
-                  <div className="w-12 bg-gray-50 flex flex-col justify-between text-xs font-extrabold text-gray-500 border-r-2 border-gray-600 shrink-0 select-none">
+                <div className="border-2 border-gray-400 rounded-none overflow-hidden flex bg-white text-center shadow-sm" style={{ width: 'calc(2.5rem + (100% - 2.5rem) * 10 / 11)' }}>
+                  <div className="w-10 bg-gray-50 flex flex-col justify-between text-xs font-extrabold text-gray-500 border-r-2 border-gray-400 shrink-0 select-none">
                     {/* Top Header */}
-                    <div className="flex flex-col py-1 border-b-2 border-gray-600">
+                    <div className="flex flex-col py-1 border-b-2 border-gray-400">
                       <span className="h-5 flex items-center justify-center text-gray-600 font-extrabold text-[11px]">Hole</span>
-                      <span className="h-4 flex items-center justify-center text-red-650 font-black tracking-normal text-[11px]">Par</span>
+                      <span className="h-4 flex items-center justify-center text-red-600 font-black tracking-normal text-[11px]">Par</span>
                     </div>
                     {/* Bottom Header */}
                     <div className="flex flex-col py-1 bg-white">
                       <span className="h-8 flex items-center justify-center text-emerald-850 font-black text-sm">SK</span>
-                      <span className="h-8 flex items-center justify-center text-teal-850 font-black text-sm">KY</span>
+                      <span className="h-8 flex items-center justify-center text-teal-855 font-black text-sm">KY</span>
                     </div>
                   </div>
                   {/* Grid for 9 holes + OUT (10 columns total) */}
@@ -825,7 +831,7 @@ export default function App() {
                           }`}
                         >
                           {/* Top Section */}
-                          <div className={`flex flex-col py-1 border-b-2 border-gray-600 ${isClickable ? 'bg-amber-50/50' : ''}`}>
+                          <div className={`flex flex-col py-1 border-b-2 border-gray-400 ${isClickable ? 'bg-amber-50/50' : ''}`}>
                             <span className={`text-xs font-bold h-5 flex items-center justify-center ${isClickable ? 'text-amber-800 font-black' : 'text-gray-500'}`}>
                               {h.hole}
                             </span>
@@ -846,16 +852,16 @@ export default function App() {
                       );
                     })}
                     {/* OUT subtotal column (occupies 10th col) */}
-                    <div className="bg-gray-50 flex flex-col justify-between text-center select-none font-bold">
+                    <div className="bg-blue-50/30 flex flex-col justify-between text-center select-none font-bold">
                       {/* Top Section */}
-                      <div className="flex flex-col py-1 border-b-2 border-gray-600 bg-gray-100/60">
-                        <span className="text-[10px] font-black h-5 flex items-center justify-center text-gray-700 bg-gray-100/50">OUT</span>
-                        <span className="text-[10px] font-black text-red-650 h-4 flex items-center justify-center">{parOut}</span>
+                      <div className="flex flex-col py-1 border-b-2 border-gray-400 bg-blue-50/50 font-black">
+                        <span className="text-[10px] font-black h-5 flex items-center justify-center text-blue-600">OUT</span>
+                        <span className="text-[10px] font-black text-blue-500 h-4 flex items-center justify-center">{parOut}</span>
                       </div>
                       {/* Bottom Section */}
-                      <div className="flex flex-col py-1 bg-gray-50/30">
-                        <span className="text-sm font-black text-emerald-800 h-8 flex items-center justify-center bg-emerald-50/30">{p1Out > 0 ? p1Out : '-'}</span>
-                        <span className="text-sm font-black text-teal-850 h-8 flex items-center justify-center bg-teal-50/30">{p2Out > 0 ? p2Out : '-'}</span>
+                      <div className="flex flex-col py-1 bg-blue-50/10">
+                        <span className="text-xs font-black text-blue-600 h-8 flex items-center justify-center bg-blue-50/5">{p1Out > 0 ? p1Out : '-'}</span>
+                        <span className="text-xs font-black text-blue-700 h-8 flex items-center justify-center bg-blue-50/5">{p2Out > 0 ? p2Out : '-'}</span>
                       </div>
                     </div>
                   </div>
@@ -865,12 +871,12 @@ export default function App() {
               {/* Back Nine layout */}
               <div className="w-full">
                 <span className="text-xs font-black text-gray-500 block mb-1.5 px-1 tracking-wide">⛳ Back</span>
-                <div className="border-2 border-gray-600 rounded-none overflow-hidden flex bg-white text-center w-full shadow-sm">
-                  <div className="w-12 bg-gray-50 flex flex-col justify-between text-xs font-extrabold text-gray-500 border-r-2 border-gray-600 shrink-0 select-none">
+                <div className="border-2 border-gray-400 rounded-none overflow-hidden flex bg-white text-center w-full shadow-sm">
+                  <div className="w-10 bg-gray-50 flex flex-col justify-between text-xs font-extrabold text-gray-500 border-r-2 border-gray-400 shrink-0 select-none">
                     {/* Top Header */}
-                    <div className="flex flex-col py-1 border-b-2 border-gray-600">
+                    <div className="flex flex-col py-1 border-b-2 border-gray-400">
                       <span className="h-5 flex items-center justify-center text-gray-600 font-extrabold text-[11px]">Hole</span>
-                      <span className="h-4 flex items-center justify-center text-red-650 font-black tracking-normal text-[11px]">Par</span>
+                      <span className="h-4 flex items-center justify-center text-red-600 font-black tracking-normal text-[11px]">Par</span>
                     </div>
                     {/* Bottom Header */}
                     <div className="flex flex-col py-1 bg-white">
@@ -897,7 +903,7 @@ export default function App() {
                           }`}
                         >
                           {/* Top Section */}
-                          <div className={`flex flex-col py-1 border-b-2 border-gray-600 ${isClickable ? 'bg-amber-50/50' : ''}`}>
+                          <div className={`flex flex-col py-1 border-b-2 border-gray-400 ${isClickable ? 'bg-amber-50/50' : ''}`}>
                             <span className={`text-xs font-bold h-5 flex items-center justify-center ${isClickable ? 'text-amber-800 font-black' : 'text-gray-500'}`}>
                               {h.hole}
                             </span>
@@ -918,29 +924,29 @@ export default function App() {
                       );
                     })}
                     {/* IN subtotal column (occupies 10th col) */}
-                    <div className="bg-gray-50 flex flex-col justify-between text-center select-none font-bold">
+                    <div className="bg-blue-50/30 flex flex-col justify-between text-center select-none font-bold">
                       {/* Top Section */}
-                      <div className="flex flex-col py-1 border-b-2 border-gray-600 bg-gray-100/60">
-                        <span className="text-[10px] font-black h-5 flex items-center justify-center text-gray-700 bg-gray-100/50">IN</span>
-                        <span className="text-[10px] font-black text-red-650 h-4 flex items-center justify-center">{parIn}</span>
+                      <div className="flex flex-col py-1 border-b-2 border-gray-400 bg-blue-50/50 font-black">
+                        <span className="text-[10px] font-black h-5 flex items-center justify-center text-blue-600">IN</span>
+                        <span className="text-[10px] font-black text-blue-500 h-4 flex items-center justify-center">{parIn}</span>
                       </div>
                       {/* Bottom Section */}
-                      <div className="flex flex-col py-1 bg-gray-50/30">
-                        <span className="text-sm font-black text-emerald-800 h-8 flex items-center justify-center bg-emerald-50/30">{p1In > 0 ? p1In : '-'}</span>
-                        <span className="text-sm font-black text-teal-855 h-8 flex items-center justify-center bg-teal-50/30">{p2In > 0 ? p2In : '-'}</span>
+                      <div className="flex flex-col py-1 bg-blue-50/10">
+                        <span className="text-xs font-black text-blue-600 h-8 flex items-center justify-center bg-blue-50/5">{p1In > 0 ? p1In : '-'}</span>
+                        <span className="text-xs font-black text-blue-700 h-8 flex items-center justify-center bg-blue-50/5">{p2In > 0 ? p2In : '-'}</span>
                       </div>
                     </div>
                     {/* TOT total column (occupies 11th col) */}
-                    <div className="bg-indigo-50/40 flex flex-col justify-between text-center select-none font-bold">
+                    <div className="bg-red-50/30 flex flex-col justify-between text-center select-none font-bold">
                       {/* Top Section */}
-                      <div className="flex flex-col py-1 border-b-2 border-gray-600 bg-indigo-100/40">
-                        <span className="text-[10px] font-black h-5 flex items-center justify-center text-indigo-900 bg-indigo-100/40">TOT</span>
-                        <span className="text-[10px] font-black text-red-655 h-4 flex items-center justify-center">{parTotal}</span>
+                      <div className="flex flex-col py-1 border-b-2 border-gray-400 bg-red-50/50 font-black">
+                        <span className="text-[10px] font-black h-5 flex items-center justify-center text-red-600 font-extrabold">TOT</span>
+                        <span className="text-[10px] font-black text-red-500 h-4 flex items-center justify-center">{parTotal}</span>
                       </div>
                       {/* Bottom Section */}
-                      <div className="flex flex-col py-1 bg-indigo-50/10">
-                        <span className="text-sm font-black text-emerald-800 h-8 flex items-center justify-center bg-emerald-100/55">{p1Total > 0 ? p1Total : '-'}</span>
-                        <span className="text-sm font-black text-teal-800 h-8 flex items-center justify-center bg-teal-100/55">{p2Total > 0 ? p2Total : '-'}</span>
+                      <div className="flex flex-col py-1 bg-red-50/10">
+                        <span className="text-xs font-black text-red-600 h-8 flex items-center justify-center bg-red-50/5">{p1Total > 0 ? p1Total : '-'}</span>
+                        <span className="text-xs font-black text-red-700 h-8 flex items-center justify-center bg-red-50/5">{p2Total > 0 ? p2Total : '-'}</span>
                       </div>
                     </div>
                   </div>
@@ -959,12 +965,11 @@ export default function App() {
                     <div className="flex items-center gap-3">
                       <span className="text-3xl filter drop-shadow">⛳</span>
                       <div className="flex flex-col text-left">
-                        <h3 className="text-lg font-black text-gray-800 tracking-wide leading-none">
-                          HOLE {editingHoleIndex + 1}
+                        <h3 className="text-lg font-black text-gray-800 tracking-wide leading-none flex items-center gap-2">
+                          <span>HOLE {editingHoleIndex + 1}</span>
+                          <span className="text-red-500 font-extrabold">•</span>
+                          <span className="text-red-600 font-black">Par {courseHolePars[editingHoleIndex] || 4}</span>
                         </h3>
-                        <span className="text-xs font-black text-red-600 uppercase mt-1 leading-none tracking-wider">
-                          Par {courseHolePars[editingHoleIndex] || 4}
-                        </span>
                       </div>
                     </div>
                     <button 
@@ -1123,8 +1128,8 @@ export default function App() {
             
             {/* Map GPS simulator card (always present) */}
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="text-base font-bold text-gray-800 mb-1 flex items-center">
-                <span className="mr-2">🗺️</span> Course Location / 골프장 지도 시뮬레이터
+              <h2 className="text-lg font-black text-emerald-800 tracking-wider uppercase flex items-center mb-1">
+                <span className="mr-2">🗺️</span> Course Location
               </h2>
               <p className="text-[11px] text-gray-400 mb-4 font-medium leading-relaxed">
                 지도 영역을 클릭하면 GPS 위치가 시뮬레이션 변경되며, 이 핀 주소를 기준으로 신규 골프장을 등록할 수 있습니다.
@@ -1390,7 +1395,7 @@ export default function App() {
 
             {/* Registered Course Cards Profile Feed */}
             <div className="space-y-4">
-              <h3 className="text-xs font-extrabold text-gray-700 px-1 uppercase tracking-wider">📍 Registered Course Profiles</h3>
+              <h3 className="text-lg font-black text-emerald-800 tracking-wider uppercase flex items-center px-1">📍 Course Profiles</h3>
               
               {courses.map(course => {
                 const courseHistories = scores.filter(s => s.courseId === course.id);
