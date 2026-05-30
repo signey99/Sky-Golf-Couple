@@ -1413,48 +1413,66 @@ export default function App() {
                 const courseHistories = scores.filter(s => s.courseId === course.id);
 
                 return (
-                  <div key={course.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3 relative">
+                  <div key={course.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3.5 relative">
                     
-                    {/* Header info */}
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <h4 className="font-extrabold text-gray-800 text-base leading-snug truncate">{course.name}</h4>
+                    {/* Row 1: Course Name (left) and Total Played Rounds (right) */}
+                    <div className="flex justify-between items-center gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                        <h4 className="font-extrabold text-gray-800 text-base leading-snug truncate">{course.name}</h4>
+                        <div className="flex items-center gap-1 shrink-0">
                           <button
                             type="button"
                             onClick={() => handleStartEditCourse(course)}
-                            className="px-3 py-1.5 text-xs text-emerald-700 font-extrabold bg-emerald-50 hover:bg-emerald-100 rounded-xl border border-emerald-200/50 flex items-center justify-center transition active:scale-95"
+                            className="px-2 py-1 text-xs text-emerald-700 font-extrabold bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200/50 flex items-center justify-center transition active:scale-95"
                             title="Edit"
                           >
-                            ✏️ Edit
+                            ✏️
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDeleteCourse(course.id)}
-                            className="px-3 py-1.5 text-xs text-rose-700 font-extrabold bg-rose-50 hover:bg-rose-100 rounded-xl border border-rose-200/50 flex items-center justify-center transition active:scale-95"
+                            className="px-2 py-1 text-xs text-rose-700 font-extrabold bg-rose-50 hover:bg-rose-100 rounded-lg border border-rose-200/50 flex items-center justify-center transition active:scale-95"
                             title="Delete"
                           >
-                            🗑️ Delete
+                            🗑️
                           </button>
                         </div>
-                        <p className="text-xs text-gray-400 mt-1 truncate"><strong>Address:</strong> {course.address}</p>
-                        <p className="text-[10px] text-gray-400 font-semibold font-mono leading-none mt-0.5">Location: {course.lat}, {course.lng}</p>
                       </div>
-                      
-                      <div className="text-right text-[10px] rounded-lg bg-emerald-50/50 px-2.5 py-1.5 min-w-[105px] border border-emerald-100/30 flex flex-col gap-0.5 shadow-sm">
-                        <span className="font-bold text-rose-700">Lady: {Number(course.ladyRating || 72.0).toFixed(1)} (S:{course.ladySlope || 113})</span>
-                        <span className="font-bold text-blue-700">Blue: {Number(course.blueRating || 72.0).toFixed(1)} (S:{course.blueSlope || 113})</span>
-                      </div>
+                      <span className="shrink-0 text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">
+                        🏆 {courseHistories.length} Rounds
+                      </span>
                     </div>
 
-                    <div className="flex justify-between items-center text-xs bg-gray-50/70 p-3 rounded-xl border border-gray-100">
-                      <span className="font-bold text-gray-600">⛳ Total Par</span>
-                      <span className="font-black text-emerald-700 text-sm">{course.totalPar || 72} Par</span>
-                    </div>
+                    {/* Row 2: Address */}
+                    <p className="text-xs text-gray-500 font-bold flex items-center gap-1.5 truncate">
+                      <span className="text-emerald-600 scale-110">📍</span> {course.address || 'No address registered'}
+                    </p>
 
-                    <div className="flex justify-between items-center text-xs bg-emerald-50/30 p-3 rounded-xl border border-emerald-150/30">
-                      <span className="font-bold text-emerald-800">🏆 Total Played Rounds</span>
-                      <span className="font-black text-emerald-700 text-sm">{courseHistories.length} Rounds</span>
+                    {/* Row 3: Telephone */}
+                    <p className="text-xs text-gray-500 font-bold flex items-center gap-1.5 mt-0.5 truncate">
+                      <span className="text-emerald-500 scale-110">📞</span> {course.phone || 'No phone number'}
+                    </p>
+
+                    {/* Row 4: Total Par, Blue Rating/Slope, Lady Rating/Slope */}
+                    <div className="grid grid-cols-3 gap-2 text-xs bg-gray-50 p-2.5 rounded-xl border border-gray-150 text-center font-bold">
+                      <div className="flex flex-col items-center justify-center bg-white py-1.5 px-2 rounded-lg border border-gray-100 shadow-sm">
+                        <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-wider">Total Par</span>
+                        <span className="font-extrabold text-emerald-800 text-[13px] mt-1 flex items-center gap-0.5">
+                          <span>⛳</span> {course.totalPar || 72}
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-center justify-center bg-white py-1.5 px-2 rounded-lg border border-gray-100 shadow-sm">
+                        <span className="text-[10px] text-blue-500 font-extrabold uppercase tracking-wider">Blue Course</span>
+                        <span className="font-black text-blue-800 text-[11px] mt-1">
+                          {Number(course.blueRating || 72.0).toFixed(1)} (S:{course.blueSlope || 113})
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-center justify-center bg-white py-1.5 px-2 rounded-lg border border-gray-100 shadow-sm">
+                        <span className="text-[10px] text-pink-500 font-extrabold uppercase tracking-wider">Lady Course</span>
+                        <span className="font-black text-pink-800 text-[11px] mt-1">
+                          {Number(course.ladyRating || 72.0).toFixed(1)} (S:{course.ladySlope || 113})
+                        </span>
+                      </div>
                     </div>
 
                   </div>
@@ -1482,7 +1500,12 @@ export default function App() {
                 .sort((a, b) => new Date(b.date) - new Date(a.date))
                 .map(score => {
                   const totalStrokesP1 = (score.holes || []).reduce((sum, h) => sum + (h.iron || 0) + (h.putt || 0), 0);
+                  const totalIronsP1 = (score.holes || []).reduce((sum, h) => sum + (h.iron || 0), 0);
+                  const totalPuttsP1 = (score.holes || []).reduce((sum, h) => sum + (h.putt || 0), 0);
+
                   const totalStrokesP2 = (score.holes || []).reduce((sum, h) => sum + (h.iron2 || 0) + (h.putt2 || 0), 0);
+                  const totalIronsP2 = (score.holes || []).reduce((sum, h) => sum + (h.iron2 || 0), 0);
+                  const totalPuttsP2 = (score.holes || []).reduce((sum, h) => sum + (h.putt2 || 0), 0);
 
                   return (
                     <div 
@@ -1491,16 +1514,16 @@ export default function App() {
                       className="bg-white rounded-2xl shadow-sm border border-gray-150 p-4 flex justify-between items-center cursor-pointer hover:bg-emerald-50/10 active:scale-[0.99] transition-all"
                     >
                       <div>
-                        <h3 className="font-extrabold text-gray-805 text-sm leading-snug">{score.courseName}</h3>
-                        <p className="text-[10px] text-gray-400 font-bold mt-1">📅 {formatPlayDate(score.date)}</p>
+                        <h3 className="font-extrabold text-gray-800 text-base leading-snug">{score.courseName}</h3>
+                        <p className="text-base text-gray-500 font-bold mt-1">{formatPlayDate(score.date)}</p>
                       </div>
-                      <div className="text-right flex flex-col gap-0.5 shrink-0 select-none border-l border-gray-100 pl-3.5">
-                        <span className="text-[11px] text-emerald-800 font-bold">
-                          SK: <strong className="font-black text-emerald-700 text-sm">{totalStrokesP1}</strong> Str
+                      <div className="text-right flex flex-col gap-1 shrink-0 select-none border-l border-gray-100 pl-3.5">
+                        <span className="text-xs text-emerald-800 font-bold">
+                          SK: <strong className="font-black text-emerald-700 text-sm">{totalStrokesP1}</strong> <span className="text-[10px] text-gray-400 font-normal">({totalIronsP1} Strokes / {totalPuttsP1} Putts)</span>
                         </span>
                         {totalStrokesP2 > 0 && (
-                          <span className="text-[11px] text-teal-800 font-bold">
-                            KY: <strong className="font-black text-teal-700 text-sm">{totalStrokesP2}</strong> Str
+                          <span className="text-xs text-teal-800 font-bold">
+                            KY: <strong className="font-black text-teal-700 text-sm">{totalStrokesP2}</strong> <span className="text-[10px] text-gray-400 font-normal">({totalIronsP2} Strokes / {totalPuttsP2} Putts)</span>
                           </span>
                         )}
                       </div>
