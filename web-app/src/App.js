@@ -149,7 +149,7 @@ export default function App() {
         courses: currentCourses,
         updatedAt: timestamp
       };
-      const res = await fetch(`https://kvdb.io/K9m8b8M8PnHpMhpbUfHqpS/${syncChannel}`, {
+      const res = await fetch(`https://kvdb.io/CpUkTKkoimWd11fnhp6BBA/${syncChannel}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -191,6 +191,25 @@ export default function App() {
     } catch (e) {
       console.warn("Firebase set skipped or failed", e);
     }
+
+    // C. Push to Firebase Realtime Database via REST API (Ultra-failsafe)
+    try {
+      if (firebaseUrl.trim()) {
+        const baseUrlNormalized = firebaseUrl.trim().replace(/\/$/, "");
+        const url = `${baseUrlNormalized}/${syncChannel}.json`;
+        await fetch(url, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            scores: currentScores,
+            courses: currentCourses,
+            updatedAt: timestamp
+          })
+        });
+      }
+    } catch (e) {
+      console.warn("Firebase REST upload failed", e);
+    }
   };
 
   // Handle manual force upload to cloud
@@ -215,28 +234,101 @@ export default function App() {
   const handleForceDownload = async () => {
     try {
       setSettingsMessage('Downloading data from cloud...');
-      const res = await fetch(`https://kvdb.io/K9m8b8M8PnHpMhpbUfHqpS/${syncChannel}`);
-      if (res.ok) {
-        const cloudData = await res.json();
-        if (cloudData && cloudData.updatedAt) {
-          lastDownloadedDataStringRef.current = JSON.stringify({
-            scores: cloudData.scores || [],
-            courses: cloudData.courses || []
-          });
-          setScores(cloudData.scores || []);
-          setCourses(cloudData.courses || []);
-          localStorage.setItem('golf_diary_scores', JSON.stringify(cloudData.scores || []));
-          localStorage.setItem('golf_diary_courses', JSON.stringify(cloudData.courses || []));
-          localStorage.setItem('golf_diary_last_sync_timestamp', String(cloudData.updatedAt));
-          
-          setCloudCoursesCount((cloudData.courses || []).length);
-          setCloudScoresCount((cloudData.scores || []).length);
-          setSettingsMessage('📥 Successfully downloaded cloud database to this device!');
-          setTimeout(() => setSettingsMessage(''), 4500);
-          return;
+      
+      let cloudData = null;
+      let downloadSource = '';
+
+      // 1. Try Firebase RTDB (using SDK if available, or REST API as immediate fallback)
+      if (window.firebase && firebaseUrl.trim()) {
+        try {
+          let app;
+          if (!window.firebase.apps.length) {
+            app = window.firebase.initializeApp({
+              databaseURL: firebaseUrl,
+              projectId: firebaseUrl.split('//')[1]?.split('.')[0] || 'skky-golf'
+            });
+          } else {
+            app = window.firebase.app();
+          }
+          const db = window.firebase.database(app);
+          const snapshot = await db.ref(syncChannel).once('value');
+          const fbData = snapshot.val();
+          if (fbData && fbData.updatedAt) {
+            cloudData = fbData;
+            downloadSource = 'Firebase Realtime DB';
+          }
+        } catch (fbSdkErr) {
+          console.warn("Firebase SDK download skipped/failed, trying REST API", fbSdkErr);
+          // Try REST API if SDK failed
+          try {
+            const baseUrlNormalized = firebaseUrl.trim().replace(/\/$/, "");
+            const res = await fetch(`${baseUrlNormalized}/${syncChannel}.json`);
+            if (res.ok) {
+              const fbRestData = await res.json();
+              if (fbRestData && fbRestData.updatedAt) {
+                cloudData = fbRestData;
+                downloadSource = 'Firebase REST API';
+              }
+            }
+          } catch (fbRestErr) {
+            console.warn("Firebase REST download failed", fbRestErr);
+          }
+        }
+      } else if (firebaseUrl.trim()) {
+        // If SDK is not loaded but URL exists, try REST API immediately
+        try {
+          const baseUrlNormalized = firebaseUrl.trim().replace(/\/$/, "");
+          const res = await fetch(`${baseUrlNormalized}/${syncChannel}.json`);
+          if (res.ok) {
+            const fbRestData = await res.json();
+            if (fbRestData && fbRestData.updatedAt) {
+              cloudData = fbRestData;
+              downloadSource = 'Firebase REST API';
+            }
+          }
+        } catch (fbRestErr) {
+          console.warn("Firebase REST download failed", fbRestErr);
         }
       }
-      setSettingsMessage('❌ No backup data found in the cloud.');
+
+      // 2. If Firebase didn't return data, try Web-Sync Fallback (kvdb.io)
+      if (!cloudData) {
+        try {
+          const res = await fetch(`https://kvdb.io/CpUkTKkoimWd11fnhp6BBA/${syncChannel}`);
+          if (res.ok) {
+            const kvData = await res.json();
+            if (kvData && kvData.updatedAt) {
+              cloudData = kvData;
+              downloadSource = 'Web-Sync Fallback (kvdb)';
+            }
+          }
+        } catch (kvErr) {
+          console.warn("KVDB fallback download failed", kvErr);
+        }
+      }
+
+      if (cloudData && cloudData.updatedAt) {
+        lastDownloadedDataStringRef.current = JSON.stringify({
+          scores: cloudData.scores || [],
+          courses: cloudData.courses || []
+        });
+        setScores(cloudData.scores || []);
+        setCourses(cloudData.courses || []);
+        localStorage.setItem('golf_diary_scores', JSON.stringify(cloudData.scores || []));
+        localStorage.setItem('golf_diary_courses', JSON.stringify(cloudData.courses || []));
+        localStorage.setItem('golf_diary_last_sync_timestamp', String(cloudData.updatedAt));
+        
+        setCloudCoursesCount((cloudData.courses || []).length);
+        setCloudScoresCount((cloudData.scores || []).length);
+        
+        const coursesCount = (cloudData.courses || []).length;
+        const scoresCount = (cloudData.scores || []).length;
+        setSettingsMessage(`📥 Successfully downloaded [${downloadSource}]! (Courses: ${coursesCount}, Rounds: ${scoresCount})`);
+        setTimeout(() => setSettingsMessage(''), 6000);
+        return;
+      }
+      
+      setSettingsMessage('❌ No backup data found in the cloud (Firebase & Fallback both empty).');
     } catch (e) {
       console.error(e);
       setSettingsMessage('❌ Download failed: ' + e.message);
@@ -310,7 +402,7 @@ export default function App() {
         tryConnectFirebase();
 
         try {
-          const res = await fetch(`https://kvdb.io/K9m8b8M8PnHpMhpbUfHqpS/${syncChannel}`);
+          const res = await fetch(`https://kvdb.io/CpUkTKkoimWd11fnhp6BBA/${syncChannel}`);
           if (res.ok) {
             const cloudData = await res.json();
             if (cloudData) {

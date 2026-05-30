@@ -11,11 +11,13 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.WebWrap"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        android:hardwareAccelerated="true">
         <activity
             android:name="com.example.MainActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize"
+            android:hardwareAccelerated="true"
             android:theme="@style/Theme.WebWrap">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

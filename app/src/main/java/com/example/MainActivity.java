@@ -12,6 +12,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.activity.OnBackPressedCallback;
 
 public class MainActivity extends AppCompatActivity {
     private static final int FILE_CHOOSER_RESULT_CODE = 1;
@@ -74,25 +75,31 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                     super.onPageStarted(view, url, favicon);
-                    ensureCacheDirs();
+                    if (!isFinishing() && !isDestroyed()) {
+                        ensureCacheDirs();
+                    }
                 }
 
                 @Override
                 public void onPageFinished(WebView view, String url) {
                     super.onPageFinished(view, url);
-                    ensureCacheDirs();
+                    if (!isFinishing() && !isDestroyed()) {
+                        ensureCacheDirs();
+                    }
                     // Also run a delayed check to make sure any lazily initialized background tasks
                     // find the directories ready!
                     view.postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            ensureCacheDirs();
+                            if (!isFinishing() && !isDestroyed()) {
+                                ensureCacheDirs();
+                            }
                         }
                     }, 1000);
                 }
             });
 
-            // Chrome client for file upload and audio/geolocation permissions
+            // Chrome client for file upload, audio/geolocation permissions, and console logs
             webView.setWebChromeClient(new WebChromeClient() {
                 @Override
                 public void onPermissionRequest(PermissionRequest request) {
@@ -118,6 +125,27 @@ public class MainActivity extends AppCompatActivity {
                         return false;
                     }
                     return true;
+                }
+
+                @Override
+                public boolean onConsoleMessage(android.webkit.ConsoleMessage consoleMessage) {
+                    android.util.Log.d("WebViewJS", consoleMessage.message() + " -- From line "
+                            + consoleMessage.lineNumber() + " of "
+                            + consoleMessage.sourceId());
+                    return true;
+                }
+            });
+
+            // Register modern back presses callback
+            getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+                @Override
+                public void handleOnBackPressed() {
+                    if (webView != null && webView.canGoBack()) {
+                        webView.goBack();
+                    } else {
+                        setEnabled(false);
+                        getOnBackPressedDispatcher().onBackPressed();
+                    }
                 }
             });
 
@@ -159,12 +187,32 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
+    protected void onResume() {
+        super.onResume();
+        if (webView != null) {
+            webView.onResume();
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (webView != null) {
+            webView.onPause();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (webView != null) {
+            android.view.ViewParent parent = webView.getParent();
+            if (parent instanceof android.view.ViewGroup) {
+                ((android.view.ViewGroup) parent).removeView(webView);
+            }
+            webView.destroy();
+            webView = null;
+        }
+        super.onDestroy();
     }
 
     /**
@@ -175,13 +223,29 @@ public class MainActivity extends AppCompatActivity {
         try {
             java.io.File cacheDir = getCacheDir();
             if (cacheDir != null) {
-                // HTTP Cache / Code Cache
-                new java.io.File(cacheDir, "WebView/Default/HTTP Cache/Code Cache/js").mkdirs();
-                new java.io.File(cacheDir, "WebView/Default/HTTP Cache/Code Cache/wasm").mkdirs();
+                // Ensure HTTP Cache directories and add a persistent dummy file
+                java.io.File httpJs = new java.io.File(cacheDir, "WebView/Default/HTTP Cache/Code Cache/js");
+                java.io.File httpWasm = new java.io.File(cacheDir, "WebView/Default/HTTP Cache/Code Cache/wasm");
                 
-                // standard Code Cache
-                new java.io.File(cacheDir, "WebView/Default/Code Cache/js").mkdirs();
-                new java.io.File(cacheDir, "WebView/Default/Code Cache/wasm").mkdirs();
+                httpJs.mkdirs();
+                httpWasm.mkdirs();
+                
+                try {
+                    new java.io.File(httpJs, ".keep").createNewFile();
+                    new java.io.File(httpWasm, ".keep").createNewFile();
+                } catch (Exception ignored) {}
+
+                // Ensure standard Code Cache directories and add a persistent dummy file
+                java.io.File codeJs = new java.io.File(cacheDir, "WebView/Default/Code Cache/js");
+                java.io.File codeWasm = new java.io.File(cacheDir, "WebView/Default/Code Cache/wasm");
+                
+                codeJs.mkdirs();
+                codeWasm.mkdirs();
+                
+                try {
+                    new java.io.File(codeJs, ".keep").createNewFile();
+                    new java.io.File(codeWasm, ".keep").createNewFile();
+                } catch (Exception ignored) {}
             }
         } catch (Throwable t) {
             t.printStackTrace();
