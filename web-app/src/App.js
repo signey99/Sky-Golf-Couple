@@ -12,6 +12,50 @@ const formatPlayDate = (dateStr) => {
   return dateStr;
 };
 
+// Render score symbol based on standard golf scoring notation
+const renderScoreSymbol = (score, par, isSelected) => {
+  if (!score || score <= 0) return <span className="text-gray-300 text-xs">-</span>;
+  
+  const diff = score - par;
+  
+  if (diff === -1) {
+    // Birdie: 빨간색 동그라미 안에 숫자
+    return (
+      <div className="w-5 h-5 rounded-full border border-red-500 bg-red-50/30 flex items-center justify-center">
+        <span className="text-[10px] font-black text-red-500 leading-none">{score}</span>
+      </div>
+    );
+  } else if (diff <= -2) {
+    // Eagle or Albatross: 두줄짜리 빨간색 동그라미
+    return (
+      <div className="relative w-5 h-5 flex items-center justify-center">
+        <div className="absolute inset-0 border border-red-500 rounded-full"></div>
+        <div className="absolute inset-[2.5px] border border-red-500 rounded-full"></div>
+        <span className="text-[10px] font-black text-red-500 z-10 leading-none">{score}</span>
+      </div>
+    );
+  } else if (diff === 1) {
+    // Bogey: 파란색 네모 안에 숫자
+    return (
+      <div className="w-5 h-5 border border-blue-500 bg-blue-50/20 rounded-[2px] flex items-center justify-center">
+        <span className="text-[10px] font-black text-blue-500 leading-none">{score}</span>
+      </div>
+    );
+  } else if (diff >= 2) {
+    // Double bogey and more: 두줄짜리 네모 안에 숫자
+    return (
+      <div className="relative w-5 h-5 flex items-center justify-center">
+        <div className="absolute inset-0 border border-blue-600 rounded-[2px]"></div>
+        <div className="absolute inset-[2.5px] border border-blue-600 rounded-[2px]"></div>
+        <span className="text-[10px] font-black text-blue-600 z-10 leading-none">{score}</span>
+      </div>
+    );
+  } else {
+    // Par
+    return <span className={`text-xs font-bold leading-none ${isSelected ? 'text-emerald-800' : 'text-gray-700'}`}>{score}</span>;
+  }
+};
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('score'); // 'score', 'course', 'history'
   const [editingCourseId, setEditingCourseId] = useState(null);
@@ -299,13 +343,13 @@ export default function App() {
   const [isNewCourse, setIsNewCourse] = useState(false);
   const [newCourseNameInput, setNewCourseNameInput] = useState('');
   
-  // Format MM/DD/YYYY as default date
+  // Format YYYY-MM-DD as default date for native calendar picker
   const getDefaultDate = () => {
     const d = new Date();
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const dd = String(d.getDate()).padStart(2, '0');
     const yyyy = d.getFullYear();
-    return `${mm}/${dd}/${yyyy}`;
+    return `${yyyy}-${mm}-${dd}`;
   };
   const [playDate, setPlayDate] = useState(getDefaultDate());
 
@@ -334,6 +378,20 @@ export default function App() {
   });
 
   const [courseHolePars, setCourseHolePars] = useState(Array(18).fill(4));
+
+  // Sync selected course's par information immediately
+  useEffect(() => {
+    if (selectedCourseId) {
+      const course = courses.find(c => Number(c.id) === Number(selectedCourseId) || String(c.id) === String(selectedCourseId));
+      if (course && course.holePars) {
+        setCourseHolePars(course.holePars);
+      } else {
+        setCourseHolePars(Array(18).fill(4));
+      }
+    } else {
+      setCourseHolePars(Array(18).fill(4));
+    }
+  }, [selectedCourseId, courses]);
   const [editingParHoleIndex, setEditingParHoleIndex] = useState(null); // null or 0..17
   const [showCourseModal, setShowCourseModal] = useState(false);
 
@@ -532,19 +590,21 @@ export default function App() {
     <div className="max-w-md mx-auto min-h-screen bg-gray-50 flex flex-col justify-between font-sans shadow-xl relative border-x border-gray-100 pb-24">
       
       {/* Top Header App Bar */}
-      <header className="text-white py-4 px-6 text-center shadow-md select-none relative animate-fade-in" style={{ backgroundColor: '#0f766e' }}>
-        <h1 className="text-xl font-extrabold tracking-wide flex justify-center items-center">⛳ SKKY Golf</h1>
+      <header className="text-white py-4 px-5 text-left shadow-md select-none relative animate-fade-in pr-20" style={{ backgroundColor: '#0f766e' }}>
+        <h1 className="text-xl font-extrabold tracking-wide flex items-center">⛳ SkKy Golf</h1>
         <p className="text-xs text-emerald-100 mt-0.5 font-medium">시근이와 계영이의 골프 여행기</p>
         
-        {/* Firebase Config Gear Trigger */}
-        <button 
-          type="button"
-          onClick={() => setIsSettingsOpen(true)}
-          className="absolute right-4 top-4 p-1.5 hover:bg-teal-800/40 rounded-full transition active:scale-90 text-lg flex items-center justify-center outline-none"
-          title="Firebase and Cloud Sync Settings"
-        >
-          ⚙️
-        </button>
+        {/* Save button positioned in top right instead of gear settings icon */}
+        {activeTab === 'score' && (
+          <button 
+            type="button"
+            onClick={handleSaveScore}
+            disabled={(!isNewCourse && !selectedCourseId) || (isNewCourse && !newCourseNameInput.trim())}
+            className="absolute right-4 top-1/2 -translate-y-1/2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-extrabold px-3.5 py-1.5 rounded-xl text-xs shadow-md transition active:scale-95 outline-none select-none"
+          >
+            Save
+          </button>
+        )}
       </header>
 
       {/* Main Content Area */}
@@ -560,12 +620,12 @@ export default function App() {
                 <span className="mr-2">🏌️</span> Setup Golf Round
               </h2>
               
-              <div className="space-y-3.5">
-                {/* Golf Course Selector */}
+              <div className="grid grid-cols-2 gap-3.5">
+                {/* Course Selector on Left */}
                 <div>
-                  <label className="block text-[11px] font-bold text-emerald-800 uppercase tracking-wide mb-1">Golf Course</label>
+                  <label className="block text-[11px] font-bold text-emerald-800 uppercase tracking-wide mb-1">Course</label>
                   <select 
-                    className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-sm shadow-sm transition-all"
+                    className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-xs shadow-sm transition-all text-gray-700"
                     value={isNewCourse ? 'new' : selectedCourseId}
                     onChange={(e) => {
                       if (e.target.value === 'new') {
@@ -577,40 +637,130 @@ export default function App() {
                       }
                     }}
                   >
-                    <option value="">-- Select a Golf Course --</option>
+                    <option value="">-- Select --</option>
                     {courses.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
-                    <option value="new">+ Add New Golf Course</option>
+                    <option value="new">+ Add New</option>
                   </select>
                 </div>
 
-                {/* Direct Entry Course Name */}
-                {isNewCourse && (
-                  <div className="bg-emerald-50/40 p-3.5 rounded-xl border border-emerald-100 space-y-1.5 animate-fadeIn">
-                    <label className="block text-[10px] font-bold text-emerald-800 uppercase">Enter Golf Course Name</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. Gapyeong Benest GC"
-                      className="w-full p-2.5 bg-white border border-emerald-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500 text-sm"
-                      value={newCourseNameInput}
-                      onChange={(e) => setNewCourseNameInput(e.target.value)}
-                    />
-                  </div>
-                )}
-
-                {/* Date Picker Input */}
+                {/* Date Picker Input on Right */}
                 <div>
-                  <label className="block text-[11px] font-bold text-emerald-800 uppercase tracking-wide mb-1">Play Date (MM/DD/YYYY)</label>
+                  <label className="block text-[11px] font-bold text-emerald-800 uppercase tracking-wide mb-1">Pla Date</label>
                   <input 
-                    type="text" 
-                    placeholder="MM/DD/YYYY"
-                    className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-sm"
+                    type="date" 
+                    className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-xs text-gray-700 font-medium"
                     value={playDate}
                     onChange={(e) => setPlayDate(e.target.value)}
                   />
                 </div>
               </div>
+
+              {/* Direct Entry Course Name */}
+              {isNewCourse && (
+                <div className="bg-emerald-50/40 p-3.5 rounded-xl border border-emerald-100 space-y-1.5 animate-fadeIn mt-3.5">
+                  <label className="block text-[10px] font-bold text-emerald-800 uppercase">Enter Golf Course Name</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Gapyeong Benest GC"
+                    className="w-full p-2.5 bg-white border border-emerald-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500 text-sm"
+                    value={newCourseNameInput}
+                    onChange={(e) => setNewCourseNameInput(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Live Matrix Section (Split tables in UI Grid) - Positioned immediately under setup */}
+            <div className="bg-white p-4 rounded-2xl border border-gray-150 shadow-sm space-y-3">
+              <span className="text-xs font-extrabold text-emerald-800 flex items-center px-1">
+                📊 18-Hole Live Matrix (Tap cell to navigate)
+              </span>
+
+              {/* Front Nine layout */}
+              <div>
+                <span className="text-[10px] font-bold text-gray-400 block mb-1 px-1">⛳ FRONT NINE (Holes 1 - 9)</span>
+                <div className="border border-gray-200 rounded-xl overflow-hidden flex bg-white text-center">
+                  <div className="w-12 bg-gray-50 flex flex-col justify-around text-[10px] font-bold text-gray-500 py-1 border-r border-gray-200">
+                    <span className="h-5 flex items-center justify-center">Hole</span>
+                    <span className="h-4 flex items-center justify-center text-red-500 font-extrabold text-[9px]">Par</span>
+                    <span className="h-6 flex items-center justify-center text-emerald-600">👦 SK</span>
+                    <span className="h-6 flex items-center justify-center text-teal-600">👩 KY</span>
+                  </div>
+                  {scoreboardHoles.slice(0, 9).map((h, k) => {
+                    const isSelected = activeHoleIndex === k;
+                    const p1T = h.iron + h.putt;
+                    const p2T = h.iron2 + h.putt2;
+                    const holePar = courseHolePars[k] || 4;
+                    return (
+                      <div 
+                        key={k}
+                        onClick={() => setActiveHoleIndex(k)}
+                        className={`flex-1 py-1 flex flex-col justify-around cursor-pointer transition-all border-r last:border-r-0 border-gray-100 ${
+                          isSelected ? 'bg-emerald-50' : 'hover:bg-gray-50/50'
+                        }`}
+                      >
+                        <span className={`text-[10px] font-bold h-5 flex items-center justify-center ${isSelected ? 'text-emerald-700 font-black' : 'text-gray-400'}`}>
+                          {h.hole}
+                        </span>
+                        <span className="text-[10px] font-black text-red-500 h-4 flex items-center justify-center">
+                          {holePar}
+                        </span>
+                        <div className="h-6 flex items-center justify-center">
+                          {renderScoreSymbol(p1T, holePar, isSelected)}
+                        </div>
+                        <div className="h-6 flex items-center justify-center">
+                          {renderScoreSymbol(p2T, holePar, isSelected)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Back Nine layout */}
+              <div>
+                <span className="text-[10px] font-bold text-gray-400 block mb-1 px-1">⛳ BACK NINE (Holes 10 - 18)</span>
+                <div className="border border-gray-200 rounded-xl overflow-hidden flex bg-white text-center">
+                  <div className="w-12 bg-gray-50 flex flex-col justify-around text-[10px] font-bold text-gray-500 py-1 border-r border-gray-200">
+                    <span className="h-5 flex items-center justify-center">Hole</span>
+                    <span className="h-4 flex items-center justify-center text-red-500 font-extrabold text-[9px]">Par</span>
+                    <span className="h-6 flex items-center justify-center text-emerald-600">👦 SK</span>
+                    <span className="h-6 flex items-center justify-center text-teal-600">👩 KY</span>
+                  </div>
+                  {scoreboardHoles.slice(9, 18).map((h, k) => {
+                    const globalK = k + 9;
+                    const isSelected = activeHoleIndex === globalK;
+                    const p1T = h.iron + h.putt;
+                    const p2T = h.iron2 + h.putt2;
+                    const holePar = courseHolePars[globalK] || 4;
+                    return (
+                      <div 
+                        key={globalK}
+                        onClick={() => setActiveHoleIndex(globalK)}
+                        className={`flex-1 py-1 flex flex-col justify-around cursor-pointer transition-all border-r last:border-r-0 border-gray-100 ${
+                          isSelected ? 'bg-emerald-50' : 'hover:bg-gray-50/50'
+                        }`}
+                      >
+                        <span className={`text-[10px] font-bold h-5 flex items-center justify-center ${isSelected ? 'text-emerald-700 font-black' : 'text-gray-400'}`}>
+                          {h.hole}
+                        </span>
+                        <span className="text-[10px] font-black text-red-500 h-4 flex items-center justify-center">
+                          {holePar}
+                        </span>
+                        <div className="h-6 flex items-center justify-center">
+                          {renderScoreSymbol(p1T, holePar, isSelected)}
+                        </div>
+                        <div className="h-6 flex items-center justify-center">
+                          {renderScoreSymbol(p2T, holePar, isSelected)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
             </div>
 
             {/* Select Hole scroll bar widget */}
@@ -684,7 +834,7 @@ export default function App() {
                 {/* SK COLUMN */}
                 <div className="flex flex-col items-center space-y-4 pr-1">
                   <span className="text-xs font-bold text-emerald-700 flex items-center">
-                    👤 SK
+                    👦 SK
                   </span>
 
                   {/* Strokes */}
@@ -728,7 +878,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => modifyScoreboardHole('putt', 1)}
-                        className="w-8 h-8 rounded-full bg-white text-emerald-700 hover:bg-emerald-50 border border-emerald-100 font-bold text-sm shadow-sm flex justify-center items-center active:scale-95"
+                        className="w-8 h-8 rounded-full bg-white text-emerald-700 hover:bg-emerald-50 border border-emerald-100 font-bold text-[15px] shadow-sm flex justify-center items-center active:scale-95"
                       >
                         +
                       </button>
@@ -743,7 +893,7 @@ export default function App() {
                 {/* KY COLUMN */}
                 <div className="flex flex-col items-center space-y-4 pl-1">
                   <span className="text-xs font-bold text-teal-700 flex items-center">
-                    👤 KY
+                    👩 KY
                   </span>
 
                   {/* Strokes */}
@@ -787,7 +937,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => modifyScoreboardHole('putt2', 1)}
-                        className="w-8 h-8 rounded-full bg-white text-teal-700 hover:bg-teal-50 border border-teal-100 font-bold text-sm shadow-sm flex justify-center items-center active:scale-95"
+                        className="w-8 h-8 rounded-full bg-white text-teal-700 hover:bg-teal-50 border border-teal-100 font-bold text-[15px] shadow-sm flex justify-center items-center active:scale-95"
                       >
                         +
                       </button>
@@ -803,89 +953,8 @@ export default function App() {
 
             </div>
 
-            {/* Live Matrix Section (Split tables in UI Grid) */}
-            <div className="bg-white p-4 rounded-2xl border border-gray-150 shadow-sm space-y-3">
-              <span className="text-xs font-extrabold text-emerald-800 flex items-center px-1">
-                📊 18-Hole Live Matrix (Tap cell to navigate)
-              </span>
-
-              {/* Front Nine layout */}
-              <div>
-                <span className="text-[10px] font-bold text-gray-400 block mb-1 px-1">⛳ FRONT NINE (Holes 1 - 9)</span>
-                <div className="border border-gray-200 rounded-xl overflow-hidden flex bg-white text-center">
-                  <div className="w-12 bg-gray-50 flex flex-col justify-around text-[10px] font-bold text-gray-500 py-1 border-r border-gray-200">
-                    <span className="h-5 flex items-center justify-center">Hole</span>
-                    <span className="h-5 flex items-center justify-center text-emerald-600">SK</span>
-                    <span className="h-5 flex items-center justify-center text-teal-600">KY</span>
-                  </div>
-                  {scoreboardHoles.slice(0, 9).map((h, k) => {
-                    const isSelected = activeHoleIndex === k;
-                    const p1T = h.iron + h.putt;
-                    const p2T = h.iron2 + h.putt2;
-                    return (
-                      <div 
-                        key={k}
-                        onClick={() => setActiveHoleIndex(k)}
-                        className={`flex-1 py-1 flex flex-col justify-around cursor-pointer transition-all border-r last:border-r-0 border-gray-100 ${
-                          isSelected ? 'bg-emerald-50' : 'hover:bg-gray-50/50'
-                        }`}
-                      >
-                        <span className={`text-[10px] font-bold h-5 flex items-center justify-center ${isSelected ? 'text-emerald-700 font-black' : 'text-gray-400'}`}>
-                          {h.hole}
-                        </span>
-                        <span className="text-xs font-bold text-emerald-700 h-5 flex items-center justify-center">
-                          {p1T > 0 ? p1T : '-'}
-                        </span>
-                        <span className="text-xs font-bold text-teal-700 h-5 flex items-center justify-center">
-                          {p2T > 0 ? p2T : '-'}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Back Nine layout */}
-              <div>
-                <span className="text-[10px] font-bold text-gray-400 block mb-1 px-1">⛳ BACK NINE (Holes 10 - 18)</span>
-                <div className="border border-gray-200 rounded-xl overflow-hidden flex bg-white text-center">
-                  <div className="w-12 bg-gray-50 flex flex-col justify-around text-[10px] font-bold text-gray-500 py-1 border-r border-gray-200">
-                    <span className="h-5 flex items-center justify-center">Hole</span>
-                    <span className="h-5 flex items-center justify-center text-emerald-600">SK</span>
-                    <span className="h-5 flex items-center justify-center text-teal-600">KY</span>
-                  </div>
-                  {scoreboardHoles.slice(9, 18).map((h, k) => {
-                    const globalK = k + 9;
-                    const isSelected = activeHoleIndex === globalK;
-                    const p1T = h.iron + h.putt;
-                    const p2T = h.iron2 + h.putt2;
-                    return (
-                      <div 
-                        key={globalK}
-                        onClick={() => setActiveHoleIndex(globalK)}
-                        className={`flex-1 py-1 flex flex-col justify-around cursor-pointer transition-all border-r last:border-r-0 border-gray-100 ${
-                          isSelected ? 'bg-emerald-50' : 'hover:bg-gray-50/50'
-                        }`}
-                      >
-                        <span className={`text-[10px] font-bold h-5 flex items-center justify-center ${isSelected ? 'text-emerald-700 font-black' : 'text-gray-400'}`}>
-                          {h.hole}
-                        </span>
-                        <span className="text-xs font-bold text-emerald-700 h-5 flex items-center justify-center">
-                          {p1T > 0 ? p1T : '-'}
-                        </span>
-                        <span className="text-xs font-bold text-teal-700 h-5 flex items-center justify-center">
-                          {p2T > 0 ? p2T : '-'}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-            </div>
-
-            {/* Grand Totals Card & Save Button */}
-            <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100/70 text-center space-y-4 shadow-sm">
+            {/* Grand Totals Card */}
+            <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100/70 text-center shadow-sm">
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold text-emerald-800 uppercase">SK Total</span>
@@ -896,15 +965,6 @@ export default function App() {
                   <span className="text-2xl font-black text-teal-700 mt-0.5">{totalCombinedP2}</span>
                 </div>
               </div>
-
-              <button
-                type="button"
-                onClick={handleSaveScore}
-                disabled={(!isNewCourse && !selectedCourseId) || (isNewCourse && !newCourseNameInput.trim())}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 px-4 rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-40 select-none text-sm"
-              >
-                Save Round Record
-              </button>
             </div>
 
           </div>
@@ -1371,11 +1431,11 @@ export default function App() {
                       <span className="text-[11px] font-extrabold text-emerald-850 uppercase tracking-widest block">🏆 Final Scoreboard Summary</span>
                       <div className="grid grid-cols-2 gap-2">
                         <div className="flex flex-col text-center">
-                          <span className="text-[9px] font-bold text-emerald-850 uppercase">👤 SK Score</span>
+                          <span className="text-[9px] font-bold text-emerald-850 uppercase">👦 SK Score</span>
                           <span className="text-base font-black text-emerald-700 mt-0.5">{totalStrokesP1} Str <span className="text-[10px] font-normal text-emerald-600">({totalPuttsP1}P)</span></span>
                         </div>
                         <div className="flex flex-col text-center border-l border-emerald-100/80">
-                          <span className="text-[9px] font-bold text-teal-850 uppercase">👤 KY Score</span>
+                          <span className="text-[9px] font-bold text-teal-850 uppercase">👩 KY Score</span>
                           <span className="text-base font-black text-teal-700 mt-0.5">
                             {totalStrokesP2 > 0 ? `${totalStrokesP2} Str (${totalPuttsP2}P)` : '-'}
                           </span>
