@@ -14,45 +14,45 @@ const formatPlayDate = (dateStr) => {
 
 // Render score symbol based on standard golf scoring notation
 const renderScoreSymbol = (score, par, isSelected) => {
-  if (!score || score <= 0) return <span className="text-gray-300 text-sm font-medium">-</span>;
+  if (!score || score <= 0) return <span className="text-gray-400 text-sm font-medium">-</span>;
   
   const diff = score - par;
   
   if (diff === -1) {
     // Birdie: 빨간색 동그라미 안에 숫자
     return (
-      <div className="w-5.5 h-5.5 rounded-full border border-red-500 bg-red-50/30 flex items-center justify-center">
-        <span className="text-[11px] font-black text-red-500 leading-none">{score}</span>
+      <div className="w-7 h-7 rounded-full border-2 border-red-500 bg-red-50/40 flex items-center justify-center shadow-sm animate-fadeIn">
+        <span className="text-[13px] font-black text-red-500 leading-none">{score}</span>
       </div>
     );
   } else if (diff <= -2) {
     // Eagle or Albatross: 두줄짜리 빨간색 동그라미
     return (
-      <div className="relative w-5.5 h-5.5 flex items-center justify-center">
-        <div className="absolute inset-0 border border-red-500 rounded-full"></div>
+      <div className="relative w-7 h-7 flex items-center justify-center shadow-sm animate-fadeIn">
+        <div className="absolute inset-0 border-2 border-red-500 rounded-full"></div>
         <div className="absolute inset-[2.5px] border border-red-500 rounded-full"></div>
-        <span className="text-[11px] font-black text-red-500 z-10 leading-none">{score}</span>
+        <span className="text-[13px] font-black text-red-500 z-10 leading-none">{score}</span>
       </div>
     );
   } else if (diff === 1) {
     // Bogey: 파란색 네모 안에 숫자
     return (
-      <div className="w-5.5 h-5.5 border border-blue-500 bg-blue-50/20 rounded-[2px] flex items-center justify-center">
-        <span className="text-[11px] font-black text-blue-500 leading-none">{score}</span>
+      <div className="w-7 h-7 border-2 border-blue-500 bg-blue-50/30 rounded-[2px] flex items-center justify-center shadow-sm animate-fadeIn">
+        <span className="text-[13px] font-black text-blue-500 leading-none">{score}</span>
       </div>
     );
   } else if (diff >= 2) {
     // Double bogey and more: 두줄짜리 네모 안에 숫자
     return (
-      <div className="relative w-5.5 h-5.5 flex items-center justify-center">
-        <div className="absolute inset-0 border border-blue-600 rounded-[2px]"></div>
+      <div className="relative w-7 h-7 flex items-center justify-center shadow-sm animate-fadeIn">
+        <div className="absolute inset-0 border-2 border-blue-600 rounded-[2px]"></div>
         <div className="absolute inset-[2.5px] border border-blue-600 rounded-[2px]"></div>
-        <span className="text-[11px] font-black text-blue-600 z-10 leading-none">{score}</span>
+        <span className="text-[13px] font-black text-blue-600 z-10 leading-none">{score}</span>
       </div>
     );
   } else {
     // Par
-    return <span className={`text-sm font-bold leading-none ${isSelected ? 'text-emerald-800' : 'text-gray-700'}`}>{score}</span>;
+    return <span className={`text-[15px] font-extrabold leading-none ${isSelected ? 'text-emerald-800 font-black' : 'text-gray-800'}`}>{score}</span>;
   }
 };
 
@@ -678,18 +678,18 @@ export default function App() {
 
   return (
     <div 
-      className="max-w-md mx-auto min-h-screen bg-gray-50 flex flex-col justify-between shadow-xl relative border-x border-gray-100 pb-24"
+      className="max-w-md mx-auto min-h-screen bg-gray-50 flex flex-col justify-between shadow-xl relative border-x border-gray-100"
       style={{ fontFamily: '"Outfit", "Noto Sans KR", sans-serif' }}
     >
       
       {/* Top Header App Bar */}
-      <header className="text-white py-3.5 px-5 text-left shadow-md select-none relative animate-fade-in" style={{ backgroundColor: '#0f766e' }}>
+      <header className="text-white py-3 px-5 text-left shadow-md select-none relative animate-fade-in" style={{ backgroundColor: '#0f766e' }}>
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-3">
             <img 
               src={process.env.PUBLIC_URL + '/logo.svg'} 
               alt="SkKy Golf Logo" 
-              className="w-14 h-14 object-contain rounded-xl shadow-md border border-emerald-500/20 bg-emerald-800/10 p-0.5 shrink-0"
+              className="w-16 h-16 object-contain rounded-xl shadow-md border border-white/10 shrink-0"
             />
             <div>
               <h1 className="text-3xl font-black tracking-wide text-[#f8fafc] leading-tight" style={{ fontFamily: '"Outfit", "Noto Sans KR", sans-serif' }}>
@@ -713,7 +713,7 @@ export default function App() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto p-4 space-y-4">
+      <main className="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
         
         {/* --- TAB 1: SCOREBOARD --- */}
         {activeTab === 'score' && (
@@ -794,15 +794,21 @@ export default function App() {
               {/* Front Nine layout */}
               <div className="w-full">
                 <span className="text-xs font-black text-gray-500 block mb-1.5 px-1 tracking-wide">⛳ Front</span>
-                <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center" style={{ width: 'calc(3rem + (100% - 3rem) * 10 / 11)' }}>
-                  <div className="w-12 bg-gray-50 flex flex-col justify-around text-xs font-extrabold text-gray-500 py-1.5 border-r border-gray-300 shrink-0 select-none">
-                    <span className="h-5 flex items-center justify-center text-gray-600 font-extrabold text-sm">Hole</span>
-                    <span className="h-4 flex items-center justify-center text-red-600 font-black tracking-normal text-xs">Par</span>
-                    <span className="h-6 flex items-center justify-center text-emerald-800 font-black text-sm">SK</span>
-                    <span className="h-6 flex items-center justify-center text-teal-800 font-black text-sm">KY</span>
+                <div className="border-2 border-gray-600 rounded-none overflow-hidden flex bg-white text-center shadow-sm" style={{ width: 'calc(3rem + (100% - 3rem) * 10 / 11)' }}>
+                  <div className="w-12 bg-gray-50 flex flex-col justify-between text-xs font-extrabold text-gray-500 border-r-2 border-gray-600 shrink-0 select-none">
+                    {/* Top Header */}
+                    <div className="flex flex-col py-1 border-b-2 border-gray-600">
+                      <span className="h-5 flex items-center justify-center text-gray-600 font-extrabold text-[11px]">Hole</span>
+                      <span className="h-4 flex items-center justify-center text-red-650 font-black tracking-normal text-[11px]">Par</span>
+                    </div>
+                    {/* Bottom Header */}
+                    <div className="flex flex-col py-1 bg-white">
+                      <span className="h-8 flex items-center justify-center text-emerald-850 font-black text-sm">SK</span>
+                      <span className="h-8 flex items-center justify-center text-teal-850 font-black text-sm">KY</span>
+                    </div>
                   </div>
                   {/* Grid for 9 holes + OUT (10 columns total) */}
-                  <div className="flex-1 grid grid-cols-10 divide-x divide-gray-200">
+                  <div className="flex-1 grid grid-cols-10 divide-x divide-gray-300">
                     {scoreboardHoles.slice(0, 9).map((h, k) => {
                       const isClickable = (k === currentFocusedIndex);
                       const p1T = h.iron + h.putt;
@@ -812,33 +818,45 @@ export default function App() {
                         <div 
                           key={k}
                           onClick={isClickable ? () => openScoreModal(k) : undefined}
-                          className={`py-1 flex flex-col justify-around transition-all ${
+                          className={`flex flex-col justify-between transition-all ${
                             isClickable 
-                              ? 'cursor-pointer bg-amber-50/30 hover:bg-amber-50/60 ring-2 ring-amber-400 ring-inset animate-pulse-slow' 
+                              ? 'cursor-pointer bg-amber-50/30 hover:bg-amber-50/60 ring-2 ring-amber-400 ring-inset' 
                               : 'cursor-default grayscale-[20%] opacity-85'
                           }`}
                         >
-                          <span className={`text-sm font-bold h-5 flex items-center justify-center ${isClickable ? 'text-amber-800 font-black text-sm' : 'text-gray-500'}`}>
-                            {h.hole}
-                          </span>
-                          <span className="text-xs font-black text-red-500 h-4 flex items-center justify-center">
-                            {holePar}
-                          </span>
-                          <div className="h-6 flex items-center justify-center">
-                            {renderScoreSymbol(p1T, holePar, isClickable, isClickable && p1T === 0)}
+                          {/* Top Section */}
+                          <div className={`flex flex-col py-1 border-b-2 border-gray-600 ${isClickable ? 'bg-amber-50/50' : ''}`}>
+                            <span className={`text-xs font-bold h-5 flex items-center justify-center ${isClickable ? 'text-amber-800 font-black' : 'text-gray-500'}`}>
+                              {h.hole}
+                            </span>
+                            <span className="text-[11px] font-black text-red-500 h-4 flex items-center justify-center">
+                              {holePar}
+                            </span>
                           </div>
-                          <div className="h-6 flex items-center justify-center">
-                            {renderScoreSymbol(p2T, holePar, isClickable, isClickable && p2T === 0)}
+                          {/* Bottom Section */}
+                          <div className="flex flex-col py-1">
+                            <div className="h-8 flex items-center justify-center">
+                              {renderScoreSymbol(p1T, holePar, isClickable, isClickable && p1T === 0)}
+                            </div>
+                            <div className="h-8 flex items-center justify-center">
+                              {renderScoreSymbol(p2T, holePar, isClickable, isClickable && p2T === 0)}
+                            </div>
                           </div>
                         </div>
                       );
                     })}
                     {/* OUT subtotal column (occupies 10th col) */}
-                    <div className="bg-gray-50 flex flex-col justify-around py-1.5 text-center select-none font-bold">
-                      <span className="text-sm font-black h-5 flex items-center justify-center text-gray-700 bg-gray-100/50">OUT</span>
-                      <span className="text-[11px] font-black text-red-600 h-4 flex items-center justify-center">{parOut}</span>
-                      <span className="text-sm font-black text-emerald-800 h-6 flex items-center justify-center bg-emerald-50/40">{p1Out > 0 ? p1Out : '-'}</span>
-                      <span className="text-sm font-black text-teal-850 h-6 flex items-center justify-center bg-teal-50/40">{p2Out > 0 ? p2Out : '-'}</span>
+                    <div className="bg-gray-50 flex flex-col justify-between text-center select-none font-bold">
+                      {/* Top Section */}
+                      <div className="flex flex-col py-1 border-b-2 border-gray-600 bg-gray-100/60">
+                        <span className="text-[10px] font-black h-5 flex items-center justify-center text-gray-700 bg-gray-100/50">OUT</span>
+                        <span className="text-[10px] font-black text-red-650 h-4 flex items-center justify-center">{parOut}</span>
+                      </div>
+                      {/* Bottom Section */}
+                      <div className="flex flex-col py-1 bg-gray-50/30">
+                        <span className="text-sm font-black text-emerald-800 h-8 flex items-center justify-center bg-emerald-50/30">{p1Out > 0 ? p1Out : '-'}</span>
+                        <span className="text-sm font-black text-teal-850 h-8 flex items-center justify-center bg-teal-50/30">{p2Out > 0 ? p2Out : '-'}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -847,15 +865,21 @@ export default function App() {
               {/* Back Nine layout */}
               <div className="w-full">
                 <span className="text-xs font-black text-gray-500 block mb-1.5 px-1 tracking-wide">⛳ Back</span>
-                <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center w-full">
-                  <div className="w-12 bg-gray-50 flex flex-col justify-around text-xs font-extrabold text-gray-500 py-1.5 border-r border-gray-300 shrink-0 select-none">
-                    <span className="h-5 flex items-center justify-center text-gray-600 font-extrabold text-sm">Hole</span>
-                    <span className="h-4 flex items-center justify-center text-red-600 font-black tracking-normal text-xs">Par</span>
-                    <span className="h-6 flex items-center justify-center text-emerald-800 font-black text-sm">SK</span>
-                    <span className="h-6 flex items-center justify-center text-teal-800 font-black text-sm">KY</span>
+                <div className="border-2 border-gray-600 rounded-none overflow-hidden flex bg-white text-center w-full shadow-sm">
+                  <div className="w-12 bg-gray-50 flex flex-col justify-between text-xs font-extrabold text-gray-500 border-r-2 border-gray-600 shrink-0 select-none">
+                    {/* Top Header */}
+                    <div className="flex flex-col py-1 border-b-2 border-gray-600">
+                      <span className="h-5 flex items-center justify-center text-gray-600 font-extrabold text-[11px]">Hole</span>
+                      <span className="h-4 flex items-center justify-center text-red-650 font-black tracking-normal text-[11px]">Par</span>
+                    </div>
+                    {/* Bottom Header */}
+                    <div className="flex flex-col py-1 bg-white">
+                      <span className="h-8 flex items-center justify-center text-emerald-850 font-black text-sm">SK</span>
+                      <span className="h-8 flex items-center justify-center text-teal-880 font-black text-sm">KY</span>
+                    </div>
                   </div>
                   {/* Grid for 9 holes + IN + TOT column (11 columns total) */}
-                  <div className="flex-1 grid grid-cols-11 divide-x divide-gray-200">
+                  <div className="flex-1 grid grid-cols-11 divide-x divide-gray-300">
                     {scoreboardHoles.slice(9, 18).map((h, k) => {
                       const globalK = k + 9;
                       const isClickable = (globalK === currentFocusedIndex);
@@ -866,40 +890,58 @@ export default function App() {
                         <div 
                           key={globalK}
                           onClick={isClickable ? () => openScoreModal(globalK) : undefined}
-                          className={`py-1 flex flex-col justify-around transition-all ${
+                          className={`flex flex-col justify-between transition-all ${
                             isClickable 
-                              ? 'cursor-pointer bg-amber-50/30 hover:bg-amber-50/60 ring-2 ring-amber-400 ring-inset animate-pulse-slow' 
+                              ? 'cursor-pointer bg-amber-50/30 hover:bg-amber-50/60 ring-2 ring-amber-400 ring-inset' 
                               : 'cursor-default grayscale-[20%] opacity-85'
                           }`}
                         >
-                          <span className={`text-sm font-bold h-5 flex items-center justify-center ${isClickable ? 'text-amber-800 font-black text-sm' : 'text-gray-500'}`}>
-                            {h.hole}
-                          </span>
-                          <span className="text-xs font-black text-red-500 h-4 flex items-center justify-center">
-                            {holePar}
-                          </span>
-                          <div className="h-6 flex items-center justify-center">
-                            {renderScoreSymbol(p1T, holePar, isClickable, isClickable && p1T === 0)}
+                          {/* Top Section */}
+                          <div className={`flex flex-col py-1 border-b-2 border-gray-600 ${isClickable ? 'bg-amber-50/50' : ''}`}>
+                            <span className={`text-xs font-bold h-5 flex items-center justify-center ${isClickable ? 'text-amber-800 font-black' : 'text-gray-500'}`}>
+                              {h.hole}
+                            </span>
+                            <span className="text-[11px] font-black text-red-500 h-4 flex items-center justify-center">
+                              {holePar}
+                            </span>
                           </div>
-                          <div className="h-6 flex items-center justify-center">
-                            {renderScoreSymbol(p2T, holePar, isClickable, isClickable && p2T === 0)}
+                          {/* Bottom Section */}
+                          <div className="flex flex-col py-1">
+                            <div className="h-8 flex items-center justify-center">
+                              {renderScoreSymbol(p1T, holePar, isClickable, isClickable && p1T === 0)}
+                            </div>
+                            <div className="h-8 flex items-center justify-center">
+                              {renderScoreSymbol(p2T, holePar, isClickable, isClickable && p2T === 0)}
+                            </div>
                           </div>
                         </div>
                       );
                     })}
                     {/* IN subtotal column (occupies 10th col) */}
-                    <div className="bg-gray-50 flex flex-col justify-around py-1.5 text-center select-none font-bold">
-                      <span className="text-sm font-black h-5 flex items-center justify-center text-gray-700 bg-gray-100/50">IN</span>
-                      <span className="text-[11px] font-black text-red-600 h-4 flex items-center justify-center">{parIn}</span>
-                      <span className="text-sm font-black text-emerald-800 h-6 flex items-center justify-center bg-emerald-50/40">{p1In > 0 ? p1In : '-'}</span>
-                      <span className="text-sm font-black text-teal-855 h-6 flex items-center justify-center bg-teal-50/40">{p2In > 0 ? p2In : '-'}</span>
+                    <div className="bg-gray-50 flex flex-col justify-between text-center select-none font-bold">
+                      {/* Top Section */}
+                      <div className="flex flex-col py-1 border-b-2 border-gray-600 bg-gray-100/60">
+                        <span className="text-[10px] font-black h-5 flex items-center justify-center text-gray-700 bg-gray-100/50">IN</span>
+                        <span className="text-[10px] font-black text-red-650 h-4 flex items-center justify-center">{parIn}</span>
+                      </div>
+                      {/* Bottom Section */}
+                      <div className="flex flex-col py-1 bg-gray-50/30">
+                        <span className="text-sm font-black text-emerald-800 h-8 flex items-center justify-center bg-emerald-50/30">{p1In > 0 ? p1In : '-'}</span>
+                        <span className="text-sm font-black text-teal-855 h-8 flex items-center justify-center bg-teal-50/30">{p2In > 0 ? p2In : '-'}</span>
+                      </div>
                     </div>
                     {/* TOT total column (occupies 11th col) */}
-                    <div className="bg-indigo-50/40 flex flex-col justify-around py-1.5 text-center select-none font-bold">
-                      <span className="text-sm font-black h-5 flex items-center justify-center text-indigo-900 bg-indigo-100/40">TOT</span>
-                      <span className="text-[11px] font-black text-red-655 h-4 flex items-center justify-center">{parTotal}</span>
-                      <span className="text-sm font-black text-emerald-800 h-6 flex items-center justify-center bg-emerald-100/55">{p1Total > 0 ? p1Total : '-'}</span>
-                      <span className="text-sm font-black text-teal-800 h-6 flex items-center justify-center bg-teal-100/55">{p2Total > 0 ? p2Total : '-'}</span>
+                    <div className="bg-indigo-50/40 flex flex-col justify-between text-center select-none font-bold">
+                      {/* Top Section */}
+                      <div className="flex flex-col py-1 border-b-2 border-gray-600 bg-indigo-100/40">
+                        <span className="text-[10px] font-black h-5 flex items-center justify-center text-indigo-900 bg-indigo-100/40">TOT</span>
+                        <span className="text-[10px] font-black text-red-655 h-4 flex items-center justify-center">{parTotal}</span>
+                      </div>
+                      {/* Bottom Section */}
+                      <div className="flex flex-col py-1 bg-indigo-50/10">
+                        <span className="text-sm font-black text-emerald-800 h-8 flex items-center justify-center bg-emerald-100/55">{p1Total > 0 ? p1Total : '-'}</span>
+                        <span className="text-sm font-black text-teal-800 h-8 flex items-center justify-center bg-teal-100/55">{p2Total > 0 ? p2Total : '-'}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -914,13 +956,16 @@ export default function App() {
                   
                   {/* Modal Header */}
                   <div className="flex justify-between items-center pb-2.5 border-b border-gray-200">
-                    <div className="flex flex-col">
-                      <h3 className="text-xl font-black text-emerald-800 tracking-wide">
-                        ⛳ HOLE {editingHoleIndex + 1}
-                      </h3>
-                      <span className="text-sm font-extrabold text-emerald-700 uppercase">
-                        Par {courseHolePars[editingHoleIndex] || 4}
-                      </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl filter drop-shadow">⛳</span>
+                      <div className="flex flex-col text-left">
+                        <h3 className="text-lg font-black text-gray-800 tracking-wide leading-none">
+                          HOLE {editingHoleIndex + 1}
+                        </h3>
+                        <span className="text-xs font-black text-red-600 uppercase mt-1 leading-none tracking-wider">
+                          Par {courseHolePars[editingHoleIndex] || 4}
+                        </span>
+                      </div>
                     </div>
                     <button 
                       type="button"
