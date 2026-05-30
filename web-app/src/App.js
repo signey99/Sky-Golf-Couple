@@ -684,7 +684,7 @@ export default function App() {
 
   return (
     <div 
-      className="max-w-md mx-auto min-h-screen bg-gray-50 flex flex-col justify-between shadow-xl relative border-x border-gray-100"
+      className="max-w-lg mx-auto min-h-screen bg-gray-50 flex flex-col justify-between shadow-xl relative border-x border-gray-100"
       style={{ fontFamily: '"Outfit", "Noto Sans KR", sans-serif' }}
     >
       
@@ -719,7 +719,7 @@ export default function App() {
       </header>
 
       {/* Main Content Area */}
-      <main className={`flex-1 p-4 ${activeTab === 'score' ? 'overflow-y-hidden pb-16 space-y-3' : 'overflow-y-auto pb-24 space-y-4'}`}>
+      <main className="flex-1 p-4 overflow-y-auto pb-24 space-y-4">
         
         {/* --- TAB 1: SCOREBOARD --- */}
         {activeTab === 'score' && (
@@ -958,7 +958,7 @@ export default function App() {
             {/* Score Entry Popup Modal */}
             {isScoreInputModalOpen && editingHoleIndex !== null && (
               <div className="fixed inset-0 bg-black/60 z-[110] flex items-center justify-center p-4 backdrop-blur-sm">
-                <div className="bg-white rounded-none w-full max-w-sm p-6 shadow-2xl border border-gray-300 flex flex-col space-y-4 animate-fade-in text-left">
+                <div className="bg-white rounded-none w-full max-w-md p-6 shadow-2xl border border-gray-300 flex flex-col space-y-4 animate-fade-in text-left">
                   
                   {/* Modal Header */}
                   <div className="flex justify-between items-center pb-2.5 border-b border-gray-200">
@@ -993,21 +993,21 @@ export default function App() {
                       {/* SK Strokes */}
                       <div className="w-full flex flex-col items-center text-center">
                         <span className="text-[11px] font-extrabold text-gray-500 uppercase">Strokes</span>
-                        <div className="w-28 h-10 flex justify-between items-center bg-emerald-50/40 p-1 rounded-none border border-emerald-200 mt-1">
+                        <div className="w-32 h-12 flex justify-between items-center bg-emerald-50/40 p-1 rounded-none border border-emerald-200 mt-1">
                           <button
                             type="button"
                             onClick={() => modifyScoreboardHoleIndex(editingHoleIndex, 'iron', -1)}
-                            className="w-8 h-8 rounded-none bg-white text-emerald-800 hover:bg-emerald-50 border border-emerald-200 font-black text-base shadow-sm flex justify-center items-center active:scale-95"
+                            className="w-10 h-10 rounded-none bg-white text-emerald-800 hover:bg-emerald-55 border border-emerald-200 font-black text-lg shadow-sm flex justify-center items-center active:scale-95"
                           >
                             −
                           </button>
-                          <span className="flex-1 text-center font-black text-lg text-emerald-800">
+                          <span className="flex-1 text-center font-black text-xl text-emerald-800">
                             {scoreboardHoles[editingHoleIndex].iron}
                           </span>
                           <button
                             type="button"
                             onClick={() => modifyScoreboardHoleIndex(editingHoleIndex, 'iron', 1)}
-                            className="w-8 h-8 rounded-none bg-white text-emerald-800 hover:bg-emerald-50 border border-emerald-200 font-black text-base shadow-sm flex justify-center items-center active:scale-95"
+                            className="w-10 h-10 rounded-none bg-white text-emerald-800 hover:bg-emerald-55 border border-emerald-200 font-black text-lg shadow-sm flex justify-center items-center active:scale-95"
                           >
                             +
                           </button>
@@ -1017,29 +1017,29 @@ export default function App() {
                       {/* SK Putts */}
                       <div className="w-full flex flex-col items-center text-center">
                         <span className="text-[11px] font-extrabold text-gray-500 uppercase">Putts</span>
-                        <div className="w-28 h-10 flex justify-between items-center bg-emerald-50/40 p-1 rounded-none border border-emerald-200 mt-1">
+                        <div className="w-32 h-12 flex justify-between items-center bg-emerald-50/40 p-1 rounded-none border border-emerald-200 mt-1">
                           <button
                             type="button"
                             onClick={() => modifyScoreboardHoleIndex(editingHoleIndex, 'putt', -1)}
-                            className="w-8 h-8 rounded-none bg-white text-emerald-800 hover:bg-emerald-50 border border-emerald-200 font-black text-base shadow-sm flex justify-center items-center active:scale-95"
+                            className="w-10 h-10 rounded-none bg-white text-emerald-800 hover:bg-emerald-55 border border-emerald-200 font-black text-lg shadow-sm flex justify-center items-center active:scale-95"
                           >
                             −
                           </button>
-                          <span className="flex-1 text-center font-black text-lg text-emerald-800">
+                          <span className="flex-1 text-center font-black text-xl text-emerald-800">
                             {scoreboardHoles[editingHoleIndex].putt}
                           </span>
                           <button
                             type="button"
                             onClick={() => modifyScoreboardHoleIndex(editingHoleIndex, 'putt', 1)}
-                            className="w-8 h-8 rounded-none bg-white text-emerald-800 hover:bg-emerald-50 border border-emerald-200 font-black text-base shadow-sm flex justify-center items-center active:scale-95"
+                            className="w-10 h-10 rounded-none bg-white text-emerald-800 hover:bg-emerald-55 border border-emerald-200 font-black text-lg shadow-sm flex justify-center items-center active:scale-95"
                           >
                             +
                           </button>
                         </div>
                       </div>
 
-                      <div className="w-28 h-10 flex justify-center items-center bg-emerald-50 p-1 rounded-none border border-emerald-200 mt-1 text-sm font-bold text-emerald-800 text-center">
-                        Total: &nbsp;<strong className="font-extrabold text-base">{scoreboardHoles[editingHoleIndex].iron + scoreboardHoles[editingHoleIndex].putt}</strong>
+                      <div className="w-32 h-12 flex justify-center items-center bg-emerald-50 p-1 rounded-none border border-emerald-200 mt-1 text-sm font-bold text-emerald-800 text-center">
+                        Total: &nbsp;<strong className="font-extrabold text-lg">{scoreboardHoles[editingHoleIndex].iron + scoreboardHoles[editingHoleIndex].putt}</strong>
                       </div>
                     </div>
 
@@ -1052,21 +1052,21 @@ export default function App() {
                       {/* KY Strokes */}
                       <div className="w-full flex flex-col items-center text-center">
                         <span className="text-[11px] font-extrabold text-gray-500 uppercase">Strokes</span>
-                        <div className="w-28 h-10 flex justify-between items-center bg-teal-50/40 p-1 rounded-none border border-teal-200 mt-1">
+                        <div className="w-32 h-12 flex justify-between items-center bg-teal-50/40 p-1 rounded-none border border-teal-200 mt-1">
                           <button
                             type="button"
                             onClick={() => modifyScoreboardHoleIndex(editingHoleIndex, 'iron2', -1)}
-                            className="w-8 h-8 rounded-none bg-white text-teal-800 hover:bg-teal-50 border border-teal-200 font-black text-base shadow-sm flex justify-center items-center active:scale-95"
+                            className="w-10 h-10 rounded-none bg-white text-teal-800 hover:bg-teal-55 border border-teal-200 font-black text-lg shadow-sm flex justify-center items-center active:scale-95"
                           >
                             −
                           </button>
-                          <span className="flex-1 text-center font-black text-lg text-teal-800">
+                          <span className="flex-1 text-center font-black text-xl text-teal-800">
                             {scoreboardHoles[editingHoleIndex].iron2}
                           </span>
                           <button
                             type="button"
                             onClick={() => modifyScoreboardHoleIndex(editingHoleIndex, 'iron2', 1)}
-                            className="w-8 h-8 rounded-none bg-white text-teal-800 hover:bg-teal-50 border border-teal-200 font-black text-base shadow-sm flex justify-center items-center active:scale-95"
+                            className="w-10 h-10 rounded-none bg-white text-teal-800 hover:bg-teal-55 border border-teal-200 font-black text-lg shadow-sm flex justify-center items-center active:scale-95"
                           >
                             +
                           </button>
@@ -1076,29 +1076,29 @@ export default function App() {
                       {/* KY Putts */}
                       <div className="w-full flex flex-col items-center text-center">
                         <span className="text-[11px] font-extrabold text-gray-500 uppercase">Putts</span>
-                        <div className="w-28 h-10 flex justify-between items-center bg-teal-50/40 p-1 rounded-none border border-teal-200 mt-1">
+                        <div className="w-32 h-12 flex justify-between items-center bg-teal-50/40 p-1 rounded-none border border-teal-200 mt-1">
                           <button
                             type="button"
                             onClick={() => modifyScoreboardHoleIndex(editingHoleIndex, 'putt2', -1)}
-                            className="w-8 h-8 rounded-none bg-white text-teal-800 hover:bg-teal-50 border border-teal-200 font-black text-base shadow-sm flex justify-center items-center active:scale-95"
+                            className="w-10 h-10 rounded-none bg-white text-teal-800 hover:bg-teal-55 border border-teal-200 font-black text-lg shadow-sm flex justify-center items-center active:scale-95"
                           >
                             −
                           </button>
-                          <span className="flex-1 text-center font-black text-lg text-teal-800">
+                          <span className="flex-1 text-center font-black text-xl text-teal-800">
                             {scoreboardHoles[editingHoleIndex].putt2}
                           </span>
                           <button
                             type="button"
                             onClick={() => modifyScoreboardHoleIndex(editingHoleIndex, 'putt2', 1)}
-                            className="w-8 h-8 rounded-none bg-white text-teal-800 hover:bg-teal-50 border border-teal-200 font-black text-base shadow-sm flex justify-center items-center active:scale-95"
+                            className="w-10 h-10 rounded-none bg-white text-teal-800 hover:bg-teal-55 border border-teal-200 font-black text-lg shadow-sm flex justify-center items-center active:scale-95"
                           >
                             +
                           </button>
                         </div>
                       </div>
 
-                      <div className="w-28 h-10 flex justify-center items-center bg-teal-50 p-1 rounded-none border border-teal-200 mt-1 text-sm font-bold text-teal-800 text-center">
-                        Total: &nbsp;<strong className="font-extrabold text-base">{scoreboardHoles[editingHoleIndex].iron2 + scoreboardHoles[editingHoleIndex].putt2}</strong>
+                      <div className="w-32 h-12 flex justify-center items-center bg-teal-50 p-1 rounded-none border border-teal-200 mt-1 text-sm font-bold text-teal-800 text-center">
+                        Total: &nbsp;<strong className="font-extrabold text-lg">{scoreboardHoles[editingHoleIndex].iron2 + scoreboardHoles[editingHoleIndex].putt2}</strong>
                       </div>
                     </div>
 
@@ -1109,7 +1109,7 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setIsScoreInputModalOpen(false)}
-                      className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white font-black rounded-none text-center text-base shadow transition active:scale-95"
+                      className="w-full py-3.5 bg-emerald-700 hover:bg-emerald-600 text-white font-black rounded-none text-center text-base shadow transition active:scale-95"
                     >
                       Confirm
                     </button>
@@ -1137,7 +1137,7 @@ export default function App() {
               
               <div 
                 onClick={handleMapClick}
-                className="w-full h-36 bg-emerald-50 border border-emerald-100 rounded-xl flex flex-col items-center justify-center relative cursor-crosshair overflow-hidden group shadow-inner"
+                className="w-full h-48 bg-emerald-50 border border-emerald-100 rounded-xl flex flex-col items-center justify-center relative cursor-crosshair overflow-hidden group shadow-inner"
               >
                 <div className="absolute inset-0 bg-opacity-15 bg-[radial-gradient(#059669_1px,transparent_1px)] [background-size:16px_16px]"></div>
                 
@@ -1164,7 +1164,7 @@ export default function App() {
             {/* Interactive Registration Modal Overlays */}
             {showCourseModal && (
               <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
-                <div className="bg-white rounded-2xl w-full max-w-sm max-h-[85vh] overflow-y-auto p-5 shadow-2xl border border-gray-100 flex flex-col">
+                <div className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto p-5 shadow-2xl border border-gray-100 flex flex-col">
                   
                   {/* Modal Header */}
                   <div className="flex justify-between items-center pb-3 border-b border-gray-100 mb-4">
@@ -1411,7 +1411,7 @@ export default function App() {
                           <button
                             type="button"
                             onClick={() => handleStartEditCourse(course)}
-                            className="px-2 py-0.5 text-xs text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200/50 flex items-center justify-center transition"
+                            className="px-3 py-1.5 text-xs text-emerald-700 font-extrabold bg-emerald-50 hover:bg-emerald-100 rounded-xl border border-emerald-200/50 flex items-center justify-center transition active:scale-95"
                             title="Edit"
                           >
                             ✏️ Edit
@@ -1419,7 +1419,7 @@ export default function App() {
                           <button
                             type="button"
                             onClick={() => handleDeleteCourse(course.id)}
-                            className="px-2 py-0.5 text-xs text-rose-700 font-bold bg-rose-50 hover:bg-rose-100 rounded-lg border border-rose-200/50 flex items-center justify-center transition"
+                            className="px-3 py-1.5 text-xs text-rose-700 font-extrabold bg-rose-50 hover:bg-rose-100 rounded-xl border border-rose-200/50 flex items-center justify-center transition active:scale-95"
                             title="Delete"
                           >
                             🗑️ Delete
@@ -1511,7 +1511,7 @@ export default function App() {
 
               return (
                 <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
-                  <div className="bg-white rounded-2xl w-full max-w-sm max-h-[85vh] overflow-y-auto p-5 shadow-2xl border border-gray-100 flex flex-col space-y-4">
+                  <div className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto p-5 shadow-2xl border border-gray-100 flex flex-col space-y-4">
                     
                     {/* Modal Header */}
                     <div className="flex justify-between items-center pb-3 border-b border-gray-100">
@@ -1663,7 +1663,7 @@ export default function App() {
       </main>
 
       {/* Styled Bottom Navigation Toolbar (Stay fixed in mobile frames) */}
-      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-150 flex justify-around py-3.5 shadow-xl z-50">
+      <nav className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white border-t border-gray-150 flex justify-around py-3.5 shadow-xl z-50">
         <button 
           onClick={() => setActiveTab('score')}
           className={`flex flex-col items-center space-y-1 transition-all active:scale-95 ${activeTab === 'score' ? 'text-emerald-600 scale-105 font-bold' : 'text-gray-400 hover:text-gray-650'}`}
@@ -1690,7 +1690,7 @@ export default function App() {
       {/* Firebase Database Settings Modal */}
       {isSettingsOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-none p-6 w-full max-w-sm border border-gray-300 shadow-2xl space-y-4 animate-fade-in text-left">
+          <div className="bg-white rounded-none p-6 w-full max-w-md border border-gray-300 shadow-2xl space-y-4 animate-fade-in text-left">
             <div className="flex justify-between items-center pb-2 border-b border-gray-200">
               <h3 className="font-extrabold text-emerald-800 flex items-center gap-1.5 uppercase tracking-wide">
                 <span>🔥</span> Dynamic Sync Settings
