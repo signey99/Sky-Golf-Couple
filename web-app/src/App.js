@@ -784,8 +784,8 @@ export default function App() {
             {/* Live Matrix Section (Split tables in UI Grid) - Positioned immediately under setup */}
             <div className="bg-transparent p-0 rounded-none border-0 shadow-none space-y-3.5 w-full">
               <div className="flex items-center justify-between px-1 w-full">
-                <span className="text-lg font-black text-emerald-800 tracking-wider uppercase">
-                  Live Scoreboard
+                <span className="text-lg font-black text-emerald-800 tracking-wider uppercase flex items-center">
+                  <span className="mr-2">📝</span>Live Scoreboard
                 </span>
                 <button 
                   type="button"
@@ -1126,11 +1126,12 @@ export default function App() {
         {activeTab === 'course' && (
           <div className="space-y-4 fade-in">
             
+            <h2 className="text-lg font-black text-emerald-800 tracking-wider uppercase flex items-center px-1">
+              <span className="mr-2">🗺️</span> Course Location
+            </h2>
+
             {/* Map GPS simulator card (always present) */}
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="text-lg font-black text-emerald-800 tracking-wider uppercase flex items-center mb-1">
-                <span className="mr-2">🗺️</span> Course Location
-              </h2>
               <p className="text-[11px] text-gray-400 mb-4 font-medium leading-relaxed">
                 지도 영역을 클릭하면 GPS 위치가 시뮬레이션 변경되며, 이 핀 주소를 기준으로 신규 골프장을 등록할 수 있습니다.
               </p>
@@ -1151,15 +1152,15 @@ export default function App() {
                   클릭하여 핀 위치 변경하기
                 </div>
               </div>
-
-              <button 
-                type="button"
-                onClick={() => setShowCourseModal(true)}
-                className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 px-4 rounded-xl text-sm transition-all shadow-md active:scale-95"
-              >
-                ⛳ Add Golf Course / 골프장 등록하기
-              </button>
             </div>
+
+            <button 
+              type="button"
+              onClick={() => setShowCourseModal(true)}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 px-4 rounded-xl text-sm transition-all shadow-md active:scale-95"
+            >
+              ⛳ Add Golf Course
+            </button>
 
             {/* Interactive Registration Modal Overlays */}
             {showCourseModal && (
@@ -1186,7 +1187,7 @@ export default function App() {
 
                   <form onSubmit={handleSaveCourse} className="space-y-4 text-left">
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">Golf Course Name *</label>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">Name *</label>
                       <input 
                         type="text" 
                         placeholder="e.g. Nine Bridges CC" 
@@ -1198,7 +1199,7 @@ export default function App() {
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">Golf Course Address</label>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">Address</label>
                       <input 
                         type="text" 
                         placeholder="e.g. Jeju, South Korea" 
@@ -1208,14 +1209,25 @@ export default function App() {
                       />
                     </div>
 
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">Telephone</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. 02-1234-5678" 
+                        className="w-full p-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        value={newCourse.phone || ''}
+                        onChange={(e) => setNewCourse({ ...newCourse, phone: e.target.value })}
+                      />
+                    </div>
+
                     {/* Individual Hole Par Editor Inside Modal */}
                     <div>
                       <span className="block text-[11px] font-bold text-emerald-800 uppercase mb-1">
-                        ⛳ Default Par per Hole (Tap to Edit)
+                        ⛳ Default Par
                       </span>
                       <div className="bg-gray-50 p-2 text-center rounded-xl border border-gray-150 grid grid-cols-9 gap-1 shadow-inner">
                         {courseHolePars.map((p, idx) => (
-                          <div
+                           <div
                             key={idx}
                             onClick={() => setEditingParHoleIndex(idx)}
                             className="bg-white hover:bg-emerald-50 border border-gray-200 rounded p-1.5 cursor-pointer flex flex-col items-center"
@@ -1235,12 +1247,12 @@ export default function App() {
 
                     {/* Difficulty adjusters */}
                     <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-150 space-y-3">
-                      <span className="block text-[10px] font-bold text-gray-500 uppercase">Tee-box Ratings & Slopes (Tee Info)</span>
+                      <span className="block text-[10px] font-bold text-gray-500 uppercase">Course & Slope rating</span>
                       
                       {/* Lady Tee */}
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <div className="bg-white p-2 rounded-lg border border-gray-200">
-                          <label className="block text-[9px] font-bold text-pink-700">Lady Rating</label>
+                          <label className="block text-[9px] font-bold text-pink-700">Lady Course</label>
                           <div className="flex justify-between items-center font-bold mt-1">
                             <button
                               type="button"
@@ -1285,7 +1297,7 @@ export default function App() {
                       {/* Blue Tee */}
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <div className="bg-white p-2 rounded-lg border border-gray-200">
-                          <label className="block text-[9px] font-bold text-blue-700">Blue Rating</label>
+                          <label className="block text-[9px] font-bold text-blue-700">Blue Course</label>
                           <div className="flex justify-between items-center font-bold mt-1">
                             <button
                               type="button"
@@ -1456,8 +1468,8 @@ export default function App() {
         {/* --- TAB 3: SHARED HISTORY MEMORIES GALLERY --- */}
         {activeTab === 'history' && (
           <div className="space-y-4 fade-in">
-            <h2 className="text-lg font-bold text-gray-800 px-1 ml-1 flex items-center">
-              <span className="mr-2">📸</span> Our Shared Memories
+            <h2 className="text-lg font-black text-emerald-800 tracking-wider uppercase flex items-center px-1">
+              <span className="mr-2">📸</span> History
             </h2>
             
             {scores.length === 0 ? (
