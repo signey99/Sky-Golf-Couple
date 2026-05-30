@@ -723,7 +723,7 @@ export default function App() {
         
         {/* --- TAB 1: SCOREBOARD --- */}
         {activeTab === 'score' && (
-          <div className="space-y-4 fade-in">
+          <div className="space-y-7 fade-in">
             
             {/* Live Scoreboard Header & Save Button at the very top */}
             <div className="flex items-center justify-between px-1 w-full">
@@ -734,14 +734,14 @@ export default function App() {
                 type="button"
                 onClick={handleSaveScore}
                 disabled={(!isNewCourse && !selectedCourseId) || (isNewCourse && !newCourseNameInput.trim())}
-                className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-extrabold px-3.5 py-1.5 rounded-xl text-xs shadow-md transition active:scale-95 outline-none select-none"
+                className="bg-emerald-600 hover:bg-emerald-505 disabled:opacity-40 text-white font-extrabold px-4 py-2 rounded-none text-xs shadow-md transition active:scale-95 outline-none select-none"
               >
                 Save
               </button>
             </div>
 
             {/* Decoupled Round Setup Boxes (under the header) */}
-            <div className="grid grid-cols-2 gap-3.5">
+            <div className="grid grid-cols-2 gap-4">
               {/* Course Box Card */}
               <div className="bg-transparent p-0 border-0 shadow-none flex flex-col justify-between">
                 <label className="block text-xs font-black text-emerald-800 uppercase tracking-wider mb-1.5 flex items-center gap-1">
@@ -788,7 +788,7 @@ export default function App() {
                 <label className="block text-xs font-extrabold text-emerald-800 uppercase">Enter Golf Course Name</label>
                 <input 
                   type="text" 
-                  placeholder="e.g. Gapyeong Benest GC"
+                  placeholder="e.g. Gapyeong Benest GC" 
                   className="w-full p-2.5 bg-white border border-emerald-300 rounded-none focus:outline-none focus:ring-1 focus:ring-emerald-500 text-sm font-semibold animate-fadeIn"
                   value={newCourseNameInput}
                   onChange={(e) => setNewCourseNameInput(e.target.value)}
@@ -796,9 +796,8 @@ export default function App() {
               </div>
             )}
 
-            {/* Live Matrix Section (Split tables in UI Grid) */}
-            <div className="bg-transparent p-0 rounded-none border-0 shadow-none space-y-3.5 w-full">
-
+            {/* Live Matrix Section (Split tables in UI Grid with spacious margins) */}
+            <div className="bg-transparent p-0 rounded-none border-0 shadow-none space-y-11 w-full mt-6">
 
               {/* Front Nine layout */}
               <div className="w-full">
@@ -1134,18 +1133,18 @@ export default function App() {
             </h2>
 
             {/* Map GPS simulator card (always present) */}
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+            <div className="bg-white p-5 rounded-none shadow-sm border border-gray-300">
               <p className="text-[11px] text-gray-400 mb-4 font-medium leading-relaxed">
                 지도 영역을 클릭하면 GPS 위치가 시뮬레이션 변경되며, 이 핀 주소를 기준으로 신규 골프장을 등록할 수 있습니다.
               </p>
               
               <div 
                 onClick={handleMapClick}
-                className="w-full h-48 bg-emerald-50 border border-emerald-100 rounded-xl flex flex-col items-center justify-center relative cursor-crosshair overflow-hidden group shadow-inner"
+                className="w-full h-48 bg-emerald-50 border border-emerald-100 rounded-none flex flex-col items-center justify-center relative cursor-crosshair overflow-hidden group shadow-inner"
               >
                 <div className="absolute inset-0 bg-opacity-15 bg-[radial-gradient(#059669_1px,transparent_1px)] [background-size:16px_16px]"></div>
                 
-                <div className="z-10 bg-white px-3.5 py-1.5 rounded-full shadow-md border border-gray-100 text-xs text-gray-700 flex items-center space-x-1.5 transition-all">
+                <div className="z-10 bg-white px-3.5 py-1.5 rounded-none shadow-md border border-gray-200 text-xs text-gray-700 flex items-center space-x-1.5 transition-all">
                   <span>📍</span> 
                   <span className="font-bold text-emerald-800">
                     Lat: {Number(mapClickedCoords?.lat || 33.3541).toFixed(4)}, Lng: {Number(mapClickedCoords?.lng || 126.3712).toFixed(4)}
@@ -1160,7 +1159,7 @@ export default function App() {
             <button 
               type="button"
               onClick={() => setShowCourseModal(true)}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 px-4 rounded-xl text-sm transition-all shadow-md active:scale-95"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 px-4 rounded-none text-sm transition-all shadow-md active:scale-95"
             >
               ⛳ Add Golf Course
             </button>
@@ -1168,7 +1167,7 @@ export default function App() {
             {/* Interactive Registration Modal Overlays */}
             {showCourseModal && (
               <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
-                <div className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto p-5 shadow-2xl border border-gray-100 flex flex-col">
+                <div className="bg-white rounded-none w-full max-w-md max-h-[85vh] overflow-y-auto p-5 shadow-2xl border-2 border-gray-400 flex flex-col">
                   
                   {/* Modal Header */}
                   <div className="flex justify-between items-center pb-3 border-b border-gray-100 mb-4">
@@ -1184,7 +1183,7 @@ export default function App() {
                     </button>
                   </div>
 
-                  <p className="text-[11px] text-emerald-850 font-semibold mb-3 bg-emerald-50 p-2.5 rounded-lg text-center">
+                  <p className="text-[11px] text-emerald-850 font-semibold mb-3 bg-emerald-50 p-2.5 rounded-none text-center">
                     📍 Simulated GPS - Lat: {mapClickedCoords.lat}, Lng: {mapClickedCoords.lng}
                   </p>
 
@@ -1194,7 +1193,7 @@ export default function App() {
                       <input 
                         type="text" 
                         placeholder="e.g. Nine Bridges CC" 
-                        className="w-full p-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        className="w-full p-2.5 border border-gray-200 rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         value={newCourse.name}
                         onChange={(e) => setNewCourse({ ...newCourse, name: e.target.value })}
                         required
@@ -1206,7 +1205,7 @@ export default function App() {
                       <input 
                         type="text" 
                         placeholder="e.g. Jeju, South Korea" 
-                        className="w-full p-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        className="w-full p-2.5 border border-gray-200 rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         value={newCourse.address}
                         onChange={(e) => setNewCourse({ ...newCourse, address: e.target.value })}
                       />
@@ -1217,7 +1216,7 @@ export default function App() {
                       <input 
                         type="text" 
                         placeholder="e.g. 02-1234-5678" 
-                        className="w-full p-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        className="w-full p-2.5 border border-gray-200 rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         value={newCourse.phone || ''}
                         onChange={(e) => setNewCourse({ ...newCourse, phone: e.target.value })}
                       />
@@ -1228,12 +1227,12 @@ export default function App() {
                       <span className="block text-[11px] font-bold text-emerald-800 uppercase mb-1">
                         ⛳ Default Par
                       </span>
-                      <div className="bg-gray-50 p-2 text-center rounded-xl border border-gray-150 grid grid-cols-9 gap-1 shadow-inner">
+                      <div className="bg-gray-50 p-2 text-center rounded-none border border-gray-150 grid grid-cols-9 gap-1 shadow-inner">
                         {courseHolePars.map((p, idx) => (
                            <div
                             key={idx}
                             onClick={() => setEditingParHoleIndex(idx)}
-                            className="bg-white hover:bg-emerald-50 border border-gray-200 rounded p-1.5 cursor-pointer flex flex-col items-center"
+                            className="bg-white hover:bg-emerald-50 border border-gray-200 rounded-none p-1.5 cursor-pointer flex flex-col items-center"
                           >
                             <span className="text-[7px] text-gray-400 font-bold">H{idx+1}</span>
                             <span className="text-[11px] font-black text-emerald-700">{p}</span>
@@ -1249,18 +1248,18 @@ export default function App() {
                     </div>
 
                     {/* Difficulty adjusters */}
-                    <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-150 space-y-3">
+                    <div className="bg-gray-50 p-3.5 rounded-none border border-gray-150 space-y-3">
                       <span className="block text-[10px] font-bold text-gray-500 uppercase">Course & Slope rating</span>
                       
                       {/* Lady Tee */}
                       <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="bg-white p-2 rounded-lg border border-gray-200">
+                        <div className="bg-white p-2 rounded-none border border-gray-200">
                           <label className="block text-[9px] font-bold text-pink-700">Lady Course</label>
                           <div className="flex justify-between items-center font-bold mt-1">
                             <button
                               type="button"
                               onClick={() => setNewCourse(p => ({ ...p, ladyRating: Math.max(1, (p.ladyRating || 72.0) - 0.1) }))}
-                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs"
+                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-none flex items-center justify-center text-xs"
                             >
                               ▼
                             </button>
@@ -1268,20 +1267,20 @@ export default function App() {
                             <button
                               type="button"
                               onClick={() => setNewCourse(p => ({ ...p, ladyRating: Math.min(150, (p.ladyRating || 72.0) + 0.1) }))}
-                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs"
+                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-none flex items-center justify-center text-xs"
                             >
                               ▲
                             </button>
                           </div>
                         </div>
 
-                        <div className="bg-white p-2 rounded-lg border border-gray-200">
+                        <div className="bg-white p-2 rounded-none border border-gray-200">
                           <label className="block text-[9px] font-bold text-pink-700">Lady Slope</label>
                           <div className="flex justify-between items-center font-bold mt-1">
                             <button
                               type="button"
                               onClick={() => setNewCourse(p => ({ ...p, ladySlope: Math.max(1, p.ladySlope - 1) }))}
-                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs"
+                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-none flex items-center justify-center text-xs"
                             >
                               ▼
                             </button>
@@ -1289,7 +1288,7 @@ export default function App() {
                             <button
                               type="button"
                               onClick={() => setNewCourse(p => ({ ...p, ladySlope: Math.min(300, p.ladySlope + 1) }))}
-                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs"
+                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-none flex items-center justify-center text-xs"
                             >
                               ▲
                             </button>
@@ -1299,13 +1298,13 @@ export default function App() {
 
                       {/* Blue Tee */}
                       <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="bg-white p-2 rounded-lg border border-gray-200">
+                        <div className="bg-white p-2 rounded-none border border-gray-200">
                           <label className="block text-[9px] font-bold text-blue-700">Blue Course</label>
                           <div className="flex justify-between items-center font-bold mt-1">
                             <button
                               type="button"
                               onClick={() => setNewCourse(p => ({ ...p, blueRating: Math.max(1, (p.blueRating || 72.0) - 0.1) }))}
-                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs"
+                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-none flex items-center justify-center text-xs"
                             >
                               ▼
                             </button>
@@ -1313,20 +1312,20 @@ export default function App() {
                             <button
                               type="button"
                               onClick={() => setNewCourse(p => ({ ...p, blueRating: Math.min(150, (p.blueRating || 72.0) + 0.1) }))}
-                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs"
+                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-none flex items-center justify-center text-xs"
                             >
                               ▲
                             </button>
                           </div>
                         </div>
 
-                        <div className="bg-white p-2 rounded-lg border border-gray-200">
+                        <div className="bg-white p-2 rounded-none border border-gray-200">
                           <label className="block text-[9px] font-bold text-blue-700">Blue Slope</label>
                           <div className="flex justify-between items-center font-bold mt-1">
                             <button
                               type="button"
                               onClick={() => setNewCourse(p => ({ ...p, blueSlope: Math.max(1, p.blueSlope - 1) }))}
-                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs"
+                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-none flex items-center justify-center text-xs"
                             >
                               ▼
                             </button>
@@ -1334,7 +1333,7 @@ export default function App() {
                             <button
                               type="button"
                               onClick={() => setNewCourse(p => ({ ...p, blueSlope: Math.min(300, p.blueSlope + 1) }))}
-                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center text-xs"
+                              className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-none flex items-center justify-center text-xs"
                             >
                               ▲
                             </button>
@@ -1349,13 +1348,13 @@ export default function App() {
                         <button 
                           type="button"
                           onClick={closeCourseModal}
-                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-4 rounded-xl text-xs transition"
+                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-4 rounded-none text-xs transition"
                         >
                           Cancel
                         </button>
                         <button 
                           type="submit" 
-                          className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs transition active:scale-95"
+                          className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2.5 px-4 rounded-none text-xs transition active:scale-95"
                         >
                           {editingCourseId ? 'Save' : 'Register'}
                         </button>
@@ -1368,7 +1367,7 @@ export default function App() {
                             handleDeleteCourse(editingCourseId);
                             closeCourseModal();
                           }}
-                          className="w-full mt-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold py-2 px-4 rounded-xl text-xs transition-all flex items-center justify-center gap-1"
+                          className="w-full mt-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold py-2 px-4 rounded-none text-xs transition-all flex items-center justify-center gap-1"
                         >
                           🗑️ Delete This Course
                         </button>
@@ -1431,7 +1430,7 @@ export default function App() {
                 const courseHistories = scores.filter(s => s.courseId === course.id);
 
                 return (
-                  <div key={course.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3 relative">
+                  <div key={course.id} className="bg-white p-5 rounded-none shadow-sm border border-gray-300 space-y-3 relative">
                     
                     {/* Row 1: Course Name (left) and Edit button (right) */}
                     <div className="flex justify-between items-center gap-2">
@@ -1439,10 +1438,10 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => handleStartEditCourse(course)}
-                        className="px-2.5 py-1 text-xs text-emerald-700 font-extrabold bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200/50 flex items-center justify-center gap-1 transition active:scale-95 shrink-0"
+                        className="px-2.5 py-1 text-xs text-emerald-700 font-extrabold bg-emerald-50 hover:bg-emerald-100 rounded-none border border-emerald-200/50 flex items-center justify-center gap-1 transition active:scale-95 shrink-0 animate-none"
                         title="Edit"
                       >
-                        ✏️ Edit
+                        ✏️
                       </button>
                     </div>
 
@@ -1456,24 +1455,21 @@ export default function App() {
                       <p className="flex items-center gap-1.5 truncate">
                         <span className="text-emerald-500 scale-110">📞</span> {course.phone || 'No phone number'}
                       </p>
-                      <span className="shrink-0 text-[11px] font-extrabold text-emerald-850 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100/50 flex items-center gap-0.5 select-none">
+                      <span className="shrink-0 text-[11px] font-extrabold text-emerald-850 bg-emerald-50 px-2 py-0.5 rounded-none border border-emerald-100/50 flex items-center gap-0.5 select-none">
                         🏆 {courseHistories.length} Rounds
                       </span>
                     </div>
 
-                    {/* Row 4: Total Par, Blue Course Rating/Slope, Lady Course Rating/Slope */}
-                    <div className="grid grid-cols-3 gap-2 text-xs bg-gray-50 p-2 rounded-xl border border-gray-150 text-center font-bold text-gray-700">
-                      <div className="flex flex-col items-center justify-center bg-white py-1.5 px-1 rounded-lg border border-gray-100 shadow-sm">
-                        <span className="text-[10px] text-gray-400 font-extrabold uppercase block leading-none">Total Par</span>
-                        <span className="text-emerald-800 text-xs font-black mt-1 block">par {course.totalPar || 72}</span>
+                    {/* Row 4: Total Par, Blue Course Rating/Slope, Lady Course Rating/Slope (simplified without headers or labels) */}
+                    <div className="grid grid-cols-3 gap-2 text-xs bg-gray-50 p-2 rounded-none border border-gray-150 text-center font-bold text-gray-700">
+                      <div className="flex flex-col items-center justify-center bg-white py-1.5 px-1 rounded-none border border-gray-100 shadow-sm">
+                        <span className="text-emerald-800 text-xs font-black block">⛳ {course.totalPar || 72}</span>
                       </div>
-                      <div className="flex flex-col items-center justify-center bg-white py-1.5 px-1 rounded-lg border border-gray-100 shadow-sm">
-                        <span className="text-[10px] text-blue-500 font-extrabold uppercase block leading-none">Blue Rating</span>
-                        <span className="text-blue-800 text-[11px] font-black mt-1 block">Blue {Number(course.blueRating || 72.0).toFixed(1)}/{course.blueSlope || 113}</span>
+                      <div className="flex flex-col items-center justify-center bg-white py-1.5 px-1 rounded-none border border-gray-100 shadow-sm">
+                        <span className="text-blue-800 text-[11px] font-black block">🔵 {Number(course.blueRating || 72.0).toFixed(1)}/{course.blueSlope || 113}</span>
                       </div>
-                      <div className="flex flex-col items-center justify-center bg-white py-1.5 px-1 rounded-lg border border-gray-100 shadow-sm">
-                        <span className="text-[10px] text-pink-500 font-extrabold uppercase block leading-none">Lady Rating</span>
-                        <span className="text-pink-850 text-[11px] font-black mt-1 block">Lady {Number(course.ladyRating || 72.0).toFixed(1)}/{course.ladySlope || 113}</span>
+                      <div className="flex flex-col items-center justify-center bg-white py-1.5 px-1 rounded-none border border-gray-100 shadow-sm">
+                        <span className="text-pink-850 text-[11px] font-black block">🔴 {Number(course.ladyRating || 72.0).toFixed(1)}/{course.ladySlope || 113}</span>
                       </div>
                     </div>
 
@@ -1493,7 +1489,7 @@ export default function App() {
             </h2>
             
             {scores.length === 0 ? (
-              <div className="text-center py-12 text-gray-400 bg-white rounded-2xl border border-dotted border-gray-200">
+              <div className="text-center py-12 text-gray-400 bg-white rounded-none border border-dotted border-gray-200">
                 <p className="font-bold text-gray-500">No game logs found.</p>
                 <p className="text-xs mt-1">Submit your first score in the first tab to begin!</p>
               </div>
@@ -1518,24 +1514,24 @@ export default function App() {
                     <div 
                       key={score.id} 
                       onClick={() => setSelectedHistoryScore(score)}
-                      className="bg-white rounded-2xl shadow-sm border border-gray-150 p-4 flex items-center gap-3.5 cursor-pointer hover:bg-emerald-50/10 active:scale-[0.99] transition-all"
+                      className="bg-white rounded-none shadow-sm border border-gray-300 p-4 flex items-center gap-3.5 cursor-pointer hover:bg-emerald-50/10 active:scale-[0.99] transition-all"
                     >
-                      {/* Left: Two-line Date block */}
-                      <div className="flex flex-col items-center justify-center bg-emerald-50 text-emerald-800 rounded-xl px-2.5 py-1.5 min-w-[65px] border border-emerald-100/50 shrink-0 select-none text-center">
-                        <span className="text-sm font-black tracking-tight text-emerald-850 leading-none">{displayMonthDay}</span>
-                        <span className="text-[10px] text-emerald-600 font-bold mt-0.5 leading-none">{displayYear}</span>
+                      {/* Left: Perfectly Square Date block (matching font sizes for top/bottom, rounded-none) */}
+                      <div className="w-14 h-14 flex flex-col items-center justify-center bg-emerald-50 text-emerald-850 border border-emerald-100 shrink-0 select-none text-center rounded-none shadow-inner">
+                        <span className="text-xs font-black tracking-tight leading-none">{displayMonthDay}</span>
+                        <span className="text-xs font-black tracking-tight text-emerald-750 mt-1 leading-none">{displayYear}</span>
                       </div>
 
                       {/* Right: Info Area (Course Name and Score Details below) */}
                       <div className="flex-1 min-w-0">
                         <h3 className="font-extrabold text-gray-800 text-base leading-snug truncate">{score.courseName}</h3>
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs">
+                        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 mt-1 text-xs">
                           <span className="text-emerald-800 font-bold">
-                            SK: <strong className="font-extrabold text-emerald-700 text-sm">{totalStrokesP1}</strong> <span className="text-[10.5px] text-gray-400 font-semibold">({totalIronsP1}/{totalPuttsP1})</span>
+                            SK: <strong className="font-black text-emerald-700 text-sm">{totalStrokesP1}</strong> <span className="text-gray-400 font-medium">({totalIronsP1}/{totalPuttsP1})</span>
                           </span>
                           {totalStrokesP2 > 0 && (
-                            <span className="text-teal-800 font-bold border-l border-gray-200 pl-3">
-                              KY: <strong className="font-extrabold text-teal-700 text-sm">{totalStrokesP2}</strong> <span className="text-[10.5px] text-gray-400 font-semibold">({totalIronsP2}/{totalPuttsP2})</span>
+                            <span className="text-teal-800 font-bold border-l border-gray-200 pl-2.5">
+                              KY: <strong className="font-black text-teal-700 text-sm">{totalStrokesP2}</strong> <span className="text-gray-400 font-medium">({totalIronsP2}/{totalPuttsP2})</span>
                             </span>
                           )}
                         </div>
@@ -1564,7 +1560,7 @@ export default function App() {
 
               return (
                 <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
-                  <div className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto p-5 shadow-2xl border border-gray-100 flex flex-col space-y-4">
+                  <div className="bg-white rounded-none w-full max-w-md max-h-[85vh] overflow-y-auto p-5 shadow-2xl border-2 border-gray-400 flex flex-col space-y-4">
                     
                     {/* Modal Header */}
                     <div className="flex justify-between items-center pb-3 border-b border-gray-100">
@@ -1579,7 +1575,7 @@ export default function App() {
                       <button 
                         type="button"
                         onClick={() => setSelectedHistoryScore(null)}
-                        className="text-gray-400 hover:text-gray-600 font-bold text-lg p-1"
+                        className="text-gray-400 hover:text-gray-650 font-bold text-lg p-1"
                       >
                         ✕
                       </button>
@@ -1589,7 +1585,7 @@ export default function App() {
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-[11px] font-extrabold text-emerald-850 uppercase tracking-wider">📷 Photos & Memories</span>
-                        <label className="text-[10px] text-emerald-700 font-black bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-lg border border-emerald-200/50 cursor-pointer transition select-none flex items-center gap-0.5">
+                        <label className="text-[10px] text-emerald-700 font-black bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-none border border-emerald-200/50 cursor-pointer transition select-none flex items-center gap-0.5">
                           <span>➕ Add Photo</span>
                           <input 
                             type="file" 
@@ -1601,13 +1597,13 @@ export default function App() {
                       </div>
 
                       {!activeDetailScore.photos || activeDetailScore.photos.length === 0 ? (
-                        <div className="text-center py-6 text-gray-300 bg-gray-50/70 border border-dotted border-gray-200 rounded-xl">
+                        <div className="text-center py-6 text-gray-300 bg-gray-50/70 border border-dotted border-gray-200 rounded-none">
                           <p className="text-xs">No registered photos. Feel free to upload your first photo!</p>
                         </div>
                       ) : (
                         <div className="grid grid-cols-3 gap-2 py-0.5">
                           {activeDetailScore.photos.map((photo, i) => (
-                            <div key={i} className="aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-150 relative group">
+                            <div key={i} className="aspect-square rounded-none overflow-hidden bg-gray-50 border border-gray-150 relative group">
                               <img src={photo} alt="round memorial" className="w-full h-full object-cover" />
                               <button 
                                 type="button"
@@ -1621,7 +1617,7 @@ export default function App() {
                                     return s;
                                   }))
                                 }}
-                                className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center hover:bg-black/80 shadow"
+                                className="absolute top-1 right-1 bg-black/60 text-white rounded-none w-5 h-5 text-[10px] flex items-center justify-center hover:bg-black/80 shadow"
                               >
                                 ✕
                               </button>
@@ -1632,15 +1628,15 @@ export default function App() {
                     </div>
 
                     {/* Final Score Card Badge */}
-                    <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100/50 text-center space-y-2.5">
+                    <div className="bg-emerald-50/50 p-4 rounded-none border border-emerald-100/50 text-center space-y-2.5">
                       <span className="text-[11px] font-extrabold text-emerald-850 uppercase tracking-widest block">🏆 Final Scoreboard Summary</span>
                       <div className="grid grid-cols-2 gap-2">
                         <div className="flex flex-col text-center">
-                          <span className="text-[9px] font-bold text-emerald-850 uppercase">👦 SK Score</span>
+                          <span className="text-[9px] font-bold text-emerald-855 uppercase">👦 SK Score</span>
                           <span className="text-base font-black text-emerald-700 mt-0.5">{totalStrokesP1} Str <span className="text-[10px] font-normal text-emerald-600">({totalPuttsP1}P)</span></span>
                         </div>
                         <div className="flex flex-col text-center border-l border-emerald-100/80">
-                          <span className="text-[9px] font-bold text-teal-850 uppercase">👩 KY Score</span>
+                          <span className="text-[9px] font-bold text-teal-855 uppercase">👩 KY Score</span>
                           <span className="text-base font-black text-teal-700 mt-0.5">
                             {totalStrokesP2 > 0 ? `${totalStrokesP2} Str (${totalPuttsP2}P)` : '-'}
                           </span>
@@ -1651,7 +1647,7 @@ export default function App() {
                     {/* 18-hole detailed Scorecard Table */}
                     <div className="space-y-2">
                       <span className="text-[11px] font-extrabold text-emerald-850 uppercase tracking-wider block">📊 Detailed Scorecard per Hole</span>
-                      <div className="border border-gray-150 rounded-xl overflow-hidden flex flex-col bg-white text-center text-xs">
+                      <div className="border border-gray-300 rounded-none overflow-hidden flex flex-col bg-white text-center text-xs">
                         {/* Table Header */}
                         <div className="bg-emerald-600 text-white py-2 px-3 font-bold flex text-center items-center font-mono">
                           <div className="w-12 text-[10px]">Hole</div>
@@ -1692,7 +1688,7 @@ export default function App() {
                             setSelectedHistoryScore(null);
                           }
                         }}
-                        className="bg-red-50 hover:bg-red-100 text-red-650 font-bold py-2.5 px-4 rounded-xl text-xs transition active:scale-95 border border-red-200"
+                        className="bg-red-50 hover:bg-red-100 text-red-650 font-bold py-2.5 px-4 rounded-none text-xs transition active:scale-95 border border-red-200"
                       >
                         🗑️ Delete
                       </button>
@@ -1700,7 +1696,7 @@ export default function App() {
                       <button 
                         type="button"
                         onClick={() => setSelectedHistoryScore(null)}
-                        className="flex-grow bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs transition active:scale-95 shadow"
+                        className="flex-grow bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2.5 px-4 rounded-none text-xs transition active:scale-95 shadow"
                       >
                         Confirm / Close
                       </button>
