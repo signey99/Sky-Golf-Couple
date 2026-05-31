@@ -126,6 +126,7 @@ export default function App() {
   const [firebaseUrl, setFirebaseUrl] = useState(() => {
     return localStorage.getItem('golf_diary_fb_url') || 'https://skky-golf-b3552-default-rtdb.firebaseio.com';
   });
+  const [tempFirebaseUrl, setTempFirebaseUrl] = useState(firebaseUrl);
   const [isInitialLoadDone, setIsInitialLoadDone] = useState(false);
   const [syncStatus, setSyncStatus] = useState('syncing'); // 'syncing', 'synced', 'error'
   const [lastSyncedTime, setLastSyncedTime] = useState('Connecting...');
@@ -137,9 +138,34 @@ export default function App() {
   const syncChannel = 'skky_golf_live_sync_signey99';
   const isFirebaseListening = useRef(false);
 
+  // Sync temp input when the actual saved firebaseUrl changes or settings opens
+  useEffect(() => {
+    setTempFirebaseUrl(firebaseUrl);
+  }, [firebaseUrl, isSettingsOpen]);
+
   useEffect(() => {
     localStorage.setItem('golf_diary_fb_url', firebaseUrl);
   }, [firebaseUrl]);
+
+  // Utility to prevent Firebase SDK & fetch calls from hanging indefinitely (max timeout)
+  const withTimeout = (promise, ms = 3000) => {
+    let timeoutId;
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error(`Timeout of ${ms}ms exceeded`));
+      }, ms);
+    });
+    return Promise.race([promise, timeoutPromise]).then(
+      (res) => {
+        clearTimeout(timeoutId);
+        return res;
+      },
+      (err) => {
+        clearTimeout(timeoutId);
+        throw err;
+      }
+    );
+  };
 
   // Helper helper to upload cloud silently to fallback web-sync bucket
   const silentUploadToFallback = async (currentScores, currentCourses, timestamp) => {
@@ -149,11 +175,12 @@ export default function App() {
         courses: currentCourses,
         updatedAt: timestamp
       };
-      const res = await fetch(`https://kvdb.io/CpUkTKkoimWd11fnhp6BBA/${syncChannel}`, {
+      // Use text/plain;charset=UTF-8 to bypass CORS OPTIONS preflight blockages on older Android systems/proxies
+      const res = await withTimeout(fetch(`https://kvdb.io/CpUkTKkoimWd11fnhp6BBA/${syncChannel}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
         body: JSON.stringify(payload)
-      });
+      }), 4000);
       if (res.ok) {
         localStorage.setItem('golf_diary_last_sync_timestamp', String(timestamp));
         setLastSyncedTime(new Date(timestamp).toLocaleTimeString() + ' (Live)');
@@ -182,30 +209,31 @@ export default function App() {
           app = window.firebase.app();
         }
         const db = window.firebase.database(app);
-        await db.ref(syncChannel).set({
+        // Timeout writes so a dead Firebase connection does not freeze our entire upload/callbacks
+        await withTimeout(db.ref(syncChannel).set({
           scores: currentScores,
           courses: currentCourses,
           updatedAt: timestamp
-        });
+        }), 2500);
       }
     } catch (e) {
       console.warn("Firebase set skipped or failed", e);
     }
 
-    // C. Push to Firebase Realtime Database via REST API (Ultra-failsafe)
+    // C. Push to Firebase Realtime Database via REST API (Ultra-failsafe / text/plain simple request bypass)
     try {
       if (firebaseUrl.trim()) {
         const baseUrlNormalized = firebaseUrl.trim().replace(/\/$/, "");
         const url = `${baseUrlNormalized}/${syncChannel}.json`;
-        await fetch(url, {
+        await withTimeout(fetch(url, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
           body: JSON.stringify({
             scores: currentScores,
             courses: currentCourses,
             updatedAt: timestamp
           })
-        });
+        }), 3000);
       }
     } catch (e) {
       console.warn("Firebase REST upload failed", e);
@@ -251,18 +279,19 @@ export default function App() {
             app = window.firebase.app();
           }
           const db = window.firebase.database(app);
-          const snapshot = await db.ref(syncChannel).once('value');
+          // SDK once() hangs forever if network unreachable or 404 URL. We cap with 2.5s timeout.
+          const snapshot = await withTimeout(db.ref(syncChannel).once('value'), 2500);
           const fbData = snapshot.val();
           if (fbData && fbData.updatedAt) {
             cloudData = fbData;
             downloadSource = 'Firebase Realtime DB';
           }
         } catch (fbSdkErr) {
-          console.warn("Firebase SDK download skipped/failed, trying REST API", fbSdkErr);
+          console.warn("Firebase SDK download timed out/failed, trying REST API", fbSdkErr);
           // Try REST API if SDK failed
           try {
             const baseUrlNormalized = firebaseUrl.trim().replace(/\/$/, "");
-            const res = await fetch(`${baseUrlNormalized}/${syncChannel}.json`);
+            const res = await withTimeout(fetch(`${baseUrlNormalized}/${syncChannel}.json`), 2500);
             if (res.ok) {
               const fbRestData = await res.json();
               if (fbRestData && fbRestData.updatedAt) {
@@ -278,7 +307,7 @@ export default function App() {
         // If SDK is not loaded but URL exists, try REST API immediately
         try {
           const baseUrlNormalized = firebaseUrl.trim().replace(/\/$/, "");
-          const res = await fetch(`${baseUrlNormalized}/${syncChannel}.json`);
+          const res = await withTimeout(fetch(`${baseUrlNormalized}/${syncChannel}.json`), 2500);
           if (res.ok) {
             const fbRestData = await res.json();
             if (fbRestData && fbRestData.updatedAt) {
@@ -294,7 +323,7 @@ export default function App() {
       // 2. If Firebase didn't return data, try Web-Sync Fallback (kvdb.io)
       if (!cloudData) {
         try {
-          const res = await fetch(`https://kvdb.io/CpUkTKkoimWd11fnhp6BBA/${syncChannel}`);
+          const res = await withTimeout(fetch(`https://kvdb.io/CpUkTKkoimWd11fnhp6BBA/${syncChannel}`), 3000);
           if (res.ok) {
             const kvData = await res.json();
             if (kvData && kvData.updatedAt) {
@@ -1275,13 +1304,9 @@ export default function App() {
                     </button>
                   </div>
 
-                  <p className="text-[11px] text-emerald-850 font-semibold mb-3 bg-emerald-50 p-2.5 rounded-none text-center">
-                    📍 Simulated GPS - Lat: {mapClickedCoords.lat}, Lng: {mapClickedCoords.lng}
-                  </p>
-
                   <form onSubmit={handleSaveCourse} className="space-y-4 text-left">
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">Name *</label>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">🏷️ Name *</label>
                       <input 
                         type="text" 
                         placeholder="e.g. Nine Bridges CC" 
@@ -1293,7 +1318,7 @@ export default function App() {
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">Address</label>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">📍 Address</label>
                       <input 
                         type="text" 
                         placeholder="e.g. Jeju, South Korea" 
@@ -1304,7 +1329,7 @@ export default function App() {
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">Telephone</label>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">📞 Telephone</label>
                       <input 
                         type="text" 
                         placeholder="e.g. 02-1234-5678" 
@@ -1316,9 +1341,14 @@ export default function App() {
 
                     {/* Individual Hole Par Editor Inside Modal */}
                     <div>
-                      <span className="block text-[11px] font-bold text-emerald-800 uppercase mb-1">
-                        ⛳ Default Par
-                      </span>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="block text-[11px] font-bold text-emerald-800 uppercase">
+                          ⛳ Default Par
+                        </span>
+                        <span className="text-[11px] font-black text-emerald-700">
+                          {courseHolePars.reduce((s,v)=>s+v, 0)} Par
+                        </span>
+                      </div>
                       <div className="bg-gray-50 p-2 text-center rounded-none border border-gray-150 grid grid-cols-9 gap-1 shadow-inner">
                         {courseHolePars.map((p, idx) => (
                            <div
@@ -1331,20 +1361,14 @@ export default function App() {
                           </div>
                         ))}
                       </div>
-                      <div className="flex justify-between items-center text-[11px] text-gray-500 mt-1.5 px-1">
-                        <span>Calculated Total Par:</span>
-                        <span className="font-extrabold text-emerald-700">
-                          {courseHolePars.reduce((s,v)=>s+v, 0)} Par
-                        </span>
-                      </div>
                     </div>
 
                     {/* Difficulty adjusters */}
-                    <div className="bg-gray-50 p-3.5 rounded-none border border-gray-150 space-y-3">
-                      <span className="block text-[10px] font-bold text-gray-500 uppercase">Course & Slope rating</span>
+                    <div>
+                      <span className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-2">📏 Course & Slope rating</span>
                       
                       {/* Lady Tee */}
-                      <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="grid grid-cols-2 gap-2 text-xs mb-3">
                         <div className="bg-white p-2 rounded-none border border-gray-200">
                           <label className="block text-[9px] font-bold text-pink-700">Lady Course</label>
                           <div className="flex justify-between items-center font-bold mt-1">
@@ -1539,7 +1563,13 @@ export default function App() {
 
                     {/* Row 2: Address */}
                     <p className="text-xs text-gray-500 font-bold flex items-center gap-1.5 truncate">
-                      <span className="text-emerald-600 scale-110">📍</span> {course.address || 'No address registered'}
+                      <span className="text-emerald-600 scale-110 shrink-0 flex items-center">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s-7-4.85-7-11.5a7 7 0 1 1 14 0c0 6.65-7 11.5-7 11.5z" />
+                          <circle cx="12" cy="9.5" r="2.5" />
+                        </svg>
+                      </span>{' '}
+                      {course.address || 'No address registered'}
                     </p>
 
                     {/* Row 3: Telephone (left) and Total Played Rounds (right) */}
@@ -1848,15 +1878,28 @@ export default function App() {
             <div className="space-y-3.5 pb-2">
               <div>
                 <label className="block text-[11px] font-black text-gray-500 uppercase mb-1 tracking-wider">Firebase Realtime DB URL</label>
-                <input 
-                  type="text" 
-                  className="w-full text-xs font-semibold p-2.5 border border-gray-300 rounded-none focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-white text-gray-850"
-                  value={firebaseUrl}
-                  onChange={(e) => setFirebaseUrl(e.target.value)}
-                  placeholder="https://your-project-rtdb.firebaseio.com"
-                />
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    className="flex-1 text-xs font-semibold p-2.5 border border-gray-300 rounded-none focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-white text-gray-850"
+                    value={tempFirebaseUrl}
+                    onChange={(e) => setTempFirebaseUrl(e.target.value)}
+                    placeholder="https://your-project-rtdb.firebaseio.com"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFirebaseUrl(tempFirebaseUrl);
+                      setSettingsMessage('💾 Realtime DB URL 설정이 정상 반영되었습니다!');
+                      setTimeout(() => setSettingsMessage(''), 3000);
+                    }}
+                    className="px-3 bg-emerald-800 hover:bg-emerald-700 active:scale-95 transition-all text-white font-extrabold text-[11px] uppercase tracking-wider rounded-none shrink-0"
+                  >
+                    적용 (Apply)
+                  </button>
+                </div>
                 <p className="text-[10px] text-gray-400 mt-1 leading-relaxed">
-                  * Leaving empty defaults to global high-speed channel.
+                  * URL을 완벽하게 입력한 다음 우측의 <b>[적용 (Apply)]</b> 버튼을 꼭 눌러주세요! 공란으로 두면 기본 고속 백업 채널(기본값)로 자동 설정됩니다.
                 </p>
               </div>
 
