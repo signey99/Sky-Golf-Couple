@@ -865,11 +865,11 @@ export default function App() {
             <div className="grid grid-cols-2 gap-4">
               {/* Course Box Card */}
               <div className="bg-transparent p-0 border-0 shadow-none flex flex-col justify-between">
-                <label className="block text-xs font-black text-emerald-800 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                <label className="block text-xs font-black text-emerald-800 uppercase tracking-wider mb-1 flex items-center gap-1">
                   <span>📍</span> Golf Course
                 </label>
                 <select 
-                  className="w-full p-2.5 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-base shadow-sm transition-all text-gray-800 font-bold"
+                  className="w-full p-2 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-sm shadow-sm transition-all text-gray-800 font-bold"
                   value={isNewCourse ? 'new' : selectedCourseId}
                   onChange={(e) => {
                     if (e.target.value === 'new') {
@@ -891,12 +891,12 @@ export default function App() {
 
               {/* Play Date Box Card */}
               <div className="bg-transparent p-0 border-0 shadow-none flex flex-col justify-between">
-                <label className="block text-xs font-black text-emerald-800 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                <label className="block text-xs font-black text-emerald-800 uppercase tracking-wider mb-1 flex items-center gap-1">
                   <span>📅</span> Play Date
                 </label>
                 <input 
                   type="date" 
-                  className="w-full p-2.5 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-base shadow-sm text-gray-800 font-bold font-sans"
+                  className="w-full p-2 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-sm shadow-sm text-gray-800 font-bold font-sans"
                   value={playDate}
                   onChange={(e) => setPlayDate(e.target.value)}
                 />
@@ -918,7 +918,7 @@ export default function App() {
             )}
 
             {/* Live Matrix Section (Split tables in UI Grid with spacious margins) */}
-            <div className="bg-transparent p-0 rounded-none border-0 shadow-none space-y-5 w-full mt-6">
+            <div className="bg-transparent p-0 rounded-none border-0 shadow-none space-y-3.5 w-full mt-6">
 
               {/* Front Nine layout */}
               <div className="w-full">
@@ -1255,10 +1255,6 @@ export default function App() {
 
             {/* Map GPS simulator card (always present) */}
             <div className="bg-white p-5 rounded-none shadow-sm border border-gray-300">
-              <p className="text-[11px] text-gray-400 mb-4 font-medium leading-relaxed">
-                지도 영역을 클릭하면 GPS 위치가 시뮬레이션 변경되며, 이 핀 주소를 기준으로 신규 골프장을 등록할 수 있습니다.
-              </p>
-              
               <div 
                 onClick={handleMapClick}
                 className="w-full h-48 bg-emerald-50 border border-emerald-100 rounded-none flex flex-col items-center justify-center relative cursor-crosshair overflow-hidden group shadow-inner"
@@ -1585,22 +1581,7 @@ export default function App() {
                       <p className="flex items-center gap-1.5 truncate">
                         <span className="text-emerald-500 scale-110">📞</span> {course.phone || 'No phone number'}
                       </p>
-                      <span className="shrink-0 text-[11px] font-extrabold text-emerald-850 bg-emerald-50 px-2 py-0.5 rounded-none border border-emerald-100/50 flex items-center gap-0.5 select-none">
-                        🏆 {courseHistories.length} Rounds
-                      </span>
-                    </div>
-
-                    {/* Row 4: Total Par, Blue Course Rating/Slope, Lady Course Rating/Slope (simplified without headers or labels) */}
-                    <div className="grid grid-cols-3 gap-2 text-xs bg-gray-50 p-2 rounded-none border border-gray-150 text-center font-bold text-gray-700">
-                      <div className="flex flex-col items-center justify-center bg-white py-1.5 px-1 rounded-none border border-gray-100 shadow-sm">
-                        <span className="text-emerald-800 text-xs font-black block">⛳ {course.totalPar || 72}</span>
-                      </div>
-                      <div className="flex flex-col items-center justify-center bg-white py-1.5 px-1 rounded-none border border-gray-100 shadow-sm">
-                        <span className="text-blue-800 text-[11px] font-black block">🔵 {Number(course.blueRating || 72.0).toFixed(1)}/{course.blueSlope || 113}</span>
-                      </div>
-                      <div className="flex flex-col items-center justify-center bg-white py-1.5 px-1 rounded-none border border-gray-100 shadow-sm">
-                        <span className="text-pink-850 text-[11px] font-black block">🔴 {Number(course.ladyRating || 72.0).toFixed(1)}/{course.ladySlope || 113}</span>
-                      </div>
+                      <span className="shrink-0 text-[11px] font-extrabold text-emerald-850 bg-emerald-50 px-2 py-0.5 rounded-none border border-emerald-100/50 flex items-center gap-0.5 select-none font-mono">🏆 {courseHistories.length} Rounds</span>
                     </div>
 
                   </div>
@@ -1695,10 +1676,10 @@ export default function App() {
                     {/* Modal Header */}
                     <div className="flex justify-between items-center pb-3 border-b border-gray-100">
                       <div>
-                        <h3 className="text-sm font-extrabold text-emerald-800 leading-snug">
+                        <h3 className="text-base font-black text-emerald-800 leading-snug">
                           ⛳ {activeDetailScore.courseName}
                         </h3>
-                        <p className="text-sm font-extrabold text-gray-500 mt-1">
+                        <p className="text-base font-extrabold text-gray-500 mt-1">
                           📅 {formatPlayDate(activeDetailScore.date)}
                         </p>
                       </div>
