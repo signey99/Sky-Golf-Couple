@@ -583,6 +583,7 @@ export default function App() {
   }, [selectedCourseId, courses]);
   const [editingParHoleIndex, setEditingParHoleIndex] = useState(null); // null or 0..17
   const [showCourseModal, setShowCourseModal] = useState(false);
+  const [courseSearchQuery, setCourseSearchQuery] = useState('');
 
   // Virtual map tracker for simulated GPS picker
   const [mapClickedCoords, setMapClickedCoords] = useState({ lat: 33.3541, lng: 126.3712 });
@@ -747,20 +748,46 @@ export default function App() {
   const handlePhotoUpload = (scoreId, event) => {
     const file = event.target.files[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert("Please upload images smaller than 2MB to ensure good localStorage performance!");
-        return;
-      }
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setScores(prevScores => 
-          prevScores.map(score => {
-            if (score.id === scoreId) {
-              return { ...score, photos: [...(score.photos || []), reader.result] };
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+          
+          // Downscale high resolution photos to max 1200px in either dimension
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+          
+          if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+            if (width > height) {
+              height = Math.round((height * MAX_WIDTH) / width);
+              width = MAX_WIDTH;
+            } else {
+              width = Math.round((width * MAX_HEIGHT) / height);
+              height = MAX_HEIGHT;
             }
-            return score;
-          })
-        );
+          }
+          
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Compress quality to 0.75 for super lightweight but crisp file
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+          
+          setScores(prevScores => 
+            prevScores.map(score => {
+              if (score.id === scoreId) {
+                return { ...score, photos: [...(score.photos || []), compressedDataUrl] };
+              }
+              return score;
+            })
+          );
+        };
+        img.src = e.target.result;
       };
       reader.readAsDataURL(file);
     }
@@ -882,7 +909,7 @@ export default function App() {
                   }}
                 >
                   <option value="">-- Select --</option>
-                  {courses.map(c => (
+                  {[...courses].sort((a,b) => (a.name || '').localeCompare(b.name || '', 'ko-KR')).map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                   <option value="new">+ Add New</option>
@@ -1546,47 +1573,103 @@ export default function App() {
             <div className="space-y-4">
               <h3 className="text-lg font-black text-emerald-800 tracking-wider uppercase flex items-center px-1">📍 Course Profiles</h3>
               
-              {courses.map(course => {
-                const courseHistories = scores.filter(s => s.courseId === course.id);
+              {/* Course search input */}
+              <div className="px-1">
+                <div className="relative flex items-center">
+                  <span className="absolute left-3 text-gray-400 text-sm select-none">
+                    🔍
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search courses by name or address..."
+                    value={courseSearchQuery}
+                    onChange={(e) => setCourseSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-none text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-sm placeholder:text-gray-400 placeholder:font-normal"
+                  />
+                  {courseSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setCourseSearchQuery('')}
+                      className="absolute right-3 text-gray-400 hover:text-gray-600 font-bold text-xs"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
 
-                return (
-                  <div key={course.id} className="bg-white p-5 rounded-none shadow-sm border border-gray-300 space-y-3 relative">
-                    
-                    {/* Row 1: Course Name (left) and Edit button (right) */}
-                    <div className="flex justify-between items-center gap-2">
-                      <h4 className="font-extrabold text-gray-800 text-base leading-snug truncate">{course.name}</h4>
-                      <button
-                        type="button"
-                        onClick={() => handleStartEditCourse(course)}
-                        className="px-2.5 py-1 text-xs text-emerald-700 font-extrabold bg-emerald-50 hover:bg-emerald-100 rounded-none border border-emerald-200/50 flex items-center justify-center gap-1 transition active:scale-95 shrink-0 animate-none"
-                        title="Edit"
-                      >
-                        ✏️
-                      </button>
-                    </div>
+              {[...courses]
+                .filter(course => {
+                  const q = courseSearchQuery.trim().toLowerCase();
+                  if (!q) return true;
+                  return (course.name || '').toLowerCase().includes(q) || (course.address || '').toLowerCase().includes(q);
+                })
+                .sort((a,b) => (a.name || '').localeCompare(b.name || '', 'ko-KR'))
+                .map(course => {
+                  const courseHistories = scores.filter(s => s.courseId === course.id);
 
-                    {/* Row 2: Address */}
-                    <p className="text-xs text-gray-500 font-bold flex items-center gap-1.5 truncate">
-                      <span className="text-gray-700 scale-110 shrink-0 flex items-center">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s-7-4.85-7-11.5a7 7 0 1 1 14 0c0 6.65-7 11.5-7 11.5z" />
-                          <circle cx="12" cy="9.5" r="2.5" />
-                        </svg>
-                      </span>{' '}
-                      {course.address || 'No address registered'}
-                    </p>
+                  return (
+                    <div key={course.id} className="bg-white p-5 rounded-none shadow-sm border border-gray-300 space-y-3 relative animate-fadeIn">
+                      
+                      {/* Row 1: Course Name (left) and Edit button (right) */}
+                      <div className="flex justify-between items-center gap-2">
+                        <h4 className="font-extrabold text-gray-800 text-base leading-snug truncate">{course.name}</h4>
+                        <button
+                          type="button"
+                          onClick={() => handleStartEditCourse(course)}
+                          className="px-2.5 py-1 text-xs text-emerald-700 font-extrabold bg-emerald-50 hover:bg-emerald-100 rounded-none border border-emerald-200/50 flex items-center justify-center gap-1 transition active:scale-95 shrink-0 animate-none"
+                          title="Edit"
+                        >
+                          ✏️
+                        </button>
+                      </div>
 
-                    {/* Row 3: Telephone (left) and Total Played Rounds (right) */}
-                    <div className="flex justify-between items-center text-xs text-gray-500 font-bold mt-0.5">
-                      <p className="flex items-center gap-1.5 truncate">
-                        <span className="text-emerald-500 scale-110">📞</span> {course.phone || 'No phone number'}
+                      {/* Row 2: Address */}
+                      <p className="text-xs text-gray-500 font-bold flex items-center gap-1.5 truncate">
+                        <span className="text-gray-700 scale-110 shrink-0 flex items-center">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s-7-4.85-7-11.5a7 7 0 1 1 14 0c0 6.65-7 11.5-7 11.5z" />
+                            <circle cx="12" cy="9.5" r="2.5" />
+                          </svg>
+                        </span>{' '}
+                        {course.address || 'No address registered'}
                       </p>
-                      <span className="shrink-0 text-[11px] font-extrabold text-emerald-850 bg-emerald-50 px-2 py-0.5 rounded-none border border-emerald-100/50 flex items-center gap-0.5 select-none font-mono">🏆 {courseHistories.length} Rounds</span>
-                    </div>
 
-                  </div>
-                );
-              })}
+                      {/* Row 3: Telephone (left) and Total Played Rounds (right) */}
+                      <div className="flex justify-between items-center text-xs text-gray-500 font-bold mt-0.5">
+                        <p className="flex items-center gap-1.5 truncate">
+                          <span className="text-emerald-500 scale-110">📞</span> {course.phone || 'No phone number'}
+                        </p>
+                        <span className="shrink-0 text-[11px] font-extrabold text-emerald-850 bg-emerald-50 px-2 py-0.5 rounded-none border border-emerald-100/50 flex items-center gap-0.5 select-none font-mono">🏆 {courseHistories.length} Rounds</span>
+                      </div>
+
+                      {/* Row 4: Total Par, Blue Course Rating/Slope, Lady Course Rating/Slope (completely borderless, label-less) */}
+                      <div className="grid grid-cols-3 gap-2 text-xs text-center font-bold text-gray-700 mt-1">
+                        <div className="flex items-center justify-center bg-gray-50/50 py-1.5 px-1 rounded-none">
+                          <span className="text-emerald-800 text-xs font-black block">⛳ {course.totalPar || 72} Par</span>
+                        </div>
+                        <div className="flex items-center justify-center bg-gray-50/50 py-1.5 px-1 rounded-none">
+                          <span className="text-blue-800 text-[11px] font-black block">🔵 {Number(course.blueRating || 72.0).toFixed(1)} / {course.blueSlope || 113}</span>
+                        </div>
+                        <div className="flex items-center justify-center bg-gray-50/50 py-1.5 px-1 rounded-none">
+                          <span className="text-pink-850 text-[11px] font-black block">🔴 {Number(course.ladyRating || 72.0).toFixed(1)} / {course.ladySlope || 113}</span>
+                        </div>
+                      </div>
+
+                    </div>
+                  );
+                })}
+
+              {courses.filter(course => {
+                const q = courseSearchQuery.trim().toLowerCase();
+                if (!q) return true;
+                return (course.name || '').toLowerCase().includes(q) || (course.address || '').toLowerCase().includes(q);
+              }).length === 0 && (
+                <div className="text-center py-8 text-gray-400 bg-white border border-dotted border-gray-200">
+                  <p className="font-bold text-gray-500">No courses match your search.</p>
+                  <p className="text-xs mt-1">Try searching with a different term!</p>
+                </div>
+              )}
             </div>
 
           </div>
@@ -1669,6 +1752,115 @@ export default function App() {
               const totalStrokesP2 = holes.reduce((sum, h) => sum + (h.iron2 || 0) + (h.putt2 || 0), 0);
               const totalPuttsP2 = holes.reduce((sum, h) => sum + (h.putt2 || 0), 0);
 
+              const course = courses.find(c => c.id === activeDetailScore.courseId);
+              const detailCoursePars = course?.holePars || Array(18).fill(4);
+
+              const renderPlayerScorecard = (label, playerPrefix) => {
+                const getHoleScore = (h) => playerPrefix === 'SK' ? ((h.iron || 0) + (h.putt || 0)) : ((h.iron2 || 0) + (h.putt2 || 0));
+                
+                const pOut = holes.slice(0, 9).reduce((sum, h) => sum + getHoleScore(h), 0);
+                const pIn = holes.slice(9, 18).reduce((sum, h) => sum + getHoleScore(h), 0);
+                const pTotal = pOut + pIn;
+                
+                const parOut = detailCoursePars.slice(0, 9).reduce((sum, val) => sum + val, 0);
+                const parIn = detailCoursePars.slice(9, 18).reduce((sum, val) => sum + val, 0);
+                const parTotal = parOut + parIn;
+
+                const playerTextColor = playerPrefix === 'SK' ? 'text-emerald-850' : 'text-teal-880';
+                const playerSubtextColor = playerPrefix === 'SK' ? 'text-emerald-700' : 'text-teal-700';
+
+                return (
+                  <div className="space-y-1 mt-1 mb-2 text-left">
+                    {/* Front Nine */}
+                    <div className="w-full">
+                      <span className="text-[10px] font-bold text-gray-400 block mb-0.5 px-1 tracking-wide">Front 9</span>
+                      <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center shadow-sm text-[10px] w-full">
+                        <div className="w-full grid grid-cols-10 divide-x divide-gray-200">
+                          {holes.slice(0, 9).map((h, k) => {
+                            const pT = getHoleScore(h);
+                            const holePar = detailCoursePars[k] || 4;
+                            return (
+                              <div key={k} className="flex flex-col justify-between">
+                                <div className="flex flex-col py-0.5 border-b border-gray-200 bg-gray-50/50">
+                                  <span className="text-gray-500 font-bold h-4 flex items-center justify-center text-[8px]">
+                                    {h.hole}
+                                  </span>
+                                  <span className="text-[8px] font-black text-red-500 h-3 flex items-center justify-center">
+                                    {holePar}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col py-0.5 justify-center items-center h-7 scale-[0.75] origin-center">
+                                  {renderScoreSymbol(pT, holePar, false)}
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {/* OUT subtotal column */}
+                          <div className="bg-blue-50/20 flex flex-col justify-between text-center select-none font-bold">
+                            <div className="flex flex-col py-0.5 border-b border-gray-200 bg-blue-50/30 font-black">
+                              <span className="text-[7px] font-black h-4 flex items-center justify-center text-blue-600">OUT</span>
+                              <span className="text-[7px] font-black text-blue-500 h-3 flex items-center justify-center">{parOut}</span>
+                            </div>
+                            <div className="flex flex-col py-0.5 justify-center items-center h-7 bg-blue-50/5">
+                              <span className={`text-[10px] font-black ${playerSubtextColor}`}>{pOut > 0 ? pOut : '-'}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Back Nine */}
+                    <div className="w-full">
+                      <span className="text-[10px] font-bold text-gray-400 block mb-0.5 px-1 tracking-wide">Back 9</span>
+                      <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center shadow-sm text-[10px] w-full">
+                        <div className="w-full grid grid-cols-11 divide-x divide-gray-200">
+                          {holes.slice(9, 18).map((h, k) => {
+                            const globalK = k + 9;
+                            const pT = getHoleScore(h);
+                            const holePar = detailCoursePars[globalK] || 4;
+                            return (
+                              <div key={globalK} className="flex flex-col justify-between">
+                                <div className="flex flex-col py-0.5 border-b border-gray-200 bg-gray-50/50">
+                                  <span className="text-gray-500 font-bold h-4 flex items-center justify-center text-[8px]">
+                                    {h.hole}
+                                  </span>
+                                  <span className="text-[8px] font-black text-red-500 h-3 flex items-center justify-center">
+                                    {holePar}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col py-0.5 justify-center items-center h-7 scale-[0.75] origin-center">
+                                  {renderScoreSymbol(pT, holePar, false)}
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {/* IN subtotal column */}
+                          <div className="bg-blue-50/20 flex flex-col justify-between text-center select-none font-bold">
+                            <div className="flex flex-col py-0.5 border-b border-gray-200 bg-blue-50/30 font-black">
+                              <span className="text-[7px] font-black h-4 flex items-center justify-center text-blue-600">IN</span>
+                              <span className="text-[7px] font-black text-blue-500 h-3 flex items-center justify-center">{parIn}</span>
+                            </div>
+                            <div className="flex flex-col py-0.5 justify-center items-center h-7 bg-blue-50/5">
+                              <span className={`text-[10px] font-black ${playerSubtextColor}`}>{pIn > 0 ? pIn : '-'}</span>
+                            </div>
+                          </div>
+                          {/* TOT total column */}
+                          <div className="bg-red-50/20 flex flex-col justify-between text-center select-none font-bold">
+                            <div className="flex flex-col py-0.5 border-b border-gray-200 bg-red-50/30 font-black">
+                              <span className="text-[7px] font-black h-4 flex items-center justify-center text-red-650">TOT</span>
+                              <span className="text-[7px] font-black text-red-500 h-3 flex items-center justify-center">{parTotal}</span>
+                            </div>
+                            <div className="flex flex-col py-0.5 justify-center items-center h-7 bg-red-50/5">
+                              <span className="text-[10px] font-black text-red-650">{pTotal > 0 ? pTotal : '-'}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              };
+
               return (
                 <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
                   <div className="bg-white rounded-none w-full max-w-md max-h-[85vh] overflow-y-auto p-5 shadow-2xl border-2 border-gray-400 flex flex-col space-y-4">
@@ -1692,36 +1884,19 @@ export default function App() {
                       </button>
                     </div>
 
-                    {/* 18-hole detailed Scorecard Table */}
-                    <div className="space-y-2">
-                      <span className="text-[11px] font-extrabold text-emerald-855 uppercase tracking-wider block">📊 Detailed Scorecard per Hole</span>
-                      <div className="border border-gray-300 rounded-none overflow-hidden flex flex-col bg-white text-center text-xs">
-                        {/* Table Header */}
-                        <div className="bg-emerald-600 text-white py-2 px-3 font-bold flex text-center items-center font-mono">
-                          <div className="w-12 text-[10px]">Hole</div>
-                          <div className="flex-1 text-[11px]">SK (Putts)</div>
-                          <div className="flex-1 text-[11px]">KY (Putts)</div>
-                        </div>
-                        
-                        {/* Scrollable list items rows */}
-                        <div className="max-h-40 overflow-y-auto divide-y divide-gray-100 font-medium font-mono">
-                          {holes.map((h, k) => {
-                            const p1T = h.iron + h.putt;
-                            const p2T = h.iron2 + h.putt2;
-                            return (
-                              <div key={k} className="flex py-2 px-3 hover:bg-gray-50/50 items-center justify-between text-center leading-none">
-                                <div className="w-12 font-bold text-gray-400">{h.hole}H</div>
-                                <div className="flex-1 font-semibold text-emerald-800">
-                                  {p1T > 0 ? `${p1T} Str (${h.putt}P)` : '-'}
-                                </div>
-                                <div className="flex-1 font-semibold text-teal-800">
-                                  {p2T > 0 ? `${p2T} Str (${h.putt2}P)` : '-'}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                    {/* 18-hole detailed Scorecard Tables */}
+                    <div className="space-y-4">
+                      <div>
+                        <span className="text-[11px] font-extrabold text-emerald-855 uppercase tracking-wider block mb-1">Scorecard for SK</span>
+                        {renderPlayerScorecard('SK', 'SK')}
                       </div>
+
+                      {totalStrokesP2 > 0 && (
+                        <div>
+                          <span className="text-[11px] font-extrabold text-teal-855 uppercase tracking-wider block mb-1">Scorecard for KY</span>
+                          {renderPlayerScorecard('KY', 'KY')}
+                        </div>
+                      )}
                     </div>
 
                     {/* Photos Gallery Section */}
