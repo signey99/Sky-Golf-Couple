@@ -869,7 +869,7 @@ export default function App() {
                   <span>📍</span> Golf Course
                 </label>
                 <select 
-                  className="w-full p-3.5 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-base shadow-sm transition-all text-gray-800 font-bold"
+                  className="w-full p-2.5 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-base shadow-sm transition-all text-gray-800 font-bold"
                   value={isNewCourse ? 'new' : selectedCourseId}
                   onChange={(e) => {
                     if (e.target.value === 'new') {
@@ -896,7 +896,7 @@ export default function App() {
                 </label>
                 <input 
                   type="date" 
-                  className="w-full p-3.5 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-base shadow-sm text-gray-800 font-bold font-sans"
+                  className="w-full p-2.5 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-base shadow-sm text-gray-800 font-bold font-sans"
                   value={playDate}
                   onChange={(e) => setPlayDate(e.target.value)}
                 />
@@ -918,7 +918,7 @@ export default function App() {
             )}
 
             {/* Live Matrix Section (Split tables in UI Grid with spacious margins) */}
-            <div className="bg-transparent p-0 rounded-none border-0 shadow-none space-y-11 w-full mt-6">
+            <div className="bg-transparent p-0 rounded-none border-0 shadow-none space-y-5 w-full mt-6">
 
               {/* Front Nine layout */}
               <div className="w-full">
@@ -1318,7 +1318,15 @@ export default function App() {
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">📍 Address</label>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1 flex items-center gap-1.5 align-middle">
+                        <span className="text-gray-700 scale-110 shrink-0 flex items-center">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s-7-4.85-7-11.5a7 7 0 1 1 14 0c0 6.65-7 11.5-7 11.5z" />
+                            <circle cx="12" cy="9.5" r="2.5" />
+                          </svg>
+                        </span>
+                        Address
+                      </label>
                       <input 
                         type="text" 
                         placeholder="e.g. Jeju, South Korea" 
@@ -1563,7 +1571,7 @@ export default function App() {
 
                     {/* Row 2: Address */}
                     <p className="text-xs text-gray-500 font-bold flex items-center gap-1.5 truncate">
-                      <span className="text-emerald-600 scale-110 shrink-0 flex items-center">
+                      <span className="text-gray-700 scale-110 shrink-0 flex items-center">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s-7-4.85-7-11.5a7 7 0 1 1 14 0c0 6.65-7 11.5-7 11.5z" />
                           <circle cx="12" cy="9.5" r="2.5" />
@@ -1690,8 +1698,8 @@ export default function App() {
                         <h3 className="text-sm font-extrabold text-emerald-800 leading-snug">
                           ⛳ {activeDetailScore.courseName}
                         </h3>
-                        <p className="text-[10px] text-gray-400 font-bold mt-0.5">
-                          📅 {formatPlayDate(activeDetailScore.date)} Detailed Stats
+                        <p className="text-sm font-extrabold text-gray-500 mt-1">
+                          📅 {formatPlayDate(activeDetailScore.date)}
                         </p>
                       </div>
                       <button 
@@ -1703,10 +1711,42 @@ export default function App() {
                       </button>
                     </div>
 
+                    {/* 18-hole detailed Scorecard Table */}
+                    <div className="space-y-2">
+                      <span className="text-[11px] font-extrabold text-emerald-855 uppercase tracking-wider block">📊 Detailed Scorecard per Hole</span>
+                      <div className="border border-gray-300 rounded-none overflow-hidden flex flex-col bg-white text-center text-xs">
+                        {/* Table Header */}
+                        <div className="bg-emerald-600 text-white py-2 px-3 font-bold flex text-center items-center font-mono">
+                          <div className="w-12 text-[10px]">Hole</div>
+                          <div className="flex-1 text-[11px]">SK (Putts)</div>
+                          <div className="flex-1 text-[11px]">KY (Putts)</div>
+                        </div>
+                        
+                        {/* Scrollable list items rows */}
+                        <div className="max-h-40 overflow-y-auto divide-y divide-gray-100 font-medium font-mono">
+                          {holes.map((h, k) => {
+                            const p1T = h.iron + h.putt;
+                            const p2T = h.iron2 + h.putt2;
+                            return (
+                              <div key={k} className="flex py-2 px-3 hover:bg-gray-50/50 items-center justify-between text-center leading-none">
+                                <div className="w-12 font-bold text-gray-400">{h.hole}H</div>
+                                <div className="flex-1 font-semibold text-emerald-800">
+                                  {p1T > 0 ? `${p1T} Str (${h.putt}P)` : '-'}
+                                </div>
+                                <div className="flex-1 font-semibold text-teal-800">
+                                  {p2T > 0 ? `${p2T} Str (${h.putt2}P)` : '-'}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Photos Gallery Section */}
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-[11px] font-extrabold text-emerald-850 uppercase tracking-wider">📷 Photos & Memories</span>
+                        <span className="text-[11px] font-extrabold text-emerald-855 uppercase tracking-wider">📷 Photos & Memories</span>
                         <label className="text-[10px] text-emerald-700 font-black bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-none border border-emerald-200/50 cursor-pointer transition select-none flex items-center gap-0.5">
                           <span>➕ Add Photo</span>
                           <input 
@@ -1747,55 +1787,6 @@ export default function App() {
                           ))}
                         </div>
                       )}
-                    </div>
-
-                    {/* Final Score Card Badge */}
-                    <div className="bg-emerald-50/50 p-4 rounded-none border border-emerald-100/50 text-center space-y-2.5">
-                      <span className="text-[11px] font-extrabold text-emerald-850 uppercase tracking-widest block">🏆 Final Scoreboard Summary</span>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="flex flex-col text-center">
-                          <span className="text-[9px] font-bold text-emerald-855 uppercase">👦 SK Score</span>
-                          <span className="text-base font-black text-emerald-700 mt-0.5">{totalStrokesP1} Str <span className="text-[10px] font-normal text-emerald-600">({totalPuttsP1}P)</span></span>
-                        </div>
-                        <div className="flex flex-col text-center border-l border-emerald-100/80">
-                          <span className="text-[9px] font-bold text-teal-855 uppercase">👩 KY Score</span>
-                          <span className="text-base font-black text-teal-700 mt-0.5">
-                            {totalStrokesP2 > 0 ? `${totalStrokesP2} Str (${totalPuttsP2}P)` : '-'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 18-hole detailed Scorecard Table */}
-                    <div className="space-y-2">
-                      <span className="text-[11px] font-extrabold text-emerald-850 uppercase tracking-wider block">📊 Detailed Scorecard per Hole</span>
-                      <div className="border border-gray-300 rounded-none overflow-hidden flex flex-col bg-white text-center text-xs">
-                        {/* Table Header */}
-                        <div className="bg-emerald-600 text-white py-2 px-3 font-bold flex text-center items-center font-mono">
-                          <div className="w-12 text-[10px]">Hole</div>
-                          <div className="flex-1 text-[11px]">SK (Putts)</div>
-                          <div className="flex-1 text-[11px]">KY (Putts)</div>
-                        </div>
-                        
-                        {/* Scrollable list items rows */}
-                        <div className="max-h-40 overflow-y-auto divide-y divide-gray-100 font-medium font-mono">
-                          {holes.map((h, k) => {
-                            const p1T = h.iron + h.putt;
-                            const p2T = h.iron2 + h.putt2;
-                            return (
-                              <div key={k} className="flex py-2 px-3 hover:bg-gray-50/50 items-center justify-between text-center leading-none">
-                                <div className="w-12 font-bold text-gray-400">{h.hole}H</div>
-                                <div className="flex-1 font-semibold text-emerald-800">
-                                  {p1T > 0 ? `${p1T} Str (${h.putt}P)` : '-'}
-                                </div>
-                                <div className="flex-1 font-semibold text-teal-800">
-                                  {p2T > 0 ? `${p2T} Str (${h.putt2}P)` : '-'}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
                     </div>
 
                     {/* Action buttons at bottom */}
