@@ -115,6 +115,7 @@ const US_STATES = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('score'); // 'score', 'course', 'history'
+  const [previewDevice, setPreviewDevice] = useState('auto'); // 'auto', 'phone', 'tablet', 'desktop'
   const [editingCourseId, setEditingCourseId] = useState(null);
   const [selectedHistoryScore, setSelectedHistoryScore] = useState(null);
   const [fullscreenPhotoUrl, setFullscreenPhotoUrl] = useState(null);
@@ -1060,10 +1061,71 @@ export default function App() {
   })();
 
   return (
-    <div 
-      className="w-full max-w-full md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto h-screen h-[100dvh] bg-gray-50 flex flex-col justify-between shadow-xl relative md:border-x border-gray-100 overflow-hidden"
-      style={{ fontFamily: '"Outfit", "Noto Sans KR", sans-serif' }}
-    >
+    <div className="w-full h-screen h-[100dvh] flex flex-col bg-[#0b0f19] text-gray-200 font-sans overflow-hidden">
+      {/* Dynamic Device Preview Switcher Control Bar */}
+      <div className="bg-[#0f172a] border-b border-[#1e293b] py-2.5 px-6 flex flex-wrap items-center justify-between gap-4 text-xs md:text-sm select-none z-50 shadow-lg">
+        <div className="flex items-center gap-2.5">
+          <span className="text-emerald-400 font-extrabold text-base leading-none">🔍</span>
+          <span className="font-bold tracking-wide text-gray-200">기기별 화면 미리보기 (Device Preview)</span>
+          <span className="text-[10px] bg-slate-800 text-teal-400 px-2 py-0.5 rounded font-mono font-bold tracking-wider">LIVE</span>
+        </div>
+        <div className="flex items-center gap-1 bg-[#1e293b] p-1 rounded-xl border border-slate-700/50">
+          <button
+            type="button"
+            onClick={() => setPreviewDevice('auto')}
+            className={`px-3 py-1.5 rounded-lg transition duration-200 font-extrabold flex items-center gap-1.5 ${previewDevice === 'auto' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200 bg-transparent'}`}
+          >
+            ⚡ 자동 반응형 (Auto)
+          </button>
+          <button
+            type="button"
+            onClick={() => setPreviewDevice('phone')}
+            className={`px-3 py-1.5 rounded-lg transition duration-200 font-extrabold flex items-center gap-1.5 ${previewDevice === 'phone' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200 bg-transparent'}`}
+          >
+            📱 휴대폰 (Phone)
+          </button>
+          <button
+            type="button"
+            onClick={() => setPreviewDevice('tablet')}
+            className={`px-3 py-1.5 rounded-lg transition duration-200 font-extrabold flex items-center gap-1.5 ${previewDevice === 'tablet' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200 bg-transparent'}`}
+          >
+            📐 태블릿 (Tablet)
+          </button>
+          <button
+            type="button"
+            onClick={() => setPreviewDevice('desktop')}
+            className={`px-3 py-1.5 rounded-lg transition duration-200 font-extrabold flex items-center gap-1.5 ${previewDevice === 'desktop' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200 bg-transparent'}`}
+          >
+            🖥️ 컴퓨터 (PC)
+          </button>
+        </div>
+        <div className="hidden lg:flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+          <span>선택된 모드:</span>
+          <span className="font-extrabold text-emerald-400 uppercase tracking-wider text-[11px]">
+            {previewDevice === 'auto' && '전체 화면 자동 맞춤'}
+            {previewDevice === 'phone' && '휴대폰 세로 모드'}
+            {previewDevice === 'tablet' && '태블릿 모드'}
+            {previewDevice === 'desktop' && '데스크톱 광폭 모드'}
+          </span>
+        </div>
+      </div>
+
+      {/* Simulator Workspace Background Canvas */}
+      <div className={`flex-1 flex items-center justify-center bg-[#090d16] ${previewDevice !== 'auto' ? 'p-4 md:p-8 overflow-auto' : ''}`}>
+        
+        {/* Actual Golf Diary Application Frame */}
+        <div 
+          style={{ fontFamily: '"Outfit", "Noto Sans KR", sans-serif' }}
+          className={`w-full bg-gray-50 flex flex-col justify-between shadow-2xl relative overflow-hidden transition-all duration-300
+            ${previewDevice === 'auto' 
+              ? 'max-w-full h-full' 
+              : previewDevice === 'phone'
+              ? 'max-w-[400px] h-[820px] rounded-[36px] border-[12px] border-slate-950 ring-4 ring-emerald-500/20'
+              : previewDevice === 'tablet'
+              ? 'max-w-[820px] h-[950px] rounded-[24px] border-[12px] border-slate-950 ring-4 ring-emerald-500/20'
+              : 'max-w-[1280px] h-[850px] rounded-2xl border-[10px] border-slate-950 ring-4 ring-emerald-500/20'
+            }`}
+        >
       
       {/* Top Header App Bar */}
       <header className="text-white py-3 px-5 text-left shadow-md select-none relative animate-fade-in" style={{ backgroundColor: '#0f766e' }}>
@@ -2201,7 +2263,7 @@ export default function App() {
       </main>
 
       {/* Styled Bottom Navigation Toolbar (Stay fixed in mobile frames) */}
-      <nav className="fixed bottom-0 left-0 right-0 w-full max-w-full md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto bg-white border-t border-gray-150 flex justify-around py-3.5 shadow-xl z-50">
+      <nav className="absolute bottom-0 left-0 right-0 w-full max-w-full md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto bg-white border-t border-gray-150 flex justify-around py-3.5 shadow-xl z-50">
         <button 
           onClick={() => setActiveTab('score')}
           className={`flex flex-col items-center space-y-1 transition-all active:scale-95 ${activeTab === 'score' ? 'text-emerald-600 scale-105 font-bold' : 'text-gray-400 hover:text-gray-650'}`}
@@ -2355,6 +2417,8 @@ export default function App() {
         </div>
       )}
 
+        </div>
+      </div>
     </div>
   );
 }
