@@ -151,15 +151,15 @@ export default function App() {
     return [
       {
         id: 1,
-        name: 'Jeju Nine Bridges CC',
-        address: 'Jeju, South Korea',
+        name: 'Frisco Lakes Golf Club',
+        address: '7170 Stonebrook Pkwy, Frisco, TX 75034',
         totalPar: 72,
-        ladyRating: 72.1,
-        ladySlope: 130,
-        blueRating: 73.5,
-        blueSlope: 135,
-        lat: 33.3541,
-        lng: 126.3712,
+        ladyRating: 70.8,
+        ladySlope: 120,
+        blueRating: 73.1,
+        blueSlope: 132,
+        lat: 33.1444,
+        lng: -96.8906,
         holePars: Array(18).fill(4)
       },
       {
@@ -186,6 +186,19 @@ export default function App() {
         blueSlope: 148,
         lat: 33.5020,
         lng: -82.0223,
+        holePars: Array(18).fill(4)
+      },
+      {
+        id: 4,
+        name: 'The Club at Frisco Farms',
+        address: 'Frisco, TX, USA',
+        totalPar: 72,
+        ladyRating: 72.0,
+        ladySlope: 113,
+        blueRating: 72.0,
+        blueSlope: 113,
+        lat: 33.1550,
+        lng: -96.8200,
         holePars: Array(18).fill(4)
       }
     ];
@@ -1440,17 +1453,18 @@ export default function App() {
                   <div className="flex-1 grid grid-cols-10 divide-x divide-gray-300">
                     {scoreboardHoles.slice(0, 9).map((h, k) => {
                       const isFocused = (k === currentFocusedIndex);
+                      const isClickable = (currentFocusedIndex === -1 || k <= currentFocusedIndex);
                       const p1T = h.iron + h.putt;
                       const p2T = h.iron2 + h.putt2;
                       const holePar = courseHolePars[k] || 4;
                       return (
                         <div 
                           key={k}
-                          onClick={() => openScoreModal(k)}
-                          className={`flex flex-col justify-between transition-all cursor-pointer ${
-                            isFocused 
-                              ? 'bg-amber-50/30 hover:bg-amber-50/40 ring-2 ring-amber-400 ring-inset pb-0.5' 
-                              : 'hover:bg-slate-50 opacity-90'
+                          onClick={isClickable ? () => openScoreModal(k) : undefined}
+                          className={`flex flex-col justify-between transition-all ${
+                            isClickable 
+                              ? `cursor-pointer ${isFocused ? 'bg-amber-50/30 hover:bg-amber-50/40 ring-2 ring-amber-400 ring-inset pb-0.5' : 'hover:bg-slate-50 opacity-95'}`
+                              : 'cursor-not-allowed opacity-35 bg-gray-100/75 select-none'
                           }`}
                         >
                           {/* Top Section */}
@@ -1512,17 +1526,18 @@ export default function App() {
                     {scoreboardHoles.slice(9, 18).map((h, k) => {
                       const globalK = k + 9;
                       const isFocused = (globalK === currentFocusedIndex);
+                      const isClickable = (currentFocusedIndex === -1 || globalK <= currentFocusedIndex);
                       const p1T = h.iron + h.putt;
                       const p2T = h.iron2 + h.putt2;
                       const holePar = courseHolePars[globalK] || 4;
                       return (
                         <div 
                           key={globalK}
-                          onClick={() => openScoreModal(globalK)}
-                          className={`flex flex-col justify-between transition-all cursor-pointer ${
-                            isFocused 
-                              ? 'bg-amber-50/30 hover:bg-amber-50/40 ring-2 ring-amber-400 ring-inset pb-0.5' 
-                              : 'hover:bg-slate-50 opacity-90'
+                          onClick={isClickable ? () => openScoreModal(globalK) : undefined}
+                          className={`flex flex-col justify-between transition-all ${
+                            isClickable 
+                              ? `cursor-pointer ${isFocused ? 'bg-amber-50/30 hover:bg-amber-50/40 ring-2 ring-amber-400 ring-inset pb-0.5' : 'hover:bg-slate-50 opacity-95'}`
+                              : 'cursor-not-allowed opacity-35 bg-gray-100/75 select-none'
                           }`}
                         >
                           {/* Top Section */}
@@ -1753,17 +1768,14 @@ export default function App() {
               <span className="mr-2">🗺️</span> Course Location
             </h2>
 
-            {/* Map GPS simulator card (always present) */}
-            <div className="bg-white p-4 rounded-none shadow-sm border border-gray-300">
+            {/* Map GPS simulator card (always present) - Expanded for full width display */}
+            <div className="-mx-4 bg-white border-y border-gray-300 relative">
               <div 
                 id="leaflet-course-map"
-                className="w-full h-80 bg-slate-50 border border-slate-300 rounded-none relative overflow-hidden group shadow-inner"
+                className="w-full h-80 bg-slate-50 relative overflow-hidden group shadow-inner"
                 style={{ zIndex: 1 }}
               >
               </div>
-              <p className="text-[10.5px] text-gray-500 mt-2 leading-relaxed">
-                ℹ️ 지도를 자유롭게 이동 및 확대(Zoom)할 수 있습니다. 등록된 골프장의 대략적인 위치는 <strong>빨간 점(🔴)</strong>으로 표시되고 클릭 시 팝업을 띄우며, 지도의 임의 위치를 클릭하면 해당 위도/경도가 새로운 골프장 위치 핀으로 지정되고 자동 계산됩니다.
-              </p>
             </div>
 
             <button 
@@ -2384,7 +2396,7 @@ export default function App() {
                     <div className="space-y-4">
                       <div>
                         <span className="text-xl font-black text-emerald-850 uppercase tracking-tight block mb-1.5">
-                          SK — {totalStrokesP1}({pOutP1}/{pInP1})
+                          SK — {totalStrokesP1} <span className="text-sm font-bold text-gray-400 normal-case">({pOutP1}/{pInP1})</span>
                         </span>
                         {renderPlayerScorecard('SK', 'SK')}
                       </div>
@@ -2392,7 +2404,7 @@ export default function App() {
                       {totalStrokesP2 > 0 && (
                         <div>
                           <span className="text-xl font-black text-teal-850 uppercase tracking-tight block mb-1.5">
-                            KY — {totalStrokesP2}({pOutP2}/{pInP2})
+                            KY — {totalStrokesP2} <span className="text-sm font-bold text-gray-400 normal-case">({pOutP2}/{pInP2})</span>
                           </span>
                           {renderPlayerScorecard('KY', 'KY')}
                         </div>
