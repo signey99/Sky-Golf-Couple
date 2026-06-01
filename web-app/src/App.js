@@ -1061,7 +1061,7 @@ export default function App() {
 
   return (
     <div 
-      className="w-full max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto h-screen h-[100dvh] bg-gray-50 flex flex-col justify-between shadow-xl relative md:border-x border-gray-100 overflow-hidden"
+      className="w-full max-w-full md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto h-screen h-[100dvh] bg-gray-50 flex flex-col justify-between shadow-xl relative md:border-x border-gray-100 overflow-hidden"
       style={{ fontFamily: '"Outfit", "Noto Sans KR", sans-serif' }}
     >
       
@@ -1179,7 +1179,8 @@ export default function App() {
               {/* Front Nine layout */}
               <div className="w-full">
                 <span className="text-xs font-black text-gray-500 block mb-1.5 px-1 tracking-wide">⛳ Front</span>
-                <div className="border-2 border-gray-400 rounded-none overflow-hidden flex bg-white text-center shadow-sm" style={{ width: 'calc(2.5rem + (100% - 2.5rem) * 10 / 11)' }}>
+                <div className="w-full overflow-x-auto pb-1.5">
+                  <div className="border-2 border-gray-400 rounded-none overflow-hidden flex bg-white text-center shadow-sm" style={{ width: 'calc(2.5rem + (100% - 2.5rem) * 10 / 11)', minWidth: '450px' }}>
                   <div className="w-10 bg-gray-50 flex flex-col justify-between text-xs font-extrabold text-gray-500 border-r-2 border-gray-400 shrink-0 select-none">
                     {/* Top Header */}
                     <div className="flex flex-col py-1 border-b-2 border-gray-400">
@@ -1248,11 +1249,13 @@ export default function App() {
                   </div>
                 </div>
               </div>
+            </div>
 
               {/* Back Nine layout */}
               <div className="w-full">
                 <span className="text-xs font-black text-gray-500 block mb-1.5 px-1 tracking-wide">⛳ Back</span>
-                <div className="border-2 border-gray-400 rounded-none overflow-hidden flex bg-white text-center w-full shadow-sm">
+                <div className="w-full overflow-x-auto pb-1.5">
+                  <div className="border-2 border-gray-400 rounded-none overflow-hidden flex bg-white text-center shadow-sm" style={{ width: '100%', minWidth: '495px' }}>
                   <div className="w-10 bg-gray-50 flex flex-col justify-between text-xs font-extrabold text-gray-500 border-r-2 border-gray-400 shrink-0 select-none">
                     {/* Top Header */}
                     <div className="flex flex-col py-1 border-b-2 border-gray-400">
@@ -1335,13 +1338,14 @@ export default function App() {
                   </div>
                 </div>
               </div>
+            </div>
 
             </div>
 
             {/* Score Entry Popup Modal */}
             {isScoreInputModalOpen && editingHoleIndex !== null && (
               <div className="fixed inset-0 bg-black/60 z-[110] flex items-center justify-center p-4 backdrop-blur-sm">
-                <div className="bg-white rounded-none w-full max-w-md p-6 shadow-2xl border border-gray-300 flex flex-col space-y-4 animate-fade-in text-left">
+                <div className="bg-white rounded-none w-full max-w-md max-h-[90vh] overflow-y-auto p-6 shadow-2xl border border-gray-300 flex flex-col space-y-4 animate-fade-in text-left">
                   
                   {/* Modal Header */}
                   <div className="flex justify-between items-center pb-2.5 border-b border-gray-200">
@@ -2023,8 +2027,8 @@ export default function App() {
                 return (
                   <div className="space-y-1 mt-1 mb-2 text-left">
                     {/* Front Nine */}
-                    <div className="w-full">
-                      <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center shadow-sm text-[10px] w-full">
+                    <div className="w-full overflow-x-auto pb-0.5">
+                      <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center shadow-sm text-[10px]" style={{ minWidth: '360px' }}>
                         <div className="w-full grid grid-cols-10 divide-x divide-gray-200">
                           {holes.slice(0, 9).map((h, k) => {
                             const pT = getHoleScore(h);
@@ -2044,8 +2048,8 @@ export default function App() {
                     </div>
 
                     {/* Back Nine */}
-                    <div className="w-full">
-                      <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center shadow-sm text-[10px] w-full">
+                    <div className="w-full overflow-x-auto pb-0.5">
+                      <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center shadow-sm text-[10px]" style={{ minWidth: '360px' }}>
                         <div className="w-full grid grid-cols-10 divide-x divide-gray-200">
                           {holes.slice(9, 18).map((h, k) => {
                             const globalK = k + 9;
@@ -2197,7 +2201,7 @@ export default function App() {
       </main>
 
       {/* Styled Bottom Navigation Toolbar (Stay fixed in mobile frames) */}
-      <nav className="fixed bottom-0 left-0 right-0 w-full max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto bg-white border-t border-gray-150 flex justify-around py-3.5 shadow-xl z-50">
+      <nav className="fixed bottom-0 left-0 right-0 w-full max-w-full md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto bg-white border-t border-gray-150 flex justify-around py-3.5 shadow-xl z-50">
         <button 
           onClick={() => setActiveTab('score')}
           className={`flex flex-col items-center space-y-1 transition-all active:scale-95 ${activeTab === 'score' ? 'text-emerald-600 scale-105 font-bold' : 'text-gray-400 hover:text-gray-650'}`}
@@ -2224,7 +2228,7 @@ export default function App() {
       {/* Firebase Database Settings Modal */}
       {isSettingsOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-none p-6 w-full max-w-md border border-gray-300 shadow-2xl space-y-4 animate-fade-in text-left">
+          <div className="bg-white rounded-none p-6 w-full max-w-md max-h-[90vh] overflow-y-auto border border-gray-300 shadow-2xl space-y-4 animate-fade-in text-left">
             <div className="flex justify-between items-center pb-2 border-b border-gray-200">
               <h3 className="font-extrabold text-emerald-800 flex items-center gap-1.5 uppercase tracking-wide">
                 <span>🔥</span> Dynamic Sync Settings
