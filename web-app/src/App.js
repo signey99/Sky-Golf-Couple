@@ -86,6 +86,33 @@ const renderScoreSymbol = (score, par, isSelected) => {
   }
 };
 
+const US_STATES = [
+  { code: 'CA', name: 'California (캘리포니아)', lat: 36.7783, lng: -119.4179 },
+  { code: 'GA', name: 'Georgia (조지아)', lat: 33.5020, lng: -82.0223 },
+  { code: 'FL', name: 'Florida (플로리다)', lat: 27.6648, lng: -81.5158 },
+  { code: 'TX', name: 'Texas (텍사스)', lat: 31.9686, lng: -99.9018 },
+  { code: 'NY', name: 'New York (뉴욕)', lat: 43.2994, lng: -74.2179 },
+  { code: 'NV', name: 'Nevada (네바다)', lat: 38.8026, lng: -116.4194 },
+  { code: 'AZ', name: 'Arizona (애리조나)', lat: 34.0489, lng: -111.0937 },
+  { code: 'HI', name: 'Hawaii (하와이)', lat: 19.8968, lng: -155.5828 },
+  { code: 'IL', name: 'Illinois (일리노이)', lat: 40.6331, lng: -89.3985 },
+  { code: 'NC', name: 'North Carolina (노스캐롤라이나)', lat: 35.7596, lng: -79.0193 },
+  { code: 'SC', name: 'South Carolina (사우스캐롤라이나)', lat: 33.8361, lng: -81.1637 },
+  { code: 'CO', name: 'Colorado (콜로라도)', lat: 39.5501, lng: -105.7821 },
+  { code: 'OR', name: 'Oregon (오레곤)', lat: 43.8041, lng: -120.5542 },
+  { code: 'WA', name: 'Washington (워싱턴)', lat: 47.7511, lng: -120.7401 },
+  { code: 'NJ', name: 'New Jersey (뉴저지)', lat: 40.0583, lng: -74.4057 },
+  { code: 'MA', name: 'Massachusetts (매사추세츠)', lat: 42.4072, lng: -71.3824 },
+  { code: 'PA', name: 'Pennsylvania (펜실베이니아)', lat: 41.2033, lng: -77.1945 },
+  { code: 'OH', name: 'Ohio (오하이오)', lat: 40.4173, lng: -82.9071 },
+  { code: 'MI', name: 'Michigan (미시간)', lat: 44.3148, lng: -85.6024 },
+  { code: 'WI', name: 'Wisconsin (위스콘신)', lat: 43.7844, lng: -88.7879 },
+  { code: 'UT', name: 'Utah (유타)', lat: 39.3210, lng: -111.0937 },
+  { code: 'AL', name: 'Alabama (앨라배마)', lat: 32.3182, lng: -86.9023 },
+  { code: 'AK', name: 'Alaska (알래스카)', lat: 64.2008, lng: -149.4937 },
+  { code: 'INTL', name: 'Outside USA / Other (미국 외 / 기타)', lat: 33.3541, lng: 126.3712 }
+];
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('score'); // 'score', 'course', 'history'
   const [editingCourseId, setEditingCourseId] = useState(null);
@@ -1493,18 +1520,15 @@ export default function App() {
                 onClick={handleMapClick}
                 className="w-full h-80 bg-slate-50 border border-slate-300 rounded-none relative cursor-crosshair overflow-hidden group shadow-inner flex flex-col justify-end"
               >
-                {/* Clean retro design bg grid */}
-                <div className="absolute inset-0 bg-opacity-40 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:12px_12px]"></div>
-                
-                {/* Beautiful Inline SVG USA Map with Alaska, Hawaii, and Jeju insets */}
+                {/* Beautiful Inline SVG USA Map with Alaska and Hawaii insets (Pure US Map) */}
                 <svg viewBox="0 0 500 280" className="absolute inset-0 w-full h-full select-none">
-                  {/* Continental USA outline path */}
+                  {/* Continental USA outline path - styled with graceful cubic curves */}
                   <path
-                    d="M 50,55 L 43,100 L 45,150 L 53,185 C 65,190 73,195 80,185 L 140,195 L 175,225 L 195,245 L 210,215 L 255,215 L 285,188 L 320,190 L 335,215 L 350,250 C 355,245 358,230 355,210 C 352,190 357,180 361,165 L 380,145 L 395,142 L 392,130 L 413,105 L 420,105 L 430,95 L 440,88 L 455,48 L 445,46 L 430,60 L 415,62 L 400,75 L 385,68 L 372,78 L 360,70 L 340,78 L 325,58 L 315,58 L 295,78 L 260,56 L 245,62 L 75,55 Z"
+                    d="M 50,50 C 50,50 63,55 78,57 C 93,60 120,59 150,61 C 180,63 210,55 240,59 C 245,60 255,63 260,61 C 265,59 275,67 285,63 C 290,61 305,70 315,63 C 320,60 325,63 330,60 C 335,57 338,73 345,77 C 355,83 360,75 365,77 C 370,80 372,83 385,73 C 395,65 400,80 415,67 C 425,55 430,65 445,51 C 450,47 455,53 458,50 C 455,60 452,70 445,83 C 440,93 430,100 420,110 C 413,110 410,120 395,130 C 385,137 380,150 375,150 C 370,150 365,160 361,170 C 358,180 355,195 355,215 C 358,235 355,250 350,257 C 345,255 342,235 335,220 C 330,210 325,200 320,195 C 310,190 295,193 285,193 C 275,193 265,205 255,220 C 245,225 230,220 210,220 C 200,235 195,250 185,250 C 175,240 165,230 155,220 C 145,210 120,200 100,195 C 85,195 75,190 65,185 C 55,180 52,170 48,155 C 45,140 42,125 45,105 C 47,90 50,70 50,50 Z"
                     fill="#f0fdf4"
                     stroke="#059669"
-                    strokeWidth="1.2"
-                    className="transition-all hover:fill-emerald-50/80"
+                    strokeWidth="1.5"
+                    className="transition-all hover:fill-emerald-50/85"
                   />
 
                   {/* Alaska Inset */}
@@ -1530,71 +1554,122 @@ export default function App() {
                     <ellipse cx="140" cy="242" rx="2.2" ry="1.2" fill="#10b981" />
                   </g>
 
-                  {/* International (Jeju) Inset */}
-                  <g>
-                    <rect x="390" y="200" width="95" height="65" fill="#f0fdff80" stroke="#cbd5e1" strokeWidth="0.8" strokeDasharray="3 3" />
-                    <text x="437" y="210" textAnchor="middle" fontSize="6.5" fontWeight="black" fill="#0891b2">🌐 JEJU / INTL</text>
-                    <ellipse cx="438" cy="238" rx="15" ry="9" fill="#ecfdf5" stroke="#10b981" strokeWidth="0.8" />
-                    <text x="438" y="240" textAnchor="middle" fontSize="5.5" fontWeight="bold" fill="#047857">제주 CC</text>
-                  </g>
-
-                  {/* 1. Plot pins for all registered golf courses */}
+                  {/* 1. Plot pins for all registered USA golf courses */}
                   {courses.map(course => {
                     const pos = getCoordinatesPosition(course.lat, course.lng);
                     if (!pos || pos.type === 'UNKNOWN') return null;
 
-                    // Highlight selected course on the map
+                    // Filter rounds to see if we played here
+                    const courseHistories = scores.filter(s => s.courseId === course.id);
+                    const isPlayed = courseHistories.length > 0;
                     const isSelected = Number(course.id) === Number(selectedCourseId);
+
+                    const shortName = course.name
+                      .replace('GC', '')
+                      .replace('CC', '')
+                      .replace('Golf Links', '')
+                      .replace('Golf Club', '')
+                      .trim();
 
                     return (
                       <g key={course.id} className="cursor-pointer group">
                         {/* Interactive invisible hover surface */}
                         <circle cx={pos.x} cy={pos.y} r="12" fill="transparent" />
 
-                        {/* Pulsing ring for active or high-profile state */}
+                        {/* Outer pulsing color for played or selected courses */}
                         <circle
                           cx={pos.x}
                           cy={pos.y}
-                          r={isSelected ? "11" : "7"}
-                          className={`fill-red-500 opacity-25 ${isSelected ? 'animate-ping' : ''}`}
-                          style={{ transformOrigin: `${pos.x}px ${pos.y}px`, animationDuration: '2s' }}
+                          r={isPlayed ? (isSelected ? "14" : "10") : "6"}
+                          className={`${
+                            isPlayed 
+                              ? 'fill-amber-500 opacity-25 animate-pulse' 
+                              : isSelected 
+                                ? 'fill-emerald-500 opacity-25' 
+                                : 'fill-slate-400 opacity-10'
+                          }`}
+                          style={{ transformOrigin: `${pos.x}px ${pos.y}px` }}
                         />
-                        {/* Outer border/pin shape */}
-                        <circle
-                          cx={pos.x}
-                          cy={pos.y}
-                          r={isSelected ? "5.5" : "4.5"}
-                          className={`${isSelected ? 'fill-emerald-600 stroke-white stroke-2' : 'fill-red-600 stroke-white stroke-[1.5]'}`}
-                        />
-                        {/* Core element dot */}
-                        <circle cx={pos.x} cy={pos.y} r="1.5" className="fill-white" />
 
-                        {/* Interactive hover display */}
+                        {/* Interactive map pin */}
+                        <circle
+                          cx={pos.x}
+                          cy={pos.y}
+                          r={isPlayed ? (isSelected ? "6" : "5") : "4.5"}
+                          className={`${
+                            isPlayed 
+                              ? 'fill-amber-500 stroke-amber-800 stroke-[1.5]' 
+                              : isSelected
+                                ? 'fill-emerald-500 stroke-white stroke-[1.5]'
+                                : 'fill-slate-400 stroke-white stroke-[1]'
+                          }`}
+                        />
+                        <circle cx={pos.x} cy={pos.y} r="1.5" fill="white" />
+
+                        {/* Clean permanent text badge for played course */}
+                        {isPlayed && (
+                          <g className="pointer-events-none">
+                            {/* Shadow/Outline Effect */}
+                            <text
+                              x={pos.x}
+                              y={pos.y + 12}
+                              textAnchor="middle"
+                              fill="#ffffff"
+                              stroke="#1e293b"
+                              strokeWidth="2"
+                              fontSize="8"
+                              fontWeight="black"
+                              className="font-sans select-none"
+                            >
+                              ⛳ {shortName}
+                            </text>
+                            <text
+                              x={pos.x}
+                              y={pos.y + 12}
+                              textAnchor="middle"
+                              fill="#df8f00"
+                              fontSize="8"
+                              fontWeight="black"
+                              className="font-sans select-none"
+                            >
+                              ⛳ {shortName}
+                            </text>
+                          </g>
+                        )}
+
+                        {/* Tooltip on hover */}
                         <g className="opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50">
-                          {/* Tooltip Background */}
                           <rect
-                            x={pos.x - 55}
-                            y={pos.y - 32}
-                            width="110"
-                            height="22"
+                            x={pos.x - 65}
+                            y={pos.y - 34}
+                            width="130"
+                            height="24"
                             rx="4"
                             fill="#1e293b"
                             stroke="#334155"
                             strokeWidth="1"
                             className="shadow-lg"
                           />
-                          {/* Tooltip Title Text */}
                           <text
                             x={pos.x}
-                            y={pos.y - 18}
+                            y={pos.y - 20}
                             textAnchor="middle"
                             fill="#f8fafc"
-                            fontSize="7.5"
+                            fontSize="8"
                             fontWeight="bold"
                           >
                             {course.name.length > 20 ? course.name.substring(0, 18) + '...' : course.name}
                           </text>
-                          {/* Little triangle pointer arrow */}
+                          <text
+                            x={pos.x}
+                            y={pos.y - 12}
+                            textAnchor="middle"
+                            fill="#fbbf24"
+                            fontSize="6.5"
+                            fontWeight="bold"
+                          >
+                            {isPlayed ? `🏆 Played ${courseHistories.length} Rounds` : 'No Rounds Recorded'}
+                          </text>
                           <polygon
                             points={`${pos.x - 4},${pos.y - 10} ${pos.x + 4},${pos.y - 10} ${pos.x},${pos.y - 7}`}
                             fill="#1e293b"
@@ -1604,59 +1679,38 @@ export default function App() {
                     );
                   })}
 
-                  {/* 2. Plot Active target crosshair picker (yellow) */}
+                  {/* 2. Visual picker marker indicator */}
                   {mapClickedCoords && (() => {
                     const clickPos = getCoordinatesPosition(mapClickedCoords.lat, mapClickedCoords.lng);
                     if (!clickPos || clickPos.type === 'UNKNOWN') return null;
                     return (
-                      <g className="pointer-events-none">
-                        {/* Radar effect */}
+                      <g className="pointer-events-none animate-bounce">
                         <circle
                           cx={clickPos.x}
                           cy={clickPos.y}
-                          r="15"
+                          r="10"
                           fill="none"
                           stroke="#eab308"
-                          strokeWidth="1"
-                          strokeDasharray="2 2"
+                          strokeWidth="1.5"
+                          className="animate-ping"
                         />
-                        {/* Crosshairs */}
-                        <line x1={clickPos.x - 7} y1={clickPos.y} x2={clickPos.x + 7} y2={clickPos.y} stroke="#eab308" strokeWidth="1.2" />
-                        <line x1={clickPos.x} y1={clickPos.y - 7} x2={clickPos.x} y2={clickPos.y + 7} stroke="#eab308" strokeWidth="1.2" />
-                        {/* Pin picker */}
+                        {/* Interactive crosshair lines */}
+                        <line x1={clickPos.x - 6} y1={clickPos.y} x2={clickPos.x + 6} y2={clickPos.y} stroke="#ca8a04" strokeWidth="1" />
+                        <line x1={clickPos.x} y1={clickPos.y - 6} x2={clickPos.x} y2={clickPos.y + 6} stroke="#ca8a04" strokeWidth="1" />
                         <circle
                           cx={clickPos.x}
                           cy={clickPos.y}
                           r="3"
                           className="fill-yellow-400 stroke-yellow-700 stroke-1 shadow-md"
                         />
-                        {/* Label Badge */}
-                        <g>
-                          <rect x={clickPos.x - 24} y={clickPos.y + 9} width="48" height="11" rx="2" fill="#eab308" stroke="#ca8a04" strokeWidth="0.5" />
-                          <text x={clickPos.x} y={clickPos.y + 17} textAnchor="middle" fill="#78350f" fontSize="6" fontWeight="black">PICKED 📍</text>
-                        </g>
                       </g>
                     );
                   })()}
                 </svg>
 
-                {/* Info Hud layer Overlay */}
-                <div className="z-10 bg-white/95 backdrop-blur-sm px-3.5 py-2.5 rounded-none shadow-md border-t border-r border-gray-300 text-xs text-gray-700 flex flex-col space-y-1 self-start select-none max-w-[240px]">
-                  <div className="flex items-center space-x-1.5">
-                    <span className="text-emerald-600">🎯</span> 
-                    <span className="font-extrabold text-emerald-900 text-[11px] uppercase tracking-wider">
-                      GPS Target Coordinate
-                    </span>
-                  </div>
-                  <div className="font-mono text-[10px] text-gray-600 flex justify-between space-x-3 bg-gray-50 px-1.5 py-0.5 border border-gray-200">
-                    <span>L: <strong>{Number(mapClickedCoords?.lat || 36.5684).toFixed(4)}</strong></span>
-                    <span>G: <strong>{Number(mapClickedCoords?.lng || -121.9511).toFixed(4)}</strong></span>
-                  </div>
-                </div>
-
-                {/* Help tip at the bottom */}
-                <div className="absolute right-2 bottom-2 z-10 bg-black/60 backdrop-blur-xs px-2 py-1 text-[8.5px] text-white font-extrabold uppercase tracking-widest text-center select-none rounded-none">
-                  지도를 클릭해 골프장 위치 핀 지정
+                {/* Helpful status layer overlay at the bottom */}
+                <div className="absolute right-2 bottom-2 z-10 bg-slate-900/85 backdrop-blur-md px-3 py-1.5 text-[9px] text-white font-extrabold uppercase tracking-wider text-center select-none rounded-none border border-slate-700/50 shadow-md">
+                  🇺🇸 미국 지도 위의 핀은 경기한(🏆) & 등록된 코스 위치를 나타냅니다
                 </div>
               </div>
             </div>
@@ -1755,21 +1809,44 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Coordinates Indicator */}
+                    {/* US State/Region dropdown */}
                     <div>
-                      <span className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">
-                        📍 Geolocations (Targeted on Map)
-                      </span>
-                      <div className="bg-gray-50 p-2 text-center rounded-none border border-gray-200 grid grid-cols-2 gap-2 text-xs font-mono text-gray-700">
-                        <div className="bg-white p-1.5 border border-gray-150 rounded-none flex justify-between px-2.5">
-                          <span className="text-gray-400 font-bold">LAT:</span>
-                          <span className="font-extrabold text-emerald-700">{Number(mapClickedCoords?.lat || 36.5684).toFixed(4)}</span>
-                        </div>
-                        <div className="bg-white p-1.5 border border-gray-150 rounded-none flex justify-between px-2.5">
-                          <span className="text-gray-400 font-bold">LNG:</span>
-                          <span className="font-extrabold text-emerald-700">{Number(mapClickedCoords?.lng || -121.9511).toFixed(4)}</span>
-                        </div>
-                      </div>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">
+                        🇺🇸 Select US State / Region (미국 주 / 지역)
+                      </label>
+                      <select
+                        className="w-full p-2.5 border border-gray-200 bg-white rounded-none text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        value={
+                          US_STATES.find(
+                            st => 
+                              Math.abs(st.lat - (newCourse.lat || 36.5684)) < 4.0 && 
+                              Math.abs(st.lng - (newCourse.lng || -121.9511)) < 4.0
+                          )?.code || 'CA'
+                        }
+                        onChange={(e) => {
+                          const matchedState = US_STATES.find(st => st.code === e.target.value);
+                          if (matchedState) {
+                            setNewCourse(prev => ({
+                              ...prev,
+                              lat: matchedState.lat,
+                              lng: matchedState.lng
+                            }));
+                            setMapClickedCoords({
+                              lat: matchedState.lat,
+                              lng: matchedState.lng
+                            });
+                          }
+                        }}
+                      >
+                        {US_STATES.map(st => (
+                          <option key={st.code} value={st.code}>
+                            {st.name}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-[10px] text-gray-400 mt-1">
+                        * 선택된 미국 주 위치에 따라 미국지도 위에 핀이 표시됩니다. 지도를 클릭해 직접 눈대중 위치를 미세 조정할 수도 있습니다.
+                      </p>
                     </div>
 
                     {/* Difficulty adjusters */}
@@ -2255,7 +2332,7 @@ export default function App() {
                     {/* 18-hole detailed Scorecard Tables */}
                     <div className="space-y-4">
                       <div>
-                        <span className="text-base font-black text-emerald-800 uppercase tracking-wide block mb-1.5">
+                        <span className="text-xl font-black text-emerald-850 uppercase tracking-tight block mb-1.5">
                           SK — {totalStrokesP1}({pOutP1}/{pInP1})
                         </span>
                         {renderPlayerScorecard('SK', 'SK')}
@@ -2263,7 +2340,7 @@ export default function App() {
 
                       {totalStrokesP2 > 0 && (
                         <div>
-                          <span className="text-base font-black text-teal-800 uppercase tracking-wide block mb-1.5">
+                          <span className="text-xl font-black text-teal-850 uppercase tracking-tight block mb-1.5">
                             KY — {totalStrokesP2}({pOutP2}/{pInP2})
                           </span>
                           {renderPlayerScorecard('KY', 'KY')}
