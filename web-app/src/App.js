@@ -1061,7 +1061,7 @@ export default function App() {
 
   return (
     <div 
-      className="max-w-lg mx-auto h-screen h-[100dvh] bg-gray-50 flex flex-col justify-between shadow-xl relative border-x border-gray-100 overflow-hidden"
+      className="w-full max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto h-screen h-[100dvh] bg-gray-50 flex flex-col justify-between shadow-xl relative md:border-x border-gray-100 overflow-hidden"
       style={{ fontFamily: '"Outfit", "Noto Sans KR", sans-serif' }}
     >
       
@@ -1811,7 +1811,7 @@ export default function App() {
             )}
 
             {/* Registered Course Cards Profile Feed */}
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
               {[...courses]
                 .filter(course => {
@@ -1911,7 +1911,7 @@ export default function App() {
                 if (!q) return true;
                 return (course.name || '').toLowerCase().includes(q) || (course.address || '').toLowerCase().includes(q);
               }).length === 0 && (
-                <div className="text-center py-8 text-gray-400 bg-white border border-dotted border-gray-200">
+                <div className="md:col-span-2 text-center py-8 text-gray-400 bg-white border border-dotted border-gray-200">
                   <p className="font-bold text-gray-500">No courses match your search.</p>
                   <p className="text-xs mt-1">Try searching with a different term!</p>
                 </div>
@@ -1934,9 +1934,10 @@ export default function App() {
                 <p className="text-xs mt-1">Submit your first score in the first tab to begin!</p>
               </div>
             ) : (
-              [...scores]
-                .sort((a, b) => new Date(b.date) - new Date(a.date))
-                .map(score => {
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[...scores]
+                  .sort((a, b) => new Date(b.date) - new Date(a.date))
+                  .map(score => {
                   const totalStrokesP1 = (score.holes || []).reduce((sum, h) => sum + (h.iron || 0) + (h.putt || 0), 0);
                   const totalIronsP1 = (score.holes || []).reduce((sum, h) => sum + (h.iron || 0), 0);
                   const totalPuttsP1 = (score.holes || []).reduce((sum, h) => sum + (h.putt || 0), 0);
@@ -1983,7 +1984,8 @@ export default function App() {
                       </div>
                     </div>
                   );
-                })
+                })}
+              </div>
             )}
 
             {/* Scorecard detail & photo upload popup */}
@@ -2195,7 +2197,7 @@ export default function App() {
       </main>
 
       {/* Styled Bottom Navigation Toolbar (Stay fixed in mobile frames) */}
-      <nav className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white border-t border-gray-150 flex justify-around py-3.5 shadow-xl z-50">
+      <nav className="fixed bottom-0 left-0 right-0 w-full max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto bg-white border-t border-gray-150 flex justify-around py-3.5 shadow-xl z-50">
         <button 
           onClick={() => setActiveTab('score')}
           className={`flex flex-col items-center space-y-1 transition-all active:scale-95 ${activeTab === 'score' ? 'text-emerald-600 scale-105 font-bold' : 'text-gray-400 hover:text-gray-650'}`}
