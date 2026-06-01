@@ -1,76 +1,58 @@
 plugins {
     id("com.android.application")
+    id("org.jetbrains.kotlin.android")
 }
 
 android {
     namespace = "com.example"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.aistudio.skkygolf.webwrap"
         minSdk = 26
-        targetSdk = 33
+        targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        versionName = "1.0.0"
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = "1.8"
     }
 }
 
 dependencies {
+    implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.11.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.webkit:webkit:1.10.0")
 }
 
-tasks.register<Exec>("installWebAssets") {
-    inputs.file(file("../package.json"))
-    inputs.file(file("../web-app/package.json"))
-    outputs.dir(file("../web-app/node_modules"))
-
+val buildWebAssets = tasks.register<Exec>("buildWebAssets") {
     workingDir = file("../web-app")
-    val isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows
-    if (isWindows) {
-        commandLine("cmd", "/c", "npm install")
-    } else {
-        commandLine("npm", "install")
-    }
-}
-
-tasks.register<Exec>("buildWebAssets") {
-    dependsOn("installWebAssets")
-    inputs.dir(file("../web-app/src"))
-    inputs.dir(file("../web-app/public"))
-    inputs.file(file("../web-app/package.json"))
-    inputs.file(file("../web-app/tailwind.config.js"))
-    outputs.dir(file("../web-app/build"))
-
-    workingDir = file("../web-app")
-    val isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows
-    if (isWindows) {
+    if (System.getProperty("os.name").lowercase().contains("windows")) {
         commandLine("cmd", "/c", "npm run build")
     } else {
         commandLine("npm", "run", "build")
     }
 }
 
-tasks.register<Copy>("copyWebAssets") {
-    dependsOn("buildWebAssets")
-    from(file("../web-app/build"))
-    into(file("src/main/assets"))
+val installWebAssets = tasks.register<Copy>("installWebAssets") {
+    dependsOn(buildWebAssets)
+    from("../web-app/build")
+    into("src/main/assets")
 }
 
-tasks.getByName("preBuild").dependsOn("copyWebAssets")
-
+tasks.named("preBuild") {
+    dependsOn(installWebAssets)
+}

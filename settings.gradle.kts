@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "GolfDiary"
+rootProject.name = "SkKy Golf"
 include(":app")
