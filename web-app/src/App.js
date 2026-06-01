@@ -559,9 +559,15 @@ export default function App() {
   }, [scores, courses, isInitialLoadDone]);
 
   // --- SCOREBOARD TAB STATES ---
-  const [selectedCourseId, setSelectedCourseId] = useState('');
-  const [isNewCourse, setIsNewCourse] = useState(false);
-  const [newCourseNameInput, setNewCourseNameInput] = useState('');
+  const [selectedCourseId, setSelectedCourseId] = useState(() => {
+    return localStorage.getItem('golf_diary_selected_course_id') || '';
+  });
+  const [isNewCourse, setIsNewCourse] = useState(() => {
+    return localStorage.getItem('golf_diary_is_new_course') === 'true';
+  });
+  const [newCourseNameInput, setNewCourseNameInput] = useState(() => {
+    return localStorage.getItem('golf_diary_new_course_name_input') || '';
+  });
   
   // Format YYYY-MM-DD as default date for native calendar picker
   const getDefaultDate = () => {
@@ -571,21 +577,61 @@ export default function App() {
     const yyyy = d.getFullYear();
     return `${yyyy}-${mm}-${dd}`;
   };
-  const [playDate, setPlayDate] = useState(getDefaultDate());
+  const [playDate, setPlayDate] = useState(() => {
+    return localStorage.getItem('golf_diary_play_date') || getDefaultDate();
+  });
 
   // Dual-Player scorecard details (1-18 holes)
-  const [scoreboardHoles, setScoreboardHoles] = useState(
-    Array.from({ length: 18 }, (_, i) => ({
+  const [scoreboardHoles, setScoreboardHoles] = useState(() => {
+    const saved = localStorage.getItem('golf_diary_scoreboard_holes');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && Array.isArray(parsed) && parsed.length === 18) {
+          return parsed;
+        }
+      } catch (e) {
+        console.error("Error reading saved scoreboard holes", e);
+      }
+    }
+    return Array.from({ length: 18 }, (_, i) => ({
       hole: i + 1,
       iron: 0,
       putt: 0,
       iron2: 0,
       putt2: 0
-    }))
-  );
-  const [activeHoleIndex, setActiveHoleIndex] = useState(0);
+    }));
+  });
+  const [activeHoleIndex, setActiveHoleIndex] = useState(() => {
+    const saved = localStorage.getItem('golf_diary_active_hole_index');
+    return saved !== null ? Number(saved) : 0;
+  });
   const [isScoreInputModalOpen, setIsScoreInputModalOpen] = useState(false);
   const [editingHoleIndex, setEditingHoleIndex] = useState(null);
+
+  useEffect(() => {
+    localStorage.setItem('golf_diary_selected_course_id', selectedCourseId);
+  }, [selectedCourseId]);
+
+  useEffect(() => {
+    localStorage.setItem('golf_diary_is_new_course', String(isNewCourse));
+  }, [isNewCourse]);
+
+  useEffect(() => {
+    localStorage.setItem('golf_diary_new_course_name_input', newCourseNameInput);
+  }, [newCourseNameInput]);
+
+  useEffect(() => {
+    localStorage.setItem('golf_diary_play_date', playDate);
+  }, [playDate]);
+
+  useEffect(() => {
+    localStorage.setItem('golf_diary_scoreboard_holes', JSON.stringify(scoreboardHoles));
+  }, [scoreboardHoles]);
+
+  useEffect(() => {
+    localStorage.setItem('golf_diary_active_hole_index', String(activeHoleIndex));
+  }, [activeHoleIndex]);
 
   const openScoreModal = (index) => {
     setEditingHoleIndex(index);
@@ -871,7 +917,7 @@ export default function App() {
 
   return (
     <div 
-      className="max-w-lg mx-auto h-screen bg-gray-50 flex flex-col justify-between shadow-xl relative border-x border-gray-100 overflow-hidden"
+      className="max-w-lg mx-auto h-full bg-gray-50 flex flex-col justify-between shadow-xl relative border-x border-gray-100 overflow-hidden"
       style={{ fontFamily: '"Outfit", "Noto Sans KR", sans-serif' }}
     >
       

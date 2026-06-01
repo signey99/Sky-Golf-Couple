@@ -205,11 +205,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         if (webView != null) {
+            try {
+                webView.stopLoading();
+                webView.clearHistory();
+                webView.clearCache(true);
+                webView.loadUrl("about:blank");
+            } catch (Throwable ignored) {}
             android.view.ViewParent parent = webView.getParent();
             if (parent instanceof android.view.ViewGroup) {
                 ((android.view.ViewGroup) parent).removeView(webView);
             }
-            webView.destroy();
+            try {
+                webView.destroy();
+            } catch (Throwable ignored) {}
             webView = null;
         }
         super.onDestroy();

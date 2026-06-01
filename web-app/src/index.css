@@ -3,8 +3,12 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
+html, body, #root {
   margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-rendering: grayscale;
 }
