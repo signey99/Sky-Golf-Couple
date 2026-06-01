@@ -18,16 +18,18 @@ const renderScoreSymbol = (score, par, isSelected) => {
   
   const diff = score - par;
   const baseStyle = {
-    width: '26px',
-    height: '26px',
-    minWidth: '26px',
-    minHeight: '26px',
-    maxWidth: '26px',
-    maxHeight: '26px',
+    width: '24px',
+    height: '24px',
+    minWidth: '24px',
+    minHeight: '24px',
+    maxWidth: '24px',
+    maxHeight: '24px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxSizing: 'border-box'
+    boxSizing: 'border-box',
+    aspectRatio: '1 / 1',
+    flexShrink: 0
   };
 
   if (diff === -1) {
@@ -35,9 +37,9 @@ const renderScoreSymbol = (score, par, isSelected) => {
     return (
       <div 
         style={baseStyle}
-        className="rounded-full border-2 border-red-500 bg-red-50/40 shadow-sm animate-fadeIn shrink-0"
+        className="rounded-full border border-red-500 bg-red-50/40 shadow-sm animate-fadeIn shrink-0 aspect-square"
       >
-        <span className="text-[14px] font-black text-red-500 leading-none">{score}</span>
+        <span className="text-[13px] font-black text-red-500 leading-none">{score}</span>
       </div>
     );
   } else if (diff <= -2) {
@@ -45,11 +47,11 @@ const renderScoreSymbol = (score, par, isSelected) => {
     return (
       <div 
         style={{ ...baseStyle, position: 'relative' }}
-        className="shadow-sm animate-fadeIn shrink-0"
+        className="shadow-sm animate-fadeIn shrink-0 aspect-square"
       >
-        <div className="absolute inset-0 border-2 border-red-500 rounded-full"></div>
+        <div className="absolute inset-0 border border-red-500 rounded-full"></div>
         <div className="absolute inset-[2px] border border-red-500 rounded-full"></div>
-        <span className="text-[14px] font-black text-red-500 z-10 leading-none">{score}</span>
+        <span className="text-[13px] font-black text-red-500 z-10 leading-none">{score}</span>
       </div>
     );
   } else if (diff === 1) {
@@ -57,9 +59,9 @@ const renderScoreSymbol = (score, par, isSelected) => {
     return (
       <div 
         style={baseStyle}
-        className="border-2 border-blue-500 bg-blue-50/30 rounded-none shadow-sm animate-fadeIn shrink-0"
+        className="border border-blue-500 bg-blue-50/30 rounded-none shadow-sm animate-fadeIn shrink-0 aspect-square"
       >
-        <span className="text-[14px] font-black text-blue-500 leading-none">{score}</span>
+        <span className="text-[13px] font-black text-blue-500 leading-none">{score}</span>
       </div>
     );
   } else if (diff >= 2) {
@@ -67,18 +69,18 @@ const renderScoreSymbol = (score, par, isSelected) => {
     return (
       <div 
         style={{ ...baseStyle, position: 'relative' }}
-        className="shadow-sm animate-fadeIn shrink-0"
+        className="shadow-sm animate-fadeIn shrink-0 aspect-square"
       >
-        <div className="absolute inset-0 border-2 border-blue-600 rounded-none"></div>
+        <div className="absolute inset-0 border border-blue-600 rounded-none"></div>
         <div className="absolute inset-[2px] border border-blue-600 rounded-none"></div>
-        <span className="text-[14px] font-black text-blue-600 z-10 leading-none">{score}</span>
+        <span className="text-[13px] font-black text-blue-600 z-10 leading-none">{score}</span>
       </div>
     );
   } else {
     // Par
     return (
-      <div style={baseStyle} className="shrink-0">
-        <span className={`text-[16px] font-extrabold leading-none ${isSelected ? 'text-emerald-800 font-black' : 'text-gray-800'}`}>{score}</span>
+      <div style={baseStyle} className="shrink-0 aspect-square">
+        <span className={`text-[15px] font-extrabold leading-none ${isSelected ? 'text-emerald-800 font-black' : 'text-gray-800'}`}>{score}</span>
       </div>
     );
   }
