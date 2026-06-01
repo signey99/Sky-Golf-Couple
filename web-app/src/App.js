@@ -144,8 +144,14 @@ export default function App() {
       try {
         let parsed = JSON.parse(saved);
         if (parsed && Array.isArray(parsed)) {
-          // Robust Migration: filter out ('jeju')
-          let filtered = parsed.filter(c => c && c.name && !c.name.toLowerCase().includes('jeju'));
+          // Robust Migration: filter out unnecessary/unwanted courses ('jeju', 'pebble beach', 'augusta national')
+          let filtered = parsed.filter(c => {
+            if (!c || !c.name) return false;
+            const lowerName = c.name.toLowerCase();
+            return !lowerName.includes('jeju') && 
+                   !lowerName.includes('pebble beach') && 
+                   !lowerName.includes('augusta national');
+          });
           
           // Let's ensure 'Frisco Lakes Golf Club' and 'The Club at Frisco Farms' are in the list if not already there
           const hasFriscoLakes = filtered.some(c => c && c.name && c.name.toLowerCase().includes('frisco lakes'));
@@ -203,32 +209,6 @@ export default function App() {
         holePars: Array(18).fill(4)
       },
       {
-        id: 2,
-        name: 'Pebble Beach Golf Links',
-        address: 'Pebble Beach, CA, USA',
-        totalPar: 72,
-        ladyRating: 72.0,
-        ladySlope: 113,
-        blueRating: 74.3,
-        blueSlope: 144,
-        lat: 36.5684,
-        lng: -121.9511,
-        holePars: Array(18).fill(4)
-      },
-      {
-        id: 3,
-        name: 'Augusta National Golf Club',
-        address: 'Augusta, GA, USA',
-        totalPar: 72,
-        ladyRating: 72.0,
-        ladySlope: 113,
-        blueRating: 76.2,
-        blueSlope: 148,
-        lat: 33.5020,
-        lng: -82.0223,
-        holePars: Array(18).fill(4)
-      },
-      {
         id: 4,
         name: 'The Club at Frisco Farms',
         address: 'Frisco, TX, USA',
@@ -265,6 +245,7 @@ export default function App() {
   });
   const [tempFirebaseUrl, setTempFirebaseUrl] = useState(firebaseUrl);
   const [isInitialLoadDone, setIsInitialLoadDone] = useState(false);
+  const isApplyingCloudSyncRef = useRef(false);
   const [syncStatus, setSyncStatus] = useState('syncing'); // 'syncing', 'synced', 'error'
   const [lastSyncedTime, setLastSyncedTime] = useState('Connecting...');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false); // Settings modal
@@ -488,6 +469,7 @@ export default function App() {
           scores: cloudData.scores || [],
           courses: cloudData.courses || []
         });
+        isApplyingCloudSyncRef.current = true;
         setScores(cloudData.scores || []);
         setCourses(cloudData.courses || []);
         localStorage.setItem('golf_diary_scores', JSON.stringify(cloudData.scores || []));
@@ -551,6 +533,7 @@ export default function App() {
                       scores: cloudData.scores || [],
                       courses: cloudData.courses || []
                     });
+                    isApplyingCloudSyncRef.current = true;
                     if (cloudData.scores) setScores(cloudData.scores);
                     if (cloudData.courses) setCourses(cloudData.courses);
                     localStorage.setItem('golf_diary_scores', JSON.stringify(cloudData.scores));
@@ -595,6 +578,7 @@ export default function App() {
                     scores: cloudData.scores || [],
                     courses: cloudData.courses || []
                   });
+                  isApplyingCloudSyncRef.current = true;
                   if (cloudData.scores) setScores(cloudData.scores);
                   if (cloudData.courses) setCourses(cloudData.courses);
                   localStorage.setItem('golf_diary_scores', JSON.stringify(cloudData.scores));
@@ -646,6 +630,13 @@ export default function App() {
     if (!isInitialLoadDone) return;
 
     const currentLocalSerialized = JSON.stringify({ scores, courses });
+    if (isApplyingCloudSyncRef.current) {
+      console.log("[Sync Loop Prevented] Skipping auto-upload since changes came from cloud sync.");
+      lastDownloadedDataStringRef.current = currentLocalSerialized;
+      isApplyingCloudSyncRef.current = false;
+      return;
+    }
+
     if (currentLocalSerialized === lastDownloadedDataStringRef.current) {
       console.log("[Sync Loop Prevented] Local state matches the last synced state.");
       return;
@@ -755,8 +746,8 @@ export default function App() {
     ladySlope: 113,
     blueRating: 72.0,
     blueSlope: 113,
-    lat: 36.5684,
-    lng: -121.9511
+    lat: 33.1444,
+    lng: -96.8906
   });
 
   const [courseHolePars, setCourseHolePars] = useState(Array(18).fill(4));
@@ -836,296 +827,8 @@ export default function App() {
   };
 
   // Virtual map tracker for simulated GPS picker
-  const [mapClickedCoords, setMapClickedCoords] = useState({ lat: 36.5684, lng: -121.9511 });
+  const [mapClickedCoords, setMapClickedCoords] = useState({ lat: 33.1444, lng: -96.8906 });
 
-  // References to manage the REAL Leaflet map instance and clean up properly
-  const leafletMapInstanceRef = useRef(null);
-  const leafletMarkersGroupRef = useRef(null);
-  const leafletPickMarkerRef = useRef(null);
-
-  // Initialize and update the REAL Leaflet map when course tab is viewed
-  useEffect(() => {
-    if (activeTab !== 'course') {
-      // Clean up map instance when switching tabs to avoid "Map container is already initialized" error
-      if (leafletMapInstanceRef.current) {
-        leafletMapInstanceRef.current.remove();
-        leafletMapInstanceRef.current = null;
-        leafletMarkersGroupRef.current = null;
-        leafletPickMarkerRef.current = null;
-      }
-      return;
-    }
-
-    const initLeafletMap = () => {
-      // Ensure Leaflet library is globally loaded
-      if (!window.L) {
-        setTimeout(initLeafletMap, 200);
-        return;
-      }
-
-      const mapContainer = document.getElementById('leaflet-course-map');
-      if (!mapContainer) return;
-
-      // Avoid double initialization
-      if (leafletMapInstanceRef.current) {
-        // Redraw layers to ensure new/modified courses and selections reflect accurately
-        if (leafletMarkersGroupRef.current) {
-          leafletMarkersGroupRef.current.clearLayers();
-          
-          courses.forEach(course => {
-            const lat = parseFloat(course.lat);
-            const lng = parseFloat(course.lng);
-            if (isNaN(lat) || isNaN(lng)) return;
-
-            const isHistoryPlayed = scores.some(s => s.courseId === course.id);
-            const isSel = Number(course.id) === Number(selectedCourseId);
-
-            // Outer red pulsing halo for premium location recognition (and red course indicators as requested)
-            window.L.circleMarker([lat, lng], {
-              radius: isHistoryPlayed ? 12 : 8,
-              fillColor: '#ef4444',
-              fillOpacity: 0.2,
-              stroke: false
-            }).addTo(leafletMarkersGroupRef.current);
-
-            // Inner vibrant red course dot marker (빨간 점)
-            const pinDot = window.L.circleMarker([lat, lng], {
-              radius: isSel ? 6.5 : 4.5,
-              fillColor: '#ef4444',
-              fillOpacity: 1.0,
-              color: isSel ? '#ffffff' : '#b91c1c',
-              weight: isSel ? 2 : 1.2
-            }).addTo(leafletMarkersGroupRef.current);
-
-            // Add popup info
-            const popupContent = `
-              <div style="font-family:'Outfit','Noto Sans KR',sans-serif; text-align:center; padding: 2px;">
-                <div style="font-size:12px; font-weight:900; color:#065f46; margin-bottom:2px;">⛳ ${course.name}</div>
-                <div style="font-size:10px; color:#64748b; margin-bottom:4px;">${course.address || '-'}</div>
-                <div style="font-size:9.5px; font-weight:800; color:${isHistoryPlayed ? '#d97706' : '#64748b'}">
-                  ${isHistoryPlayed ? '🏆 Played (경기완료)' : 'Registered Course'}
-                </div>
-              </div>
-            `;
-            pinDot.bindPopup(popupContent);
-
-            pinDot.on('click', () => {
-              setSelectedCourseId(course.id);
-              setMapClickedCoords({ lat, lng });
-            });
-          });
-        }
-        
-        // Update selection marker
-        if (mapClickedCoords && leafletMapInstanceRef.current) {
-          drawPickMarker(mapClickedCoords.lat, mapClickedCoords.lng);
-        }
-        return;
-      }
-
-      // Default center: Pebble Beach/Continental USA area
-      const defaultCenter = [37.0902, -95.7129];
-      const defaultZoom = courses.length > 0 ? 4 : 3;
-
-      const mapObj = window.L.map('leaflet-course-map', {
-        center: defaultCenter,
-        zoom: defaultZoom,
-        zoomControl: true,
-        attributionControl: false
-      });
-
-      leafletMapInstanceRef.current = mapObj;
-
-      // Clean, premium CartoDB light Voyager tiles fitting the retro-modern aesthetic
-      window.L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19,
-        subdomains: 'abcd'
-      }).addTo(mapObj);
-
-      // Create marker group to maintain course pointers easily
-      const markerGroup = window.L.layerGroup().addTo(mapObj);
-      leafletMarkersGroupRef.current = markerGroup;
-
-      // Render courses locations as Red Dots (빨간 점)
-      courses.forEach(course => {
-        const lat = parseFloat(course.lat);
-        const lng = parseFloat(course.lng);
-        if (isNaN(lat) || isNaN(lng)) return;
-
-        const isHistoryPlayed = scores.some(s => s.courseId === course.id);
-        const isSel = Number(course.id) === Number(selectedCourseId);
-
-        // Outer red halo
-        window.L.circleMarker([lat, lng], {
-          radius: isHistoryPlayed ? 12 : 8,
-          fillColor: '#ef4444',
-          fillOpacity: 0.2,
-          stroke: false
-        }).addTo(markerGroup);
-
-        // Inner vibrant red course dot marker (빨간 점)
-        const pinDot = window.L.circleMarker([lat, lng], {
-          radius: isSel ? 6.5 : 4.5,
-          fillColor: '#ef4444',
-          fillOpacity: 1.0,
-          color: isSel ? '#ffffff' : '#b91c1c',
-          weight: isSel ? 2 : 1.2
-        }).addTo(markerGroup);
-
-        // Add popup info
-        const popupContent = `
-          <div style="font-family:'Outfit','Noto Sans KR',sans-serif; text-align:center; padding: 2px;">
-            <div style="font-size:12px; font-weight:900; color:#065f46; margin-bottom:2px;">⛳ ${course.name}</div>
-            <div style="font-size:10px; color:#64748b; margin-bottom:4px;">${course.address || '-'}</div>
-            <div style="font-size:9.5px; font-weight:800; color:${isHistoryPlayed ? '#d97706' : '#64748b'}">
-              ${isHistoryPlayed ? '🏆 Played (경기완료)' : 'Registered Course'}
-            </div>
-          </div>
-        `;
-        pinDot.bindPopup(popupContent);
-
-        pinDot.on('click', () => {
-          setSelectedCourseId(course.id);
-          setMapClickedCoords({ lat, lng });
-        });
-      });
-
-      // Allow choosing new coordinates with a click on the real map
-      mapObj.on('click', (ev) => {
-        const { lat, lng } = ev.latlng;
-        const roundedLat = parseFloat(lat.toFixed(4));
-        const roundedLng = parseFloat(lng.toFixed(4));
-
-        setMapClickedCoords({ lat: roundedLat, lng: roundedLng });
-        setNewCourse(prev => ({ ...prev, lat: roundedLat, lng: roundedLng }));
-        drawPickMarker(roundedLat, roundedLng);
-      });
-
-      // auto-zoom/auto-pan map bounds to cover all courses if available
-      if (courses.length > 0) {
-        try {
-          const latLngs = courses
-            .map(c => [parseFloat(c.lat), parseFloat(c.lng)])
-            .filter(([la, ln]) => !isNaN(la) && !isNaN(ln));
-          if (latLngs.length > 0) {
-            mapObj.fitBounds(latLngs, { padding: [40, 40], maxZoom: 6 });
-          }
-        } catch (err) {
-          console.error("Map fitBounds failed", err);
-        }
-      }
-
-      // Render original pick marker if coordinates exist
-      if (mapClickedCoords) {
-        drawPickMarker(mapClickedCoords.lat, mapClickedCoords.lng);
-      }
-    };
-
-    const drawPickMarker = (lat, lng) => {
-      const mapObj = leafletMapInstanceRef.current;
-      if (!mapObj) return;
-
-      if (leafletPickMarkerRef.current) {
-        mapObj.removeLayer(leafletPickMarkerRef.current);
-      }
-
-      const pickerGroup = window.L.layerGroup();
-      
-      // Beautiful yellow bouncing/glowing indicator
-      window.L.circleMarker([lat, lng], {
-        radius: 12,
-        fillColor: '#eab308',
-        fillOpacity: 0.3,
-        color: '#ca8a04',
-        weight: 1.5,
-        dashArray: '3 3'
-      }).addTo(pickerGroup);
-
-      window.L.circleMarker([lat, lng], {
-        radius: 4,
-        fillColor: '#fbbf24',
-        fillOpacity: 1.0,
-        color: '#a16207',
-        weight: 1
-      }).addTo(pickerGroup);
-
-      pickerGroup.addTo(mapObj);
-      leafletPickMarkerRef.current = pickerGroup;
-    };
-
-    // Initialize with slight timeout to ensure correct container layout width
-    const timer = setTimeout(initLeafletMap, 100);
-
-    return () => {
-      clearTimeout(timer);
-      if (leafletMapInstanceRef.current) {
-        leafletMapInstanceRef.current.remove();
-        leafletMapInstanceRef.current = null;
-        leafletMarkersGroupRef.current = null;
-        leafletPickMarkerRef.current = null;
-      }
-    };
-  }, [activeTab, courses, selectedCourseId, scores]);
-
-  // Handle map center panning smoothly when coordinates are specified from dropdowns/pickers
-  useEffect(() => {
-    if (activeTab === 'course' && leafletMapInstanceRef.current && mapClickedCoords) {
-      const { lat, lng } = mapClickedCoords;
-      if (!isNaN(lat) && !isNaN(lng)) {
-        leafletMapInstanceRef.current.setView([lat, lng], Math.max(leafletMapInstanceRef.current.getZoom(), 5), { animate: true });
-      }
-    }
-  }, [mapClickedCoords, activeTab]);
-
-  const handleMapClick = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
-
-    // Convert click coordinates on the SVG to our viewport format (500x280)
-    const svgX = (clickX / rect.width) * 500;
-    const svgY = (clickY / rect.height) * 280;
-
-    let calculatedLat = 37.0902;
-    let calculatedLng = -95.7129; // Center of US defaults
-
-    // Check click targets for insets
-    const isAlaskaBox = svgX >= 15 && svgX <= 85 && svgY >= 200 && svgY <= 250;
-    const isHawaiiBox = svgX >= 95 && svgX <= 155 && svgY >= 220 && svgY <= 250;
-    const isInternationalBox = svgX >= 390 && svgX <= 485 && svgY >= 200 && svgY <= 265;
-
-    if (isAlaskaBox) {
-      const xPercent = (svgX - 15) / 70;
-      const yPercent = (svgY - 200) / 50;
-      calculatedLng = (-172 + xPercent * (-130 - (-172))).toFixed(4);
-      calculatedLat = (72 - yPercent * (72 - 52)).toFixed(4);
-    } else if (isHawaiiBox) {
-      const xPercent = (svgX - 95) / 60;
-      const yPercent = (svgY - 220) / 30;
-      calculatedLng = (-160.5 + xPercent * (-154.5 - (-160.5))).toFixed(4);
-      calculatedLat = (22.5 - yPercent * (22.5 - 18.5)).toFixed(4);
-    } else if (isInternationalBox) {
-      const xPercent = (svgX - 390) / 95;
-      const yPercent = (svgY - 200) / 65;
-      calculatedLng = (126.0 + xPercent * (129.5 - 126.0)).toFixed(4);
-      calculatedLat = (36.0 - yPercent * (36.0 - 33.0)).toFixed(4);
-    } else {
-      // Continental US region
-      const xPercent = Math.max(0, Math.min(1, (svgX - 40) / 400));
-      const yPercent = Math.max(0, Math.min(1, (svgY - 45) / 180));
-
-      const minLng = -125.0;
-      const maxLng = -66.5;
-      const minLat = 24.5;
-      const maxLat = 49.5;
-
-      calculatedLng = (minLng + xPercent * (maxLng - minLng)).toFixed(4);
-      calculatedLat = (maxLat - yPercent * (maxLat - minLat)).toFixed(4);
-    }
-
-    setMapClickedCoords({ lat: parseFloat(calculatedLat), lng: parseFloat(calculatedLng) });
-    setNewCourse(prev => ({ ...prev, lat: parseFloat(calculatedLat), lng: parseFloat(calculatedLng) }));
-  };
 
   const handleSaveScore = (e) => {
     e.preventDefault();
@@ -1202,11 +905,11 @@ export default function App() {
       ladySlope: course.ladySlope || 113,
       blueRating: course.blueRating || 72.0,
       blueSlope: course.blueSlope || 113,
-      lat: course.lat || 36.5684,
-      lng: course.lng || -121.9511
+      lat: course.lat || 33.1444,
+      lng: course.lng || -96.8906
     });
     setCourseHolePars(course.holePars || Array(18).fill(4));
-    setMapClickedCoords({ lat: course.lat || 36.5684, lng: course.lng || -121.9511 });
+    setMapClickedCoords({ lat: course.lat || 33.1444, lng: course.lng || -96.8906 });
     setShowCourseModal(true);
   };
 
@@ -1230,11 +933,11 @@ export default function App() {
       ladySlope: 113,
       blueRating: 72.0,
       blueSlope: 113,
-      lat: 36.5684,
-      lng: -121.9511
+      lat: 33.1444,
+      lng: -96.8906
     });
     setCourseHolePars(Array(18).fill(4));
-    setMapClickedCoords({ lat: 36.5684, lng: -121.9511 });
+    setMapClickedCoords({ lat: 33.1444, lng: -96.8906 });
   };
 
   const handleSaveCourse = (e) => {
@@ -1807,16 +1510,31 @@ export default function App() {
           <div className="space-y-4 fade-in">
             
             <h2 className="text-lg font-black text-emerald-800 tracking-wider uppercase flex items-center px-1">
-              <span className="mr-2">🗺️</span> Course Location
+              <span className="mr-2">🗺️</span> Course Profiles
             </h2>
 
-            {/* Map GPS simulator card (always present) - Expanded for full width display */}
-            <div className="-mx-4 relative">
-              <div 
-                id="leaflet-course-map"
-                className="w-full h-[380px] bg-slate-50 relative overflow-hidden group"
-                style={{ zIndex: 1 }}
-              >
+            {/* Course search input */}
+            <div className="px-1">
+              <div className="relative flex items-center">
+                <span className="absolute left-3 text-gray-400 text-sm select-none">
+                  🔍
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search courses by name or address..."
+                  value={courseSearchQuery}
+                  onChange={(e) => setCourseSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-none text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-sm placeholder:text-gray-400 placeholder:font-normal"
+                />
+                {courseSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setCourseSearchQuery('')}
+                    className="absolute right-3 text-gray-400 hover:text-gray-650 font-bold text-xs"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1912,46 +1630,6 @@ export default function App() {
                           </div>
                         ))}
                       </div>
-                    </div>
-
-                    {/* US State/Region dropdown */}
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">
-                        🇺🇸 Select US State / Region (미국 주 / 지역)
-                      </label>
-                      <select
-                        className="w-full p-2.5 border border-gray-200 bg-white rounded-none text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                        value={
-                          US_STATES.find(
-                            st => 
-                              Math.abs(st.lat - (newCourse.lat || 36.5684)) < 4.0 && 
-                              Math.abs(st.lng - (newCourse.lng || -121.9511)) < 4.0
-                          )?.code || 'CA'
-                        }
-                        onChange={(e) => {
-                          const matchedState = US_STATES.find(st => st.code === e.target.value);
-                          if (matchedState) {
-                            setNewCourse(prev => ({
-                              ...prev,
-                              lat: matchedState.lat,
-                              lng: matchedState.lng
-                            }));
-                            setMapClickedCoords({
-                              lat: matchedState.lat,
-                              lng: matchedState.lng
-                            });
-                          }
-                        }}
-                      >
-                        {US_STATES.map(st => (
-                          <option key={st.code} value={st.code}>
-                            {st.name}
-                          </option>
-                        ))}
-                      </select>
-                      <p className="text-[10px] text-gray-400 mt-1">
-                        * 선택된 미국 주 위치에 따라 미국지도 위에 핀이 표시됩니다. 지도를 클릭해 직접 눈대중 위치를 미세 조정할 수도 있습니다.
-                      </p>
                     </div>
 
                     {/* Difficulty adjusters */}
@@ -2131,32 +1809,6 @@ export default function App() {
 
             {/* Registered Course Cards Profile Feed */}
             <div className="space-y-4">
-              <h3 className="text-lg font-black text-emerald-800 tracking-wider uppercase flex items-center px-1">📍 Course Profiles</h3>
-              
-              {/* Course search input */}
-              <div className="px-1">
-                <div className="relative flex items-center">
-                  <span className="absolute left-3 text-gray-400 text-sm select-none">
-                    🔍
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Search courses by name or address..."
-                    value={courseSearchQuery}
-                    onChange={(e) => setCourseSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-none text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-sm placeholder:text-gray-400 placeholder:font-normal"
-                  />
-                  {courseSearchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setCourseSearchQuery('')}
-                      className="absolute right-3 text-gray-400 hover:text-gray-600 font-bold text-xs"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-              </div>
 
               {[...courses]
                 .filter(course => {
