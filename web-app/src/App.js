@@ -14,45 +14,73 @@ const formatPlayDate = (dateStr) => {
 
 // Render score symbol based on standard golf scoring notation
 const renderScoreSymbol = (score, par, isSelected) => {
-  if (!score || score <= 0) return <span className="text-gray-400 text-sm font-medium h-8 flex items-center justify-center">-</span>;
+  if (!score || score <= 0) return <span className="text-gray-450 text-sm font-medium h-8 flex items-center justify-center">-</span>;
   
   const diff = score - par;
-  
+  const baseStyle = {
+    width: '26px',
+    height: '26px',
+    minWidth: '26px',
+    minHeight: '26px',
+    maxWidth: '26px',
+    maxHeight: '26px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxSizing: 'border-box'
+  };
+
   if (diff === -1) {
     // Birdie: 빨간색 동그라미 안에 숫자
     return (
-      <div className="w-8 h-8 rounded-full border-2 border-red-500 bg-red-50/40 flex items-center justify-center shadow-sm animate-fadeIn shrink-0 aspect-square">
-        <span className="text-[16px] font-black text-red-500 leading-none">{score}</span>
+      <div 
+        style={baseStyle}
+        className="rounded-full border-2 border-red-500 bg-red-50/40 shadow-sm animate-fadeIn shrink-0"
+      >
+        <span className="text-[14px] font-black text-red-500 leading-none">{score}</span>
       </div>
     );
   } else if (diff <= -2) {
     // Eagle or Albatross: 두줄짜리 빨간색 동그라미
     return (
-      <div className="relative w-8 h-8 flex items-center justify-center shadow-sm animate-fadeIn shrink-0 aspect-square">
+      <div 
+        style={{ ...baseStyle, position: 'relative' }}
+        className="shadow-sm animate-fadeIn shrink-0"
+      >
         <div className="absolute inset-0 border-2 border-red-500 rounded-full"></div>
-        <div className="absolute inset-[2.5px] border border-red-500 rounded-full"></div>
-        <span className="text-[16px] font-black text-red-500 z-10 leading-none">{score}</span>
+        <div className="absolute inset-[2px] border border-red-500 rounded-full"></div>
+        <span className="text-[14px] font-black text-red-500 z-10 leading-none">{score}</span>
       </div>
     );
   } else if (diff === 1) {
     // Bogey: 파란색 네모 안에 숫자
     return (
-      <div className="w-8 h-8 border-2 border-blue-500 bg-blue-50/30 rounded-none flex items-center justify-center shadow-sm animate-fadeIn shrink-0 aspect-square">
-        <span className="text-[16px] font-black text-blue-500 leading-none">{score}</span>
+      <div 
+        style={baseStyle}
+        className="border-2 border-blue-500 bg-blue-50/30 rounded-none shadow-sm animate-fadeIn shrink-0"
+      >
+        <span className="text-[14px] font-black text-blue-500 leading-none">{score}</span>
       </div>
     );
   } else if (diff >= 2) {
     // Double bogey and more: 두줄짜리 네모 안에 숫자
     return (
-      <div className="relative w-8 h-8 flex items-center justify-center shadow-sm animate-fadeIn shrink-0 aspect-square">
+      <div 
+        style={{ ...baseStyle, position: 'relative' }}
+        className="shadow-sm animate-fadeIn shrink-0"
+      >
         <div className="absolute inset-0 border-2 border-blue-600 rounded-none"></div>
-        <div className="absolute inset-[2.5px] border border-blue-600 rounded-none"></div>
-        <span className="text-[16px] font-black text-blue-600 z-10 leading-none">{score}</span>
+        <div className="absolute inset-[2px] border border-blue-600 rounded-none"></div>
+        <span className="text-[14px] font-black text-blue-600 z-10 leading-none">{score}</span>
       </div>
     );
   } else {
     // Par
-    return <span className={`text-[18px] font-extrabold leading-none ${isSelected ? 'text-emerald-800 font-black' : 'text-gray-800'}`}>{score}</span>;
+    return (
+      <div style={baseStyle} className="shrink-0">
+        <span className={`text-[16px] font-extrabold leading-none ${isSelected ? 'text-emerald-800 font-black' : 'text-gray-800'}`}>{score}</span>
+      </div>
+    );
   }
 };
 
