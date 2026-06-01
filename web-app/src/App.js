@@ -14,21 +14,21 @@ const formatPlayDate = (dateStr) => {
 
 // Render score symbol based on standard golf scoring notation
 const renderScoreSymbol = (score, par, isSelected) => {
-  if (!score || score <= 0) return <span className="text-gray-400 text-sm font-medium">-</span>;
+  if (!score || score <= 0) return <span className="text-gray-400 text-sm font-medium h-8 flex items-center justify-center">-</span>;
   
   const diff = score - par;
   
   if (diff === -1) {
     // Birdie: 빨간색 동그라미 안에 숫자
     return (
-      <div className="w-8 h-8 rounded-full border-2 border-red-500 bg-red-50/40 flex items-center justify-center shadow-sm animate-fadeIn">
+      <div className="w-8 h-8 rounded-full border-2 border-red-500 bg-red-50/40 flex items-center justify-center shadow-sm animate-fadeIn shrink-0 aspect-square">
         <span className="text-[16px] font-black text-red-500 leading-none">{score}</span>
       </div>
     );
   } else if (diff <= -2) {
     // Eagle or Albatross: 두줄짜리 빨간색 동그라미
     return (
-      <div className="relative w-8 h-8 flex items-center justify-center shadow-sm animate-fadeIn">
+      <div className="relative w-8 h-8 flex items-center justify-center shadow-sm animate-fadeIn shrink-0 aspect-square">
         <div className="absolute inset-0 border-2 border-red-500 rounded-full"></div>
         <div className="absolute inset-[2.5px] border border-red-500 rounded-full"></div>
         <span className="text-[16px] font-black text-red-500 z-10 leading-none">{score}</span>
@@ -37,16 +37,16 @@ const renderScoreSymbol = (score, par, isSelected) => {
   } else if (diff === 1) {
     // Bogey: 파란색 네모 안에 숫자
     return (
-      <div className="w-8 h-8 border-2 border-blue-500 bg-blue-50/30 rounded-[2px] flex items-center justify-center shadow-sm animate-fadeIn">
+      <div className="w-8 h-8 border-2 border-blue-500 bg-blue-50/30 rounded-none flex items-center justify-center shadow-sm animate-fadeIn shrink-0 aspect-square">
         <span className="text-[16px] font-black text-blue-500 leading-none">{score}</span>
       </div>
     );
   } else if (diff >= 2) {
     // Double bogey and more: 두줄짜리 네모 안에 숫자
     return (
-      <div className="relative w-8 h-8 flex items-center justify-center shadow-sm animate-fadeIn">
-        <div className="absolute inset-0 border-2 border-blue-600 rounded-[2px]"></div>
-        <div className="absolute inset-[2.5px] border border-blue-600 rounded-[2px]"></div>
+      <div className="relative w-8 h-8 flex items-center justify-center shadow-sm animate-fadeIn shrink-0 aspect-square">
+        <div className="absolute inset-0 border-2 border-blue-600 rounded-none"></div>
+        <div className="absolute inset-[2.5px] border border-blue-600 rounded-none"></div>
         <span className="text-[16px] font-black text-blue-600 z-10 leading-none">{score}</span>
       </div>
     );
@@ -60,6 +60,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('score'); // 'score', 'course', 'history'
   const [editingCourseId, setEditingCourseId] = useState(null);
   const [selectedHistoryScore, setSelectedHistoryScore] = useState(null);
+  const [fullscreenPhotoUrl, setFullscreenPhotoUrl] = useState(null);
 
   // Load from LocalStorage if exists
   const [scores, setScores] = useState(() => {
@@ -1760,20 +1761,17 @@ export default function App() {
                 
                 const pOut = holes.slice(0, 9).reduce((sum, h) => sum + getHoleScore(h), 0);
                 const pIn = holes.slice(9, 18).reduce((sum, h) => sum + getHoleScore(h), 0);
-                const pTotal = pOut + pIn;
                 
                 const parOut = detailCoursePars.slice(0, 9).reduce((sum, val) => sum + val, 0);
                 const parIn = detailCoursePars.slice(9, 18).reduce((sum, val) => sum + val, 0);
-                const parTotal = parOut + parIn;
 
-                const playerTextColor = playerPrefix === 'SK' ? 'text-emerald-850' : 'text-teal-880';
                 const playerSubtextColor = playerPrefix === 'SK' ? 'text-emerald-700' : 'text-teal-700';
 
                 return (
                   <div className="space-y-1 mt-1 mb-2 text-left">
                     {/* Front Nine */}
                     <div className="w-full">
-                      <span className="text-[10px] font-bold text-gray-400 block mb-0.5 px-1 tracking-wide">Front 9</span>
+                      <span className="text-[10px] font-bold text-gray-400 block mb-0.5 px-1 tracking-wide">Front</span>
                       <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center shadow-sm text-[10px] w-full">
                         <div className="w-full grid grid-cols-10 divide-x divide-gray-200">
                           {holes.slice(0, 9).map((h, k) => {
@@ -1811,9 +1809,9 @@ export default function App() {
 
                     {/* Back Nine */}
                     <div className="w-full">
-                      <span className="text-[10px] font-bold text-gray-400 block mb-0.5 px-1 tracking-wide">Back 9</span>
+                      <span className="text-[10px] font-bold text-gray-400 block mb-0.5 px-1 tracking-wide">Back</span>
                       <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center shadow-sm text-[10px] w-full">
-                        <div className="w-full grid grid-cols-11 divide-x divide-gray-200">
+                        <div className="w-full grid grid-cols-10 divide-x divide-gray-200">
                           {holes.slice(9, 18).map((h, k) => {
                             const globalK = k + 9;
                             const pT = getHoleScore(h);
@@ -1842,16 +1840,6 @@ export default function App() {
                             </div>
                             <div className="flex flex-col py-0.5 justify-center items-center h-7 bg-blue-50/5">
                               <span className={`text-[10px] font-black ${playerSubtextColor}`}>{pIn > 0 ? pIn : '-'}</span>
-                            </div>
-                          </div>
-                          {/* TOT total column */}
-                          <div className="bg-red-50/20 flex flex-col justify-between text-center select-none font-bold">
-                            <div className="flex flex-col py-0.5 border-b border-gray-200 bg-red-50/30 font-black">
-                              <span className="text-[7px] font-black h-4 flex items-center justify-center text-red-650">TOT</span>
-                              <span className="text-[7px] font-black text-red-500 h-3 flex items-center justify-center">{parTotal}</span>
-                            </div>
-                            <div className="flex flex-col py-0.5 justify-center items-center h-7 bg-red-50/5">
-                              <span className="text-[10px] font-black text-red-650">{pTotal > 0 ? pTotal : '-'}</span>
                             </div>
                           </div>
                         </div>
@@ -1887,13 +1875,17 @@ export default function App() {
                     {/* 18-hole detailed Scorecard Tables */}
                     <div className="space-y-4">
                       <div>
-                        <span className="text-[11px] font-extrabold text-emerald-855 uppercase tracking-wider block mb-1">Scorecard for SK</span>
+                        <span className="text-[11px] font-extrabold text-emerald-855 uppercase tracking-wider block mb-1">
+                          Scorecard for SK — {totalStrokesP1}타 ({totalStrokesP1 - totalPuttsP1}스트로/{totalPuttsP1}퍼팅)
+                        </span>
                         {renderPlayerScorecard('SK', 'SK')}
                       </div>
 
                       {totalStrokesP2 > 0 && (
                         <div>
-                          <span className="text-[11px] font-extrabold text-teal-855 uppercase tracking-wider block mb-1">Scorecard for KY</span>
+                          <span className="text-[11px] font-extrabold text-teal-855 uppercase tracking-wider block mb-1">
+                            Scorecard for KY — {totalStrokesP2}타 ({totalStrokesP2 - totalPuttsP2}스트로/{totalPuttsP2}퍼팅)
+                          </span>
                           {renderPlayerScorecard('KY', 'KY')}
                         </div>
                       )}
@@ -1922,7 +1914,12 @@ export default function App() {
                         <div className="grid grid-cols-3 gap-2 py-0.5">
                           {activeDetailScore.photos.map((photo, i) => (
                             <div key={i} className="aspect-square rounded-none overflow-hidden bg-gray-50 border border-gray-150 relative group">
-                              <img src={photo} alt="round memorial" className="w-full h-full object-cover" />
+                              <img 
+                                src={photo} 
+                                alt="round memorial" 
+                                className="w-full h-full object-cover cursor-pointer hover:brightness-95 transition-all" 
+                                onClick={() => setFullscreenPhotoUrl(photo)}
+                              />
                               <button 
                                 type="button"
                                 onClick={() => {
@@ -2102,6 +2099,35 @@ export default function App() {
             >
               닫기 (Close)
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen Photo Modal */}
+      {fullscreenPhotoUrl && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-[200] flex flex-col items-center justify-center p-4 select-none animate-fadeIn cursor-pointer"
+          onClick={() => setFullscreenPhotoUrl(null)}
+        >
+          {/* Close button */}
+          <button 
+            type="button"
+            className="absolute top-4 right-4 text-white hover:text-gray-350 bg-black/40 hover:bg-black/60 w-10 h-10 rounded-full flex items-center justify-center font-black text-xl transition-all z-10"
+            onClick={(e) => {
+              e.stopPropagation();
+              setFullscreenPhotoUrl(null);
+            }}
+          >
+            ✕
+          </button>
+          {/* Fullscreen image */}
+          <div className="max-w-full max-h-full flex items-center justify-center p-2">
+            <img 
+              src={fullscreenPhotoUrl} 
+              alt="gorgeous golf memory" 
+              className="max-w-full max-h-[92vh] object-contain shadow-2xl select-none"
+              onClick={(e) => e.stopPropagation()} 
+            />
           </div>
         </div>
       )}

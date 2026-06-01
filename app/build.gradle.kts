@@ -35,7 +35,22 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
 }
 
+tasks.register<Exec>("installWebAssets") {
+    inputs.file(file("../package.json"))
+    inputs.file(file("../web-app/package.json"))
+    outputs.dir(file("../web-app/node_modules"))
+
+    workingDir = file("../web-app")
+    val isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows
+    if (isWindows) {
+        commandLine("cmd", "/c", "npm install")
+    } else {
+        commandLine("npm", "install")
+    }
+}
+
 tasks.register<Exec>("buildWebAssets") {
+    dependsOn("installWebAssets")
     inputs.dir(file("../web-app/src"))
     inputs.dir(file("../web-app/public"))
     inputs.file(file("../web-app/package.json"))
