@@ -785,6 +785,245 @@ export default function App() {
   // Virtual map tracker for simulated GPS picker
   const [mapClickedCoords, setMapClickedCoords] = useState({ lat: 36.5684, lng: -121.9511 });
 
+  // References to manage the REAL Leaflet map instance and clean up properly
+  const leafletMapInstanceRef = useRef(null);
+  const leafletMarkersGroupRef = useRef(null);
+  const leafletPickMarkerRef = useRef(null);
+
+  // Initialize and update the REAL Leaflet map when course tab is viewed
+  useEffect(() => {
+    if (activeTab !== 'course') {
+      // Clean up map instance when switching tabs to avoid "Map container is already initialized" error
+      if (leafletMapInstanceRef.current) {
+        leafletMapInstanceRef.current.remove();
+        leafletMapInstanceRef.current = null;
+        leafletMarkersGroupRef.current = null;
+        leafletPickMarkerRef.current = null;
+      }
+      return;
+    }
+
+    const initLeafletMap = () => {
+      // Ensure Leaflet library is globally loaded
+      if (!window.L) {
+        setTimeout(initLeafletMap, 200);
+        return;
+      }
+
+      const mapContainer = document.getElementById('leaflet-course-map');
+      if (!mapContainer) return;
+
+      // Avoid double initialization
+      if (leafletMapInstanceRef.current) {
+        // Redraw layers to ensure new/modified courses and selections reflect accurately
+        if (leafletMarkersGroupRef.current) {
+          leafletMarkersGroupRef.current.clearLayers();
+          
+          courses.forEach(course => {
+            const lat = parseFloat(course.lat);
+            const lng = parseFloat(course.lng);
+            if (isNaN(lat) || isNaN(lng)) return;
+
+            const isHistoryPlayed = scores.some(s => s.courseId === course.id);
+            const isSel = Number(course.id) === Number(selectedCourseId);
+
+            // Outer red pulsing halo for premium location recognition (and red course indicators as requested)
+            window.L.circleMarker([lat, lng], {
+              radius: isHistoryPlayed ? 12 : 8,
+              fillColor: '#ef4444',
+              fillOpacity: 0.2,
+              stroke: false
+            }).addTo(leafletMarkersGroupRef.current);
+
+            // Inner vibrant red course dot marker (빨간 점)
+            const pinDot = window.L.circleMarker([lat, lng], {
+              radius: isSel ? 6.5 : 4.5,
+              fillColor: '#ef4444',
+              fillOpacity: 1.0,
+              color: isSel ? '#ffffff' : '#b91c1c',
+              weight: isSel ? 2 : 1.2
+            }).addTo(leafletMarkersGroupRef.current);
+
+            // Add popup info
+            const popupContent = `
+              <div style="font-family:'Outfit','Noto Sans KR',sans-serif; text-align:center; padding: 2px;">
+                <div style="font-size:12px; font-weight:900; color:#065f46; margin-bottom:2px;">⛳ ${course.name}</div>
+                <div style="font-size:10px; color:#64748b; margin-bottom:4px;">${course.address || '-'}</div>
+                <div style="font-size:9.5px; font-weight:800; color:${isHistoryPlayed ? '#d97706' : '#64748b'}">
+                  ${isHistoryPlayed ? '🏆 Played (경기완료)' : 'Registered Course'}
+                </div>
+              </div>
+            `;
+            pinDot.bindPopup(popupContent);
+
+            pinDot.on('click', () => {
+              setSelectedCourseId(course.id);
+              setMapClickedCoords({ lat, lng });
+            });
+          });
+        }
+        
+        // Update selection marker
+        if (mapClickedCoords && leafletMapInstanceRef.current) {
+          drawPickMarker(mapClickedCoords.lat, mapClickedCoords.lng);
+        }
+        return;
+      }
+
+      // Default center: Pebble Beach/Continental USA area
+      const defaultCenter = [37.0902, -95.7129];
+      const defaultZoom = courses.length > 0 ? 4 : 3;
+
+      const mapObj = window.L.map('leaflet-course-map', {
+        center: defaultCenter,
+        zoom: defaultZoom,
+        zoomControl: true,
+        attributionControl: false
+      });
+
+      leafletMapInstanceRef.current = mapObj;
+
+      // Clean, premium CartoDB light Voyager tiles fitting the retro-modern aesthetic
+      window.L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        subdomains: 'abcd'
+      }).addTo(mapObj);
+
+      // Create marker group to maintain course pointers easily
+      const markerGroup = window.L.layerGroup().addTo(mapObj);
+      leafletMarkersGroupRef.current = markerGroup;
+
+      // Render courses locations as Red Dots (빨간 점)
+      courses.forEach(course => {
+        const lat = parseFloat(course.lat);
+        const lng = parseFloat(course.lng);
+        if (isNaN(lat) || isNaN(lng)) return;
+
+        const isHistoryPlayed = scores.some(s => s.courseId === course.id);
+        const isSel = Number(course.id) === Number(selectedCourseId);
+
+        // Outer red halo
+        window.L.circleMarker([lat, lng], {
+          radius: isHistoryPlayed ? 12 : 8,
+          fillColor: '#ef4444',
+          fillOpacity: 0.2,
+          stroke: false
+        }).addTo(markerGroup);
+
+        // Inner vibrant red course dot marker (빨간 점)
+        const pinDot = window.L.circleMarker([lat, lng], {
+          radius: isSel ? 6.5 : 4.5,
+          fillColor: '#ef4444',
+          fillOpacity: 1.0,
+          color: isSel ? '#ffffff' : '#b91c1c',
+          weight: isSel ? 2 : 1.2
+        }).addTo(markerGroup);
+
+        // Add popup info
+        const popupContent = `
+          <div style="font-family:'Outfit','Noto Sans KR',sans-serif; text-align:center; padding: 2px;">
+            <div style="font-size:12px; font-weight:900; color:#065f46; margin-bottom:2px;">⛳ ${course.name}</div>
+            <div style="font-size:10px; color:#64748b; margin-bottom:4px;">${course.address || '-'}</div>
+            <div style="font-size:9.5px; font-weight:800; color:${isHistoryPlayed ? '#d97706' : '#64748b'}">
+              ${isHistoryPlayed ? '🏆 Played (경기완료)' : 'Registered Course'}
+            </div>
+          </div>
+        `;
+        pinDot.bindPopup(popupContent);
+
+        pinDot.on('click', () => {
+          setSelectedCourseId(course.id);
+          setMapClickedCoords({ lat, lng });
+        });
+      });
+
+      // Allow choosing new coordinates with a click on the real map
+      mapObj.on('click', (ev) => {
+        const { lat, lng } = ev.latlng;
+        const roundedLat = parseFloat(lat.toFixed(4));
+        const roundedLng = parseFloat(lng.toFixed(4));
+
+        setMapClickedCoords({ lat: roundedLat, lng: roundedLng });
+        setNewCourse(prev => ({ ...prev, lat: roundedLat, lng: roundedLng }));
+        drawPickMarker(roundedLat, roundedLng);
+      });
+
+      // auto-zoom/auto-pan map bounds to cover all courses if available
+      if (courses.length > 0) {
+        try {
+          const latLngs = courses
+            .map(c => [parseFloat(c.lat), parseFloat(c.lng)])
+            .filter(([la, ln]) => !isNaN(la) && !isNaN(ln));
+          if (latLngs.length > 0) {
+            mapObj.fitBounds(latLngs, { padding: [40, 40], maxZoom: 6 });
+          }
+        } catch (err) {
+          console.error("Map fitBounds failed", err);
+        }
+      }
+
+      // Render original pick marker if coordinates exist
+      if (mapClickedCoords) {
+        drawPickMarker(mapClickedCoords.lat, mapClickedCoords.lng);
+      }
+    };
+
+    const drawPickMarker = (lat, lng) => {
+      const mapObj = leafletMapInstanceRef.current;
+      if (!mapObj) return;
+
+      if (leafletPickMarkerRef.current) {
+        mapObj.removeLayer(leafletPickMarkerRef.current);
+      }
+
+      const pickerGroup = window.L.layerGroup();
+      
+      // Beautiful yellow bouncing/glowing indicator
+      window.L.circleMarker([lat, lng], {
+        radius: 12,
+        fillColor: '#eab308',
+        fillOpacity: 0.3,
+        color: '#ca8a04',
+        weight: 1.5,
+        dashArray: '3 3'
+      }).addTo(pickerGroup);
+
+      window.L.circleMarker([lat, lng], {
+        radius: 4,
+        fillColor: '#fbbf24',
+        fillOpacity: 1.0,
+        color: '#a16207',
+        weight: 1
+      }).addTo(pickerGroup);
+
+      pickerGroup.addTo(mapObj);
+      leafletPickMarkerRef.current = pickerGroup;
+    };
+
+    // Initialize with slight timeout to ensure correct container layout width
+    const timer = setTimeout(initLeafletMap, 100);
+
+    return () => {
+      clearTimeout(timer);
+      if (leafletMapInstanceRef.current) {
+        leafletMapInstanceRef.current.remove();
+        leafletMapInstanceRef.current = null;
+        leafletMarkersGroupRef.current = null;
+        leafletPickMarkerRef.current = null;
+      }
+    };
+  }, [activeTab, courses, selectedCourseId, scores]);
+
+  // Handle map center panning smoothly when coordinates are specified from dropdowns/pickers
+  useEffect(() => {
+    if (activeTab === 'course' && leafletMapInstanceRef.current && mapClickedCoords) {
+      const { lat, lng } = mapClickedCoords;
+      if (!isNaN(lat) && !isNaN(lng)) {
+        leafletMapInstanceRef.current.setView([lat, lng], Math.max(leafletMapInstanceRef.current.getZoom(), 5), { animate: true });
+      }
+    }
+  }, [mapClickedCoords, activeTab]);
+
   const handleMapClick = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
@@ -1200,23 +1439,23 @@ export default function App() {
                   {/* Grid for 9 holes + OUT (10 columns total) */}
                   <div className="flex-1 grid grid-cols-10 divide-x divide-gray-300">
                     {scoreboardHoles.slice(0, 9).map((h, k) => {
-                      const isClickable = (k === currentFocusedIndex);
+                      const isFocused = (k === currentFocusedIndex);
                       const p1T = h.iron + h.putt;
                       const p2T = h.iron2 + h.putt2;
                       const holePar = courseHolePars[k] || 4;
                       return (
                         <div 
                           key={k}
-                          onClick={isClickable ? () => openScoreModal(k) : undefined}
-                          className={`flex flex-col justify-between transition-all ${
-                            isClickable 
-                              ? 'cursor-pointer bg-amber-50/30 hover:bg-amber-50/60 ring-2 ring-amber-400 ring-inset' 
-                              : 'cursor-default grayscale-[20%] opacity-85'
+                          onClick={() => openScoreModal(k)}
+                          className={`flex flex-col justify-between transition-all cursor-pointer ${
+                            isFocused 
+                              ? 'bg-amber-50/30 hover:bg-amber-50/40 ring-2 ring-amber-400 ring-inset pb-0.5' 
+                              : 'hover:bg-slate-50 opacity-90'
                           }`}
                         >
                           {/* Top Section */}
-                          <div className={`flex flex-col py-1 border-b-2 border-gray-400 ${isClickable ? 'bg-amber-50/50' : ''}`}>
-                            <span className={`text-xs font-bold h-5 flex items-center justify-center ${isClickable ? 'text-amber-800 font-black' : 'text-gray-500'}`}>
+                          <div className={`flex flex-col py-1 border-b-2 border-gray-400 ${isFocused ? 'bg-amber-50/50' : 'bg-gray-50/30'}`}>
+                            <span className={`text-xs font-bold h-5 flex items-center justify-center ${isFocused ? 'text-amber-800 font-black' : 'text-gray-500 font-extrabold'}`}>
                               {h.hole}
                             </span>
                             <span className="text-[11px] font-black text-red-500 h-4 flex items-center justify-center">
@@ -1226,10 +1465,10 @@ export default function App() {
                           {/* Bottom Section */}
                           <div className="flex flex-col py-1">
                             <div className="h-8 flex items-center justify-center">
-                              {renderScoreSymbol(p1T, holePar, isClickable, isClickable && p1T === 0)}
+                              {renderScoreSymbol(p1T, holePar, isFocused, isFocused && p1T === 0)}
                             </div>
                             <div className="h-8 flex items-center justify-center">
-                              {renderScoreSymbol(p2T, holePar, isClickable, isClickable && p2T === 0)}
+                              {renderScoreSymbol(p2T, holePar, isFocused, isFocused && p2T === 0)}
                             </div>
                           </div>
                         </div>
@@ -1272,23 +1511,23 @@ export default function App() {
                   <div className="flex-1 grid grid-cols-11 divide-x divide-gray-300">
                     {scoreboardHoles.slice(9, 18).map((h, k) => {
                       const globalK = k + 9;
-                      const isClickable = (globalK === currentFocusedIndex);
+                      const isFocused = (globalK === currentFocusedIndex);
                       const p1T = h.iron + h.putt;
                       const p2T = h.iron2 + h.putt2;
                       const holePar = courseHolePars[globalK] || 4;
                       return (
                         <div 
                           key={globalK}
-                          onClick={isClickable ? () => openScoreModal(globalK) : undefined}
-                          className={`flex flex-col justify-between transition-all ${
-                            isClickable 
-                              ? 'cursor-pointer bg-amber-50/30 hover:bg-amber-50/60 ring-2 ring-amber-400 ring-inset' 
-                              : 'cursor-default grayscale-[20%] opacity-85'
+                          onClick={() => openScoreModal(globalK)}
+                          className={`flex flex-col justify-between transition-all cursor-pointer ${
+                            isFocused 
+                              ? 'bg-amber-50/30 hover:bg-amber-50/40 ring-2 ring-amber-400 ring-inset pb-0.5' 
+                              : 'hover:bg-slate-50 opacity-90'
                           }`}
                         >
                           {/* Top Section */}
-                          <div className={`flex flex-col py-1 border-b-2 border-gray-400 ${isClickable ? 'bg-amber-50/50' : ''}`}>
-                            <span className={`text-xs font-bold h-5 flex items-center justify-center ${isClickable ? 'text-amber-800 font-black' : 'text-gray-500'}`}>
+                          <div className={`flex flex-col py-1 border-b-2 border-gray-400 ${isFocused ? 'bg-amber-50/50' : 'bg-gray-50/30'}`}>
+                            <span className={`text-xs font-bold h-5 flex items-center justify-center ${isFocused ? 'text-amber-800 font-black' : 'text-gray-500 font-extrabold'}`}>
                               {h.hole}
                             </span>
                             <span className="text-[11px] font-black text-red-500 h-4 flex items-center justify-center">
@@ -1298,10 +1537,10 @@ export default function App() {
                           {/* Bottom Section */}
                           <div className="flex flex-col py-1">
                             <div className="h-8 flex items-center justify-center">
-                              {renderScoreSymbol(p1T, holePar, isClickable, isClickable && p1T === 0)}
+                              {renderScoreSymbol(p1T, holePar, isFocused, isFocused && p1T === 0)}
                             </div>
                             <div className="h-8 flex items-center justify-center">
-                              {renderScoreSymbol(p2T, holePar, isClickable, isClickable && p2T === 0)}
+                              {renderScoreSymbol(p2T, holePar, isFocused, isFocused && p2T === 0)}
                             </div>
                           </div>
                         </div>
@@ -1517,202 +1756,14 @@ export default function App() {
             {/* Map GPS simulator card (always present) */}
             <div className="bg-white p-4 rounded-none shadow-sm border border-gray-300">
               <div 
-                onClick={handleMapClick}
-                className="w-full h-80 bg-slate-50 border border-slate-300 rounded-none relative cursor-crosshair overflow-hidden group shadow-inner flex flex-col justify-end"
+                id="leaflet-course-map"
+                className="w-full h-80 bg-slate-50 border border-slate-300 rounded-none relative overflow-hidden group shadow-inner"
+                style={{ zIndex: 1 }}
               >
-                {/* Beautiful Inline SVG USA Map with Alaska and Hawaii insets (Pure US Map) */}
-                <svg viewBox="0 0 500 280" className="absolute inset-0 w-full h-full select-none">
-                  {/* Continental USA outline path - styled with graceful cubic curves */}
-                  <path
-                    d="M 50,50 C 50,50 63,55 78,57 C 93,60 120,59 150,61 C 180,63 210,55 240,59 C 245,60 255,63 260,61 C 265,59 275,67 285,63 C 290,61 305,70 315,63 C 320,60 325,63 330,60 C 335,57 338,73 345,77 C 355,83 360,75 365,77 C 370,80 372,83 385,73 C 395,65 400,80 415,67 C 425,55 430,65 445,51 C 450,47 455,53 458,50 C 455,60 452,70 445,83 C 440,93 430,100 420,110 C 413,110 410,120 395,130 C 385,137 380,150 375,150 C 370,150 365,160 361,170 C 358,180 355,195 355,215 C 358,235 355,250 350,257 C 345,255 342,235 335,220 C 330,210 325,200 320,195 C 310,190 295,193 285,193 C 275,193 265,205 255,220 C 245,225 230,220 210,220 C 200,235 195,250 185,250 C 175,240 165,230 155,220 C 145,210 120,200 100,195 C 85,195 75,190 65,185 C 55,180 52,170 48,155 C 45,140 42,125 45,105 C 47,90 50,70 50,50 Z"
-                    fill="#f0fdf4"
-                    stroke="#059669"
-                    strokeWidth="1.5"
-                    className="transition-all hover:fill-emerald-50/85"
-                  />
-
-                  {/* Alaska Inset */}
-                  <g>
-                    <rect x="15" y="200" width="70" height="50" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.8" strokeDasharray="3 3" />
-                    <text x="50" y="210" textAnchor="middle" fontSize="6.5" fontWeight="black" fill="#64748b">ALASKA</text>
-                    <path 
-                      d="M 22,240 L 25,228 L 35,222 L 45,217 L 60,219 L 75,221 L 79,230 L 70,244 L 65,241 L 50,244 L 38,239 L 30,247 Z" 
-                      fill="#f8fafc" 
-                      stroke="#94a3b8" 
-                      strokeWidth="0.8" 
-                    />
-                  </g>
-
-                  {/* Hawaii Inset */}
-                  <g>
-                    <rect x="95" y="220" width="60" height="30" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.8" strokeDasharray="3 3" />
-                    <text x="125" y="229" textAnchor="middle" fontSize="6.5" fontWeight="black" fill="#64748b">HAWAII</text>
-                    <ellipse cx="106" cy="241" rx="1" ry="1" fill="#10b981" />
-                    <ellipse cx="113" cy="239" rx="1.5" ry="1" fill="#10b981" />
-                    <ellipse cx="120" cy="238" rx="1.5" ry="1" fill="#10b981" />
-                    <ellipse cx="131" cy="237" rx="1" ry="0.8" fill="#10b981" />
-                    <ellipse cx="140" cy="242" rx="2.2" ry="1.2" fill="#10b981" />
-                  </g>
-
-                  {/* 1. Plot pins for all registered USA golf courses */}
-                  {courses.map(course => {
-                    const pos = getCoordinatesPosition(course.lat, course.lng);
-                    if (!pos || pos.type === 'UNKNOWN') return null;
-
-                    // Filter rounds to see if we played here
-                    const courseHistories = scores.filter(s => s.courseId === course.id);
-                    const isPlayed = courseHistories.length > 0;
-                    const isSelected = Number(course.id) === Number(selectedCourseId);
-
-                    const shortName = course.name
-                      .replace('GC', '')
-                      .replace('CC', '')
-                      .replace('Golf Links', '')
-                      .replace('Golf Club', '')
-                      .trim();
-
-                    return (
-                      <g key={course.id} className="cursor-pointer group">
-                        {/* Interactive invisible hover surface */}
-                        <circle cx={pos.x} cy={pos.y} r="12" fill="transparent" />
-
-                        {/* Outer pulsing color for played or selected courses */}
-                        <circle
-                          cx={pos.x}
-                          cy={pos.y}
-                          r={isPlayed ? (isSelected ? "14" : "10") : "6"}
-                          className={`${
-                            isPlayed 
-                              ? 'fill-amber-500 opacity-25 animate-pulse' 
-                              : isSelected 
-                                ? 'fill-emerald-500 opacity-25' 
-                                : 'fill-slate-400 opacity-10'
-                          }`}
-                          style={{ transformOrigin: `${pos.x}px ${pos.y}px` }}
-                        />
-
-                        {/* Interactive map pin */}
-                        <circle
-                          cx={pos.x}
-                          cy={pos.y}
-                          r={isPlayed ? (isSelected ? "6" : "5") : "4.5"}
-                          className={`${
-                            isPlayed 
-                              ? 'fill-amber-500 stroke-amber-800 stroke-[1.5]' 
-                              : isSelected
-                                ? 'fill-emerald-500 stroke-white stroke-[1.5]'
-                                : 'fill-slate-400 stroke-white stroke-[1]'
-                          }`}
-                        />
-                        <circle cx={pos.x} cy={pos.y} r="1.5" fill="white" />
-
-                        {/* Clean permanent text badge for played course */}
-                        {isPlayed && (
-                          <g className="pointer-events-none">
-                            {/* Shadow/Outline Effect */}
-                            <text
-                              x={pos.x}
-                              y={pos.y + 12}
-                              textAnchor="middle"
-                              fill="#ffffff"
-                              stroke="#1e293b"
-                              strokeWidth="2"
-                              fontSize="8"
-                              fontWeight="black"
-                              className="font-sans select-none"
-                            >
-                              ⛳ {shortName}
-                            </text>
-                            <text
-                              x={pos.x}
-                              y={pos.y + 12}
-                              textAnchor="middle"
-                              fill="#df8f00"
-                              fontSize="8"
-                              fontWeight="black"
-                              className="font-sans select-none"
-                            >
-                              ⛳ {shortName}
-                            </text>
-                          </g>
-                        )}
-
-                        {/* Tooltip on hover */}
-                        <g className="opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50">
-                          <rect
-                            x={pos.x - 65}
-                            y={pos.y - 34}
-                            width="130"
-                            height="24"
-                            rx="4"
-                            fill="#1e293b"
-                            stroke="#334155"
-                            strokeWidth="1"
-                            className="shadow-lg"
-                          />
-                          <text
-                            x={pos.x}
-                            y={pos.y - 20}
-                            textAnchor="middle"
-                            fill="#f8fafc"
-                            fontSize="8"
-                            fontWeight="bold"
-                          >
-                            {course.name.length > 20 ? course.name.substring(0, 18) + '...' : course.name}
-                          </text>
-                          <text
-                            x={pos.x}
-                            y={pos.y - 12}
-                            textAnchor="middle"
-                            fill="#fbbf24"
-                            fontSize="6.5"
-                            fontWeight="bold"
-                          >
-                            {isPlayed ? `🏆 Played ${courseHistories.length} Rounds` : 'No Rounds Recorded'}
-                          </text>
-                          <polygon
-                            points={`${pos.x - 4},${pos.y - 10} ${pos.x + 4},${pos.y - 10} ${pos.x},${pos.y - 7}`}
-                            fill="#1e293b"
-                          />
-                        </g>
-                      </g>
-                    );
-                  })}
-
-                  {/* 2. Visual picker marker indicator */}
-                  {mapClickedCoords && (() => {
-                    const clickPos = getCoordinatesPosition(mapClickedCoords.lat, mapClickedCoords.lng);
-                    if (!clickPos || clickPos.type === 'UNKNOWN') return null;
-                    return (
-                      <g className="pointer-events-none animate-bounce">
-                        <circle
-                          cx={clickPos.x}
-                          cy={clickPos.y}
-                          r="10"
-                          fill="none"
-                          stroke="#eab308"
-                          strokeWidth="1.5"
-                          className="animate-ping"
-                        />
-                        {/* Interactive crosshair lines */}
-                        <line x1={clickPos.x - 6} y1={clickPos.y} x2={clickPos.x + 6} y2={clickPos.y} stroke="#ca8a04" strokeWidth="1" />
-                        <line x1={clickPos.x} y1={clickPos.y - 6} x2={clickPos.x} y2={clickPos.y + 6} stroke="#ca8a04" strokeWidth="1" />
-                        <circle
-                          cx={clickPos.x}
-                          cy={clickPos.y}
-                          r="3"
-                          className="fill-yellow-400 stroke-yellow-700 stroke-1 shadow-md"
-                        />
-                      </g>
-                    );
-                  })()}
-                </svg>
-
-                {/* Helpful status layer overlay at the bottom */}
-                <div className="absolute right-2 bottom-2 z-10 bg-slate-900/85 backdrop-blur-md px-3 py-1.5 text-[9px] text-white font-extrabold uppercase tracking-wider text-center select-none rounded-none border border-slate-700/50 shadow-md">
-                  🇺🇸 미국 지도 위의 핀은 경기한(🏆) & 등록된 코스 위치를 나타냅니다
-                </div>
               </div>
+              <p className="text-[10.5px] text-gray-500 mt-2 leading-relaxed">
+                ℹ️ 지도를 자유롭게 이동 및 확대(Zoom)할 수 있습니다. 등록된 골프장의 대략적인 위치는 <strong>빨간 점(🔴)</strong>으로 표시되고 클릭 시 팝업을 띄우며, 지도의 임의 위치를 클릭하면 해당 위도/경도가 새로운 골프장 위치 핀으로 지정되고 자동 계산됩니다.
+              </p>
             </div>
 
             <button 
