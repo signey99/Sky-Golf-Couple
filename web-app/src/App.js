@@ -2270,7 +2270,7 @@ export default function App() {
                     <table className="w-full text-center border-collapse">
                       <thead>
                         <tr className="bg-gray-100/80 border-b-2 border-gray-300">
-                          <th className="py-3 px-4 font-extrabold text-[13px] text-gray-750 border-r border-gray-250">추출할 레코드</th>
+                          <th className="py-3 px-4 font-extrabold text-[13px] text-gray-750 border-r border-gray-250">Record Metric</th>
                           <th className="py-3 px-4 font-black text-[14px] text-emerald-850 border-r border-gray-250">SK</th>
                           <th className="py-3 px-4 font-black text-[14px] text-teal-880">KY</th>
                         </tr>
@@ -2293,12 +2293,6 @@ export default function App() {
                         </tr>
                       </tbody>
                     </table>
-                  </div>
-
-                  <div className="bg-emerald-50/30 border border-emerald-100 p-4 select-none text-left rounded-none">
-                    <p className="text-xs text-emerald-800/90 leading-relaxed font-bold">
-                      💡 <strong>실시간 기록 분석:</strong> 입력된 모든 라운드 기록에서 플레이어별 최상의 18홀 라운드 성적을 실시간으로 분석한 결과입니다. (9홀 이상 완주 기준 우대)
-                    </p>
                   </div>
                 </div>
               );
