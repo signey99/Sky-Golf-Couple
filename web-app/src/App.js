@@ -1180,7 +1180,7 @@ export default function App() {
               <div className="w-full">
                 <span className="text-xs font-black text-gray-500 block mb-1.5 px-1 tracking-wide">⛳ Front</span>
                 <div className="w-full overflow-x-auto pb-1.5">
-                  <div className="border-2 border-gray-400 rounded-none overflow-hidden flex bg-white text-center shadow-sm" style={{ width: 'calc(2.5rem + (100% - 2.5rem) * 10 / 11)', minWidth: '450px' }}>
+                  <div className="border-2 border-gray-400 rounded-none overflow-hidden flex bg-white text-center shadow-sm" style={{ width: 'calc(2.5rem + (100% - 2.5rem) * 10 / 11)' }}>
                   <div className="w-10 bg-gray-50 flex flex-col justify-between text-xs font-extrabold text-gray-500 border-r-2 border-gray-400 shrink-0 select-none">
                     {/* Top Header */}
                     <div className="flex flex-col py-1 border-b-2 border-gray-400">
@@ -1255,7 +1255,7 @@ export default function App() {
               <div className="w-full">
                 <span className="text-xs font-black text-gray-500 block mb-1.5 px-1 tracking-wide">⛳ Back</span>
                 <div className="w-full overflow-x-auto pb-1.5">
-                  <div className="w-full border-2 border-gray-400 rounded-none overflow-hidden flex bg-white text-center shadow-sm" style={{ minWidth: '495px' }}>
+                  <div className="w-full border-2 border-gray-400 rounded-none overflow-hidden flex bg-white text-center shadow-sm">
                   <div className="w-10 bg-gray-50 flex flex-col justify-between text-xs font-extrabold text-gray-500 border-r-2 border-gray-400 shrink-0 select-none">
                     {/* Top Header */}
                     <div className="flex flex-col py-1 border-b-2 border-gray-400">
@@ -2198,6 +2198,109 @@ export default function App() {
           </div>
         )}
 
+        {/* --- TAB 4: BEST RECORDS TRACKER --- */}
+        {activeTab === 'record' && (
+          <div className="space-y-4 fade-in">
+            <h2 className="text-lg font-black text-emerald-800 tracking-wider uppercase flex items-center px-1">
+              <span className="mr-2">🏆</span> Record
+            </h2>
+
+            {(() => {
+              // Extract all game aggregates for active user matches
+              const skGames = scores.map(score => {
+                const hList = score.holes || [];
+                const completedHoles = hList.filter(h => h.iron > 0 || h.putt > 0);
+                if (completedHoles.length < 9) return null; // Only count rounds with at least 9 holes played
+                
+                const totalStrokes = hList.reduce((sum, h) => sum + (h.iron || 0) + (h.putt || 0), 0);
+                const totalIrons = hList.reduce((sum, h) => sum + (h.iron || 0), 0);
+                const totalPutts = hList.reduce((sum, h) => sum + (h.putt || 0), 0);
+                return { totalStrokes, totalIrons, totalPutts };
+              }).filter(Boolean);
+
+              const kyGames = scores.map(score => {
+                const hList = score.holes || [];
+                const completedHoles = hList.filter(h => h.iron2 > 0 || h.putt2 > 0);
+                if (completedHoles.length < 9) return null; // Only count rounds with at least 9 holes played
+
+                const totalStrokes = hList.reduce((sum, h) => sum + (h.iron2 || 0) + (h.putt2 || 0), 0);
+                const totalIrons = hList.reduce((sum, h) => sum + (h.iron2 || 0), 0);
+                const totalPutts = hList.reduce((sum, h) => sum + (h.putt2 || 0), 0);
+                return { totalStrokes, totalIrons, totalPutts };
+              }).filter(Boolean);
+
+              let skActiveGames = skGames;
+              if (skActiveGames.length === 0) {
+                skActiveGames = scores.map(score => {
+                  const hList = score.holes || [];
+                  const totalStrokes = hList.reduce((sum, h) => sum + (h.iron || 0) + (h.putt || 0), 0);
+                  const totalIrons = hList.reduce((sum, h) => sum + (h.iron || 0), 0);
+                  const totalPutts = hList.reduce((sum, h) => sum + (h.putt || 0), 0);
+                  return { totalStrokes, totalIrons, totalPutts };
+                }).filter(g => g.totalStrokes > 0);
+              }
+
+              let kyActiveGames = kyGames;
+              if (kyActiveGames.length === 0) {
+                kyActiveGames = scores.map(score => {
+                  const hList = score.holes || [];
+                  const totalStrokes = hList.reduce((sum, h) => sum + (h.iron2 || 0) + (h.putt2 || 0), 0);
+                  const totalIrons = hList.reduce((sum, h) => sum + (h.iron2 || 0), 0);
+                  const totalPutts = hList.reduce((sum, h) => sum + (h.putt2 || 0), 0);
+                  return { totalStrokes, totalIrons, totalPutts };
+                }).filter(g => g.totalStrokes > 0);
+              }
+
+              const bestScoreSK = skActiveGames.length > 0 ? Math.min(...skActiveGames.map(g => g.totalStrokes)) : '-';
+              const bestStrokeSK = skActiveGames.length > 0 ? Math.min(...skActiveGames.map(g => g.totalIrons)) : '-';
+              const bestPuttSK = skActiveGames.length > 0 ? Math.min(...skActiveGames.map(g => g.totalPutts)) : '-';
+
+              const bestScoreKY = kyActiveGames.length > 0 ? Math.min(...kyActiveGames.map(g => g.totalStrokes)) : '-';
+              const bestStrokeKY = kyActiveGames.length > 0 ? Math.min(...kyActiveGames.map(g => g.totalIrons)) : '-';
+              const bestPuttKY = kyActiveGames.length > 0 ? Math.min(...kyActiveGames.map(g => g.totalPutts)) : '-';
+
+              return (
+                <div className="space-y-4 fade-in">
+                  <div className="bg-white border-2 border-gray-300 shadow-sm rounded-none overflow-hidden select-none">
+                    <table className="w-full text-center border-collapse">
+                      <thead>
+                        <tr className="bg-gray-100/80 border-b-2 border-gray-300">
+                          <th className="py-3 px-4 font-extrabold text-[13px] text-gray-750 border-r border-gray-250">추출할 레코드</th>
+                          <th className="py-3 px-4 font-black text-[14px] text-emerald-850 border-r border-gray-250">SK</th>
+                          <th className="py-3 px-4 font-black text-[14px] text-teal-880">KY</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-250 text-gray-800 font-bold text-sm">
+                        <tr className="hover:bg-slate-50/50">
+                          <td className="py-4 px-4 bg-gray-50/40 text-[13px] font-extrabold text-gray-700 border-r border-gray-250">Best Score</td>
+                          <td className="py-4 px-4 text-emerald-700 text-base font-black border-r border-gray-250">{bestScoreSK}</td>
+                          <td className="py-4 px-4 text-teal-700 text-base font-black">{bestScoreKY}</td>
+                        </tr>
+                        <tr className="hover:bg-slate-50/50">
+                          <td className="py-4 px-4 bg-gray-50/40 text-[13px] font-extrabold text-gray-700 border-r border-gray-250">Best Stoke</td>
+                          <td className="py-4 px-4 text-emerald-700 text-base font-black border-r border-gray-250">{bestStrokeSK}</td>
+                          <td className="py-4 px-4 text-teal-700 text-base font-black">{bestStrokeKY}</td>
+                        </tr>
+                        <tr className="hover:bg-slate-50/50">
+                          <td className="py-4 px-4 bg-gray-50/40 text-[13px] font-extrabold text-gray-700 border-r border-gray-250">Best Putt</td>
+                          <td className="py-4 px-4 text-emerald-700 text-base font-black border-r border-gray-250">{bestPuttSK}</td>
+                          <td className="py-4 px-4 text-teal-700 text-base font-black">{bestPuttKY}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="bg-emerald-50/30 border border-emerald-100 p-4 select-none text-left rounded-none">
+                    <p className="text-xs text-emerald-800/90 leading-relaxed font-bold">
+                      💡 <strong>실시간 기록 분석:</strong> 입력된 모든 라운드 기록에서 플레이어별 최상의 18홀 라운드 성적을 실시간으로 분석한 결과입니다. (9홀 이상 완주 기준 우대)
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
       </main>
 
       {/* Styled Bottom Navigation Toolbar (Stay fixed in mobile frames) */}
@@ -2222,6 +2325,13 @@ export default function App() {
         >
           <span className="text-lg leading-tight">📸</span>
           <span className="text-xs font-bold leading-tight">History</span>
+        </button>
+        <button 
+          onClick={() => setActiveTab('record')}
+          className={`flex flex-col items-center space-y-1 transition-all active:scale-95 ${activeTab === 'record' ? 'text-emerald-600 scale-105 font-bold' : 'text-gray-400 hover:text-gray-650'}`}
+        >
+          <span className="text-lg leading-tight">🏆</span>
+          <span className="text-xs font-bold leading-tight">Record</span>
         </button>
       </nav>
 
