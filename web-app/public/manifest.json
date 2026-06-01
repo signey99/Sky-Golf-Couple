@@ -1,0 +1,17 @@
+{
+  "short_name": "Skky Golf",
+  "name": "Skky Golf",
+  "description": "Skky Golf - Share and track golf scores",
+  "icons": [
+    {
+      "src": "logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#107c41",
+  "background_color": "#f9fafb"
+}

@@ -41,9 +41,9 @@ dependencies {
 val buildWebAssets = tasks.register<Exec>("buildWebAssets") {
     workingDir = file("../web-app")
     if (System.getProperty("os.name").lowercase().contains("windows")) {
-        commandLine("cmd", "/c", "npm run build")
+        commandLine("cmd", "/c", "npm install && npm run build")
     } else {
-        commandLine("npm", "run", "build")
+        commandLine("sh", "-c", "npm install && npm run build")
     }
 }
 
