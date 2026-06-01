@@ -14,16 +14,16 @@ const formatPlayDate = (dateStr) => {
 
 // Render score symbol based on standard golf scoring notation
 const renderScoreSymbol = (score, par, isSelected) => {
-  if (!score || score <= 0) return <span className="text-gray-450 text-sm font-medium h-8 flex items-center justify-center">-</span>;
+  if (!score || score <= 0) return <span className="text-gray-450 text-xs font-medium h-6 flex items-center justify-center">-</span>;
   
   const diff = score - par;
   const baseStyle = {
-    width: '24px',
-    height: '24px',
-    minWidth: '24px',
-    minHeight: '24px',
-    maxWidth: '24px',
-    maxHeight: '24px',
+    width: '20px',
+    height: '20px',
+    minWidth: '20px',
+    minHeight: '20px',
+    maxWidth: '20px',
+    maxHeight: '20px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -39,7 +39,7 @@ const renderScoreSymbol = (score, par, isSelected) => {
         style={baseStyle}
         className="rounded-full border border-red-500 bg-red-50/40 shadow-sm animate-fadeIn shrink-0 aspect-square"
       >
-        <span className="text-[13px] font-black text-red-500 leading-none">{score}</span>
+        <span className="text-[11px] font-black text-red-500 leading-none">{score}</span>
       </div>
     );
   } else if (diff <= -2) {
@@ -50,8 +50,8 @@ const renderScoreSymbol = (score, par, isSelected) => {
         className="shadow-sm animate-fadeIn shrink-0 aspect-square"
       >
         <div className="absolute inset-0 border border-red-500 rounded-full"></div>
-        <div className="absolute inset-[2px] border border-red-500 rounded-full"></div>
-        <span className="text-[13px] font-black text-red-500 z-10 leading-none">{score}</span>
+        <div className="absolute inset-[1.5px] border border-red-500 rounded-full"></div>
+        <span className="text-[11px] font-black text-red-500 z-10 leading-none">{score}</span>
       </div>
     );
   } else if (diff === 1) {
@@ -61,7 +61,7 @@ const renderScoreSymbol = (score, par, isSelected) => {
         style={baseStyle}
         className="border border-blue-500 bg-blue-50/30 rounded-none shadow-sm animate-fadeIn shrink-0 aspect-square"
       >
-        <span className="text-[13px] font-black text-blue-500 leading-none">{score}</span>
+        <span className="text-[11px] font-black text-blue-500 leading-none">{score}</span>
       </div>
     );
   } else if (diff >= 2) {
@@ -72,15 +72,15 @@ const renderScoreSymbol = (score, par, isSelected) => {
         className="shadow-sm animate-fadeIn shrink-0 aspect-square"
       >
         <div className="absolute inset-0 border border-blue-600 rounded-none"></div>
-        <div className="absolute inset-[2px] border border-blue-600 rounded-none"></div>
-        <span className="text-[13px] font-black text-blue-600 z-10 leading-none">{score}</span>
+        <div className="absolute inset-[1.5px] border border-blue-600 rounded-none"></div>
+        <span className="text-[11px] font-black text-blue-600 z-10 leading-none">{score}</span>
       </div>
     );
   } else {
     // Par
     return (
       <div style={baseStyle} className="shrink-0 aspect-square">
-        <span className={`text-[15px] font-extrabold leading-none ${isSelected ? 'text-emerald-800 font-black' : 'text-gray-800'}`}>{score}</span>
+        <span className={`text-[13px] font-extrabold leading-none ${isSelected ? 'text-emerald-800 font-black' : 'text-gray-800'}`}>{score}</span>
       </div>
     );
   }
@@ -177,6 +177,14 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('golf_diary_fb_url', firebaseUrl);
   }, [firebaseUrl]);
+
+  // Reset main content scroll when tab changes
+  useEffect(() => {
+    const mainEl = document.querySelector('main');
+    if (mainEl) {
+      mainEl.scrollTop = 0;
+    }
+  }, [activeTab]);
 
   // Utility to prevent Firebase SDK & fetch calls from hanging indefinitely (max timeout)
   const withTimeout = (promise, ms = 3000) => {
@@ -863,7 +871,7 @@ export default function App() {
 
   return (
     <div 
-      className="max-w-lg mx-auto min-h-screen bg-gray-50 flex flex-col justify-between shadow-xl relative border-x border-gray-100"
+      className="max-w-lg mx-auto h-screen bg-gray-50 flex flex-col justify-between shadow-xl relative border-x border-gray-100 overflow-hidden"
       style={{ fontFamily: '"Outfit", "Noto Sans KR", sans-serif' }}
     >
       
@@ -1656,21 +1664,42 @@ export default function App() {
                       </div>
 
                       {/* Row 2: Address */}
-                      <p className="text-xs text-gray-500 font-bold flex items-center gap-1.5 truncate">
-                        <span className="text-gray-700 scale-110 shrink-0 flex items-center">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const query = encodeURIComponent(course.name + ' ' + (course.address || ''));
+                          window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+                        }}
+                        className="text-xs text-gray-500 font-bold flex items-center gap-1.5 hover:text-emerald-700 hover:underline transition-colors w-full text-left bg-transparent border-0 p-0 cursor-pointer min-h-[24px]"
+                      >
+                        <span className="text-emerald-600 scale-110 shrink-0 flex items-center bg-emerald-50 p-1 rounded-none border border-emerald-100 hover:bg-emerald-100 active:scale-95 transition-all">
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s-7-4.85-7-11.5a7 7 0 1 1 14 0c0 6.65-7 11.5-7 11.5z" />
                             <circle cx="12" cy="9.5" r="2.5" />
                           </svg>
                         </span>{' '}
-                        {course.address || 'No address registered'}
-                      </p>
+                        <span className="truncate">{course.address || 'No address registered'}</span>
+                      </button>
 
                       {/* Row 3: Telephone (left) and Total Played Rounds (right) */}
                       <div className="flex justify-between items-center text-xs text-gray-500 font-bold mt-0.5">
-                        <p className="flex items-center gap-1.5 truncate">
-                          <span className="text-emerald-500 scale-110">📞</span> {course.phone || 'No phone number'}
-                        </p>
+                        {course.phone ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              window.open(`tel:${course.phone}`, '_self');
+                            }}
+                            className="flex items-center gap-1.5 hover:text-emerald-700 hover:underline text-left bg-transparent border-0 p-0 cursor-pointer min-h-[24px]"
+                          >
+                            <span className="text-emerald-600 bg-emerald-50 p-1 rounded-none border border-emerald-100 hover:bg-emerald-100 active:scale-95 transition-all flex items-center justify-center scale-110 w-5.5 h-5.5 shrink-0">📞</span>
+                            <span className="truncate">{course.phone}</span>
+                          </button>
+                        ) : (
+                          <p className="flex items-center gap-1.5 truncate min-h-[24px]">
+                            <span className="text-gray-400 bg-gray-50 p-1 rounded-none border border-gray-200 flex items-center justify-center scale-110 w-5.5 h-5.5 shrink-0">📞</span>
+                            <span className="text-gray-400 font-normal">No phone number</span>
+                          </p>
+                        )}
                         <span className="shrink-0 text-[11px] font-extrabold text-emerald-850 bg-emerald-50 px-2 py-0.5 rounded-none border border-emerald-100/50 flex items-center gap-0.5 select-none font-mono">🏆 {courseHistories.length} Rounds</span>
                       </div>
 
@@ -1783,6 +1812,15 @@ export default function App() {
               const totalStrokesP2 = holes.reduce((sum, h) => sum + (h.iron2 || 0) + (h.putt2 || 0), 0);
               const totalPuttsP2 = holes.reduce((sum, h) => sum + (h.putt2 || 0), 0);
 
+              const getHoleScoreP1 = (h) => (h.iron || 0) + (h.putt || 0);
+              const getHoleScoreP2 = (h) => (h.iron2 || 0) + (h.putt2 || 0);
+
+              const pOutP1 = holes.slice(0, 9).reduce((sum, h) => sum + getHoleScoreP1(h), 0);
+              const pInP1 = holes.slice(9, 18).reduce((sum, h) => sum + getHoleScoreP1(h), 0);
+
+              const pOutP2 = holes.slice(0, 9).reduce((sum, h) => sum + getHoleScoreP2(h), 0);
+              const pInP2 = holes.slice(9, 18).reduce((sum, h) => sum + getHoleScoreP2(h), 0);
+
               const course = courses.find(c => c.id === activeDetailScore.courseId);
               const detailCoursePars = course?.holePars || Array(18).fill(4);
 
@@ -1792,9 +1830,6 @@ export default function App() {
                 const pOut = holes.slice(0, 9).reduce((sum, h) => sum + getHoleScore(h), 0);
                 const pIn = holes.slice(9, 18).reduce((sum, h) => sum + getHoleScore(h), 0);
                 
-                const parOut = detailCoursePars.slice(0, 9).reduce((sum, val) => sum + val, 0);
-                const parIn = detailCoursePars.slice(9, 18).reduce((sum, val) => sum + val, 0);
-
                 const playerSubtextColor = playerPrefix === 'SK' ? 'text-emerald-700' : 'text-teal-700';
 
                 return (
@@ -1808,30 +1843,14 @@ export default function App() {
                             const pT = getHoleScore(h);
                             const holePar = detailCoursePars[k] || 4;
                             return (
-                              <div key={k} className="flex flex-col justify-between">
-                                <div className="flex flex-col py-0.5 border-b border-gray-200 bg-gray-50/50">
-                                  <span className="text-gray-500 font-bold h-4 flex items-center justify-center text-[8px]">
-                                    {h.hole}
-                                  </span>
-                                  <span className="text-[8px] font-black text-red-500 h-3 flex items-center justify-center">
-                                    {holePar}
-                                  </span>
-                                </div>
-                                <div className="flex flex-col py-0.5 justify-center items-center h-7 scale-[0.75] origin-center">
-                                  {renderScoreSymbol(pT, holePar, false)}
-                                </div>
+                              <div key={k} className="flex flex-col justify-center items-center h-8 bg-white">
+                                {renderScoreSymbol(pT, holePar, false)}
                               </div>
                             );
                           })}
                           {/* OUT subtotal column */}
-                          <div className="bg-blue-50/20 flex flex-col justify-between text-center select-none font-bold">
-                            <div className="flex flex-col py-0.5 border-b border-gray-200 bg-blue-50/30 font-black">
-                              <span className="text-[7px] font-black h-4 flex items-center justify-center text-blue-600">OUT</span>
-                              <span className="text-[7px] font-black text-blue-500 h-3 flex items-center justify-center">{parOut}</span>
-                            </div>
-                            <div className="flex flex-col py-0.5 justify-center items-center h-7 bg-blue-50/5">
-                              <span className={`text-[10px] font-black ${playerSubtextColor}`}>{pOut > 0 ? pOut : '-'}</span>
-                            </div>
+                          <div className="bg-blue-50/20 flex flex-col justify-center items-center h-8 select-none font-bold">
+                            <span className={`text-[11px] font-black ${playerSubtextColor}`}>{pOut > 0 ? pOut : '-'}</span>
                           </div>
                         </div>
                       </div>
@@ -1847,30 +1866,14 @@ export default function App() {
                             const pT = getHoleScore(h);
                             const holePar = detailCoursePars[globalK] || 4;
                             return (
-                              <div key={globalK} className="flex flex-col justify-between">
-                                <div className="flex flex-col py-0.5 border-b border-gray-200 bg-gray-50/50">
-                                  <span className="text-gray-500 font-bold h-4 flex items-center justify-center text-[8px]">
-                                    {h.hole}
-                                  </span>
-                                  <span className="text-[8px] font-black text-red-500 h-3 flex items-center justify-center">
-                                    {holePar}
-                                  </span>
-                                </div>
-                                <div className="flex flex-col py-0.5 justify-center items-center h-7 scale-[0.75] origin-center">
-                                  {renderScoreSymbol(pT, holePar, false)}
-                                </div>
+                              <div key={globalK} className="flex flex-col justify-center items-center h-8 bg-white">
+                                {renderScoreSymbol(pT, holePar, false)}
                               </div>
                             );
                           })}
                           {/* IN subtotal column */}
-                          <div className="bg-blue-50/20 flex flex-col justify-between text-center select-none font-bold">
-                            <div className="flex flex-col py-0.5 border-b border-gray-200 bg-blue-50/30 font-black">
-                              <span className="text-[7px] font-black h-4 flex items-center justify-center text-blue-600">IN</span>
-                              <span className="text-[7px] font-black text-blue-500 h-3 flex items-center justify-center">{parIn}</span>
-                            </div>
-                            <div className="flex flex-col py-0.5 justify-center items-center h-7 bg-blue-50/5">
-                              <span className={`text-[10px] font-black ${playerSubtextColor}`}>{pIn > 0 ? pIn : '-'}</span>
-                            </div>
+                          <div className="bg-blue-50/20 flex flex-col justify-center items-center h-8 select-none font-bold">
+                            <span className={`text-[11px] font-black ${playerSubtextColor}`}>{pIn > 0 ? pIn : '-'}</span>
                           </div>
                         </div>
                       </div>
@@ -1906,7 +1909,7 @@ export default function App() {
                     <div className="space-y-4">
                       <div>
                         <span className="text-[11px] font-extrabold text-emerald-855 uppercase tracking-wider block mb-1">
-                          Scorecard for SK — {totalStrokesP1}타 ({totalStrokesP1 - totalPuttsP1}스트로/{totalPuttsP1}퍼팅)
+                          SK — {totalStrokesP1}({pOutP1}/{pInP1})
                         </span>
                         {renderPlayerScorecard('SK', 'SK')}
                       </div>
@@ -1914,7 +1917,7 @@ export default function App() {
                       {totalStrokesP2 > 0 && (
                         <div>
                           <span className="text-[11px] font-extrabold text-teal-855 uppercase tracking-wider block mb-1">
-                            Scorecard for KY — {totalStrokesP2}타 ({totalStrokesP2 - totalPuttsP2}스트로/{totalPuttsP2}퍼팅)
+                            KY — {totalStrokesP2}({pOutP2}/{pInP2})
                           </span>
                           {renderPlayerScorecard('KY', 'KY')}
                         </div>
