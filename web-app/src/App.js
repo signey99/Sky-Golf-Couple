@@ -2028,7 +2028,7 @@ export default function App() {
                   <div className="space-y-1 mt-1 mb-2 text-left">
                     {/* Front Nine */}
                     <div className="w-full overflow-x-auto pb-0.5">
-                      <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center shadow-sm text-[10px]" style={{ minWidth: '360px' }}>
+                      <div className="w-full border border-gray-300 rounded-none overflow-hidden flex bg-white text-center shadow-sm text-[10px]">
                         <div className="w-full grid grid-cols-10 divide-x divide-gray-200">
                           {holes.slice(0, 9).map((h, k) => {
                             const pT = getHoleScore(h);
@@ -2049,7 +2049,7 @@ export default function App() {
 
                     {/* Back Nine */}
                     <div className="w-full overflow-x-auto pb-0.5">
-                      <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center shadow-sm text-[10px]" style={{ minWidth: '360px' }}>
+                      <div className="w-full border border-gray-300 rounded-none overflow-hidden flex bg-white text-center shadow-sm text-[10px]">
                         <div className="w-full grid grid-cols-10 divide-x divide-gray-200">
                           {holes.slice(9, 18).map((h, k) => {
                             const globalK = k + 9;
