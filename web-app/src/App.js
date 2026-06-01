@@ -2185,7 +2185,6 @@ export default function App() {
                   <div className="space-y-1 mt-1 mb-2 text-left">
                     {/* Front Nine */}
                     <div className="w-full">
-                      <span className="text-[10px] font-bold text-gray-400 block mb-0.5 px-1 tracking-wide">Front</span>
                       <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center shadow-sm text-[10px] w-full">
                         <div className="w-full grid grid-cols-10 divide-x divide-gray-200">
                           {holes.slice(0, 9).map((h, k) => {
@@ -2207,7 +2206,6 @@ export default function App() {
 
                     {/* Back Nine */}
                     <div className="w-full">
-                      <span className="text-[10px] font-bold text-gray-400 block mb-0.5 px-1 tracking-wide">Back</span>
                       <div className="border border-gray-300 rounded-none overflow-hidden flex bg-white text-center shadow-sm text-[10px] w-full">
                         <div className="w-full grid grid-cols-10 divide-x divide-gray-200">
                           {holes.slice(9, 18).map((h, k) => {
@@ -2257,7 +2255,7 @@ export default function App() {
                     {/* 18-hole detailed Scorecard Tables */}
                     <div className="space-y-4">
                       <div>
-                        <span className="text-[11px] font-extrabold text-emerald-855 uppercase tracking-wider block mb-1">
+                        <span className="text-base font-black text-emerald-800 uppercase tracking-wide block mb-1.5">
                           SK — {totalStrokesP1}({pOutP1}/{pInP1})
                         </span>
                         {renderPlayerScorecard('SK', 'SK')}
@@ -2265,7 +2263,7 @@ export default function App() {
 
                       {totalStrokesP2 > 0 && (
                         <div>
-                          <span className="text-[11px] font-extrabold text-teal-855 uppercase tracking-wider block mb-1">
+                          <span className="text-base font-black text-teal-800 uppercase tracking-wide block mb-1.5">
                             KY — {totalStrokesP2}({pOutP2}/{pInP2})
                           </span>
                           {renderPlayerScorecard('KY', 'KY')}
