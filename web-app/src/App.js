@@ -1061,24 +1061,24 @@ export default function App() {
 
   return (
     <div 
-      className="w-full max-w-full md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto h-screen h-[100dvh] bg-white flex flex-col justify-between shadow-xl relative md:border-x border-gray-100 overflow-hidden"
+      className="w-full max-w-full md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto h-screen h-[100dvh] bg-gray-50 flex flex-col justify-between shadow-xl relative md:border-x border-gray-150 overflow-hidden"
       style={{ fontFamily: '"Outfit", "Noto Sans KR", sans-serif' }}
     >
       
       {/* Top Header App Bar */}
-      <header className="bg-white border-b border-gray-200 py-4 px-5 text-left select-none relative animate-fade-in">
+      <header className="text-white py-4 px-5 text-left shadow-sm select-none relative animate-fade-in" style={{ backgroundColor: '#0f766e' }}>
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-3">
             <img 
               src={process.env.PUBLIC_URL + '/logo.svg'} 
               alt="SkKy Golf Logo" 
-              className="w-16 h-16 object-contain rounded-xl shadow-sm border border-emerald-100 shrink-0"
+              className="w-16 h-16 object-contain rounded-xl shadow-sm border border-white/20 shrink-0"
             />
             <div>
               <h1 className="text-3xl font-black tracking-wide leading-tight animate-fade-in" style={{ fontFamily: '"Outfit", "Noto Sans KR", sans-serif', color: '#38bdf8' }}>
                 SkKy Golf
               </h1>
-              <p className="text-xl text-teal-650 mt-1.5 font-bold leading-none animate-fadeIn" style={{ fontFamily: '"Nanum Pen Script", cursive' }}>시근이와 계영이의 골프 여행기</p>
+              <p className="text-[11px] sm:text-xs text-white/85 tracking-wider uppercase font-bold text-left mt-1.5 leading-snug animate-fadeIn">시근이와 계영이의 골프 여행기</p>
             </div>
           </div>
           
@@ -1086,7 +1086,7 @@ export default function App() {
           <button 
             type="button"
             onClick={() => setIsSettingsOpen(true)}
-            className="text-lg opacity-85 hover:opacity-100 active:scale-95 transition duration-150 p-2 bg-slate-50 hover:bg-slate-100 text-slate-500 border border-slate-200/80 rounded-xl shadow-sm flex items-center justify-center shrink-0"
+            className="text-lg opacity-85 hover:opacity-100 active:scale-95 transition duration-150 p-2 bg-white/10 hover:bg-white/20 text-white border border-white/10 rounded-xl shadow-sm flex items-center justify-center shrink-0"
             style={{ minHeight: '38px', minWidth: '38px' }}
             title="Dynamic Sync Settings"
           >
@@ -1825,7 +1825,7 @@ export default function App() {
                 })
                 .sort((a,b) => (a.name || '').localeCompare(b.name || '', 'ko-KR'))
                 .map(course => {
-                  const courseHistories = scores.filter(s => s.courseId === course.id);
+                  const courseHistories = (scores || []).filter(s => s && s.courseId === course.id);
 
                   return (
                     <div key={course.id} className="bg-white p-5 rounded-none shadow-sm border border-gray-300 space-y-3 relative animate-fadeIn">
@@ -1939,8 +1939,9 @@ export default function App() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[...scores]
-                  .sort((a, b) => new Date(b.date) - new Date(a.date))
+                {(scores || [])
+                  .filter(Boolean)
+                  .sort((a, b) => new Date(b?.date || "") - new Date(a?.date || ""))
                   .map(score => {
                   const totalStrokesP1 = (score.holes || []).reduce((sum, h) => sum + (h.iron || 0) + (h.putt || 0), 0);
                   const totalIronsP1 = (score.holes || []).reduce((sum, h) => sum + (h.iron || 0), 0);
@@ -1994,7 +1995,7 @@ export default function App() {
 
             {/* Scorecard detail & photo upload popup */}
             {selectedHistoryScore && (() => {
-              const activeDetailScore = scores.find(s => s.id === selectedHistoryScore.id);
+              const activeDetailScore = (scores || []).find(s => s && s.id === selectedHistoryScore.id);
               if (!activeDetailScore) return null;
 
               const holes = activeDetailScore.holes || [];
@@ -2171,7 +2172,7 @@ export default function App() {
                         type="button"
                         onClick={() => {
                           if (window.confirm("Are you sure you want to delete this round log permanently?")) {
-                            const updated = scores.filter(s => s.id !== activeDetailScore.id);
+                            const updated = (scores || []).filter(s => s && s.id !== activeDetailScore.id);
                             setScores(updated);
                             localStorage.setItem('golf_diary_scores', JSON.stringify(updated));
                             setSelectedHistoryScore(null);
@@ -2206,49 +2207,53 @@ export default function App() {
             </h2>
 
             {(() => {
-              // Extract all game aggregates for active user matches
-              const skGames = scores.map(score => {
+              // Extract all game aggregates for active user matches with strict safety checks
+              const skGames = (scores || []).map(score => {
+                if (!score) return null;
                 const hList = score.holes || [];
-                const completedHoles = hList.filter(h => h.iron > 0 || h.putt > 0);
+                const completedHoles = hList.filter(h => h && (h.iron > 0 || h.putt > 0));
                 if (completedHoles.length < 9) return null; // Only count rounds with at least 9 holes played
                 
-                const totalStrokes = hList.reduce((sum, h) => sum + (h.iron || 0) + (h.putt || 0), 0);
-                const totalIrons = hList.reduce((sum, h) => sum + (h.iron || 0), 0);
-                const totalPutts = hList.reduce((sum, h) => sum + (h.putt || 0), 0);
+                const totalStrokes = hList.reduce((sum, h) => sum + ((h && h.iron) || 0) + ((h && h.putt) || 0), 0);
+                const totalIrons = hList.reduce((sum, h) => sum + ((h && h.iron) || 0), 0);
+                const totalPutts = hList.reduce((sum, h) => sum + ((h && h.putt) || 0), 0);
                 return { totalStrokes, totalIrons, totalPutts };
               }).filter(Boolean);
 
-              const kyGames = scores.map(score => {
+              const kyGames = (scores || []).map(score => {
+                if (!score) return null;
                 const hList = score.holes || [];
-                const completedHoles = hList.filter(h => h.iron2 > 0 || h.putt2 > 0);
+                const completedHoles = hList.filter(h => h && (h.iron2 > 0 || h.putt2 > 0));
                 if (completedHoles.length < 9) return null; // Only count rounds with at least 9 holes played
 
-                const totalStrokes = hList.reduce((sum, h) => sum + (h.iron2 || 0) + (h.putt2 || 0), 0);
-                const totalIrons = hList.reduce((sum, h) => sum + (h.iron2 || 0), 0);
-                const totalPutts = hList.reduce((sum, h) => sum + (h.putt2 || 0), 0);
+                const totalStrokes = hList.reduce((sum, h) => sum + ((h && h.iron2) || 0) + ((h && h.putt2) || 0), 0);
+                const totalIrons = hList.reduce((sum, h) => sum + ((h && h.iron2) || 0), 0);
+                const totalPutts = hList.reduce((sum, h) => sum + ((h && h.putt2) || 0), 0);
                 return { totalStrokes, totalIrons, totalPutts };
               }).filter(Boolean);
 
               let skActiveGames = skGames;
               if (skActiveGames.length === 0) {
-                skActiveGames = scores.map(score => {
+                skActiveGames = (scores || []).map(score => {
+                  if (!score) return null;
                   const hList = score.holes || [];
-                  const totalStrokes = hList.reduce((sum, h) => sum + (h.iron || 0) + (h.putt || 0), 0);
-                  const totalIrons = hList.reduce((sum, h) => sum + (h.iron || 0), 0);
-                  const totalPutts = hList.reduce((sum, h) => sum + (h.putt || 0), 0);
+                  const totalStrokes = hList.reduce((sum, h) => sum + ((h && h.iron) || 0) + ((h && h.putt) || 0), 0);
+                  const totalIrons = hList.reduce((sum, h) => sum + ((h && h.iron) || 0), 0);
+                  const totalPutts = hList.reduce((sum, h) => sum + ((h && h.putt) || 0), 0);
                   return { totalStrokes, totalIrons, totalPutts };
-                }).filter(g => g.totalStrokes > 0);
+                }).filter(g => g && g.totalStrokes > 0);
               }
 
               let kyActiveGames = kyGames;
               if (kyActiveGames.length === 0) {
-                kyActiveGames = scores.map(score => {
+                kyActiveGames = (scores || []).map(score => {
+                  if (!score) return null;
                   const hList = score.holes || [];
-                  const totalStrokes = hList.reduce((sum, h) => sum + (h.iron2 || 0) + (h.putt2 || 0), 0);
-                  const totalIrons = hList.reduce((sum, h) => sum + (h.iron2 || 0), 0);
-                  const totalPutts = hList.reduce((sum, h) => sum + (h.putt2 || 0), 0);
+                  const totalStrokes = hList.reduce((sum, h) => sum + ((h && h.iron2) || 0) + ((h && h.putt2) || 0), 0);
+                  const totalIrons = hList.reduce((sum, h) => sum + ((h && h.iron2) || 0), 0);
+                  const totalPutts = hList.reduce((sum, h) => sum + ((h && h.putt2) || 0), 0);
                   return { totalStrokes, totalIrons, totalPutts };
-                }).filter(g => g.totalStrokes > 0);
+                }).filter(g => g && g.totalStrokes > 0);
               }
 
               const bestScoreSK = skActiveGames.length > 0 ? Math.min(...skActiveGames.map(g => g.totalStrokes)) : '-';
