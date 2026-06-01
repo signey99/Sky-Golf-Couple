@@ -134,6 +134,32 @@ export default function App() {
         lat: 33.3541,
         lng: 126.3712,
         holePars: Array(18).fill(4)
+      },
+      {
+        id: 2,
+        name: 'Pebble Beach Golf Links',
+        address: 'Pebble Beach, CA, USA',
+        totalPar: 72,
+        ladyRating: 72.0,
+        ladySlope: 113,
+        blueRating: 74.3,
+        blueSlope: 144,
+        lat: 36.5684,
+        lng: -121.9511,
+        holePars: Array(18).fill(4)
+      },
+      {
+        id: 3,
+        name: 'Augusta National Golf Club',
+        address: 'Augusta, GA, USA',
+        totalPar: 72,
+        ladyRating: 72.0,
+        ladySlope: 113,
+        blueRating: 76.2,
+        blueSlope: 148,
+        lat: 33.5020,
+        lng: -82.0223,
+        holePars: Array(18).fill(4)
       }
     ];
   });
@@ -649,8 +675,8 @@ export default function App() {
     ladySlope: 113,
     blueRating: 72.0,
     blueSlope: 113,
-    lat: 33.3541,
-    lng: 126.3712
+    lat: 36.5684,
+    lng: -121.9511
   });
 
   const [courseHolePars, setCourseHolePars] = useState(Array(18).fill(4));
@@ -672,20 +698,114 @@ export default function App() {
   const [showCourseModal, setShowCourseModal] = useState(false);
   const [courseSearchQuery, setCourseSearchQuery] = useState('');
 
+  // Coordinate projection from lat/lng to our 500x280 US map SVG viewport coordinates
+  const getCoordinatesPosition = (latInput, lngInput) => {
+    const lat = parseFloat(latInput);
+    const lng = parseFloat(lngInput);
+    if (isNaN(lat) || isNaN(lng)) return { x: 0, y: 0, type: 'UNKNOWN' };
+
+    // Normalize longitude written as positive value by accident for West
+    let normalizedLng = lng;
+    if (normalizedLng > 65 && normalizedLng < 130) {
+      normalizedLng = -normalizedLng;
+    }
+
+    const isAlaska = lat >= 50 && lat <= 72 && normalizedLng >= -178 && normalizedLng <= -128;
+    const isHawaii = lat >= 18 && lat <= 23 && normalizedLng >= -161 && normalizedLng <= -154;
+    const isContinentalUS = lat >= 23.5 && lat <= 50.5 && normalizedLng >= -126.0 && normalizedLng <= -65.0;
+
+    if (isContinentalUS) {
+      // Maps to Continental US bounds inside our 500x280 SVG layout.
+      // Range: x=40 to 440 (width 400), y=45 to 225 (height 180)
+      const minLng = -125.0;
+      const maxLng = -66.5;
+      const minLat = 24.5;
+      const maxLat = 49.5;
+
+      const xPercent = (normalizedLng - minLng) / (maxLng - minLng);
+      const yPercent = (maxLat - lat) / (maxLat - minLat);
+
+      const x = 40 + xPercent * 400;
+      const y = 45 + yPercent * 180;
+      return { x, y, type: 'US' };
+    } else if (isAlaska) {
+      // Alaska Inset box bounds: x=15 to 85, y=200 to 250
+      const xPercent = (normalizedLng - (-172)) / (-130 - (-172));
+      const yPercent = (72 - lat) / (72 - 52);
+      const x = 15 + xPercent * 70;
+      const y = 200 + yPercent * 50;
+      return { x, y, type: 'AK' };
+    } else if (isHawaii) {
+      // Hawaii Inset box bounds: x=95 to 155, y=220 to 250
+      const xPercent = (normalizedLng - (-160.5)) / (-154.5 - (-160.5));
+      const yPercent = (22.5 - lat) / (22.5 - 18.5);
+      const x = 95 + xPercent * 60;
+      const y = 220 + yPercent * 30;
+      return { x, y, type: 'HI' };
+    } else if (lat > 32 && lat < 39 && normalizedLng > 124 && normalizedLng < 131) {
+      // Jeju Island/Korea in the Dedicated Inset box: x=390 to 485, y=200 to 265
+      const xPercent = (normalizedLng - 126.0) / (129.5 - 126.0);
+      const yPercent = (36.0 - lat) / (36.0 - 33.0);
+      const x = 390 + xPercent * 95;
+      const y = 200 + yPercent * 65;
+      return { x, y, type: 'INTL_JEJU' };
+    } else {
+      // Default to center of International Inset box
+      return { x: 440, y: 235, type: 'INTL_OTHER' };
+    }
+  };
+
   // Virtual map tracker for simulated GPS picker
-  const [mapClickedCoords, setMapClickedCoords] = useState({ lat: 33.3541, lng: 126.3712 });
+  const [mapClickedCoords, setMapClickedCoords] = useState({ lat: 36.5684, lng: -121.9511 });
 
   const handleMapClick = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    // Simulate mapping click coordinates to relative latitude & longitude offsets
-    const simulatedLat = (33.3541 + (y / rect.height) * 0.1).toFixed(4);
-    const simulatedLng = (126.3712 + (x / rect.width) * 0.1).toFixed(4);
-    
-    setMapClickedCoords({ lat: parseFloat(simulatedLat), lng: parseFloat(simulatedLng) });
-    setNewCourse(prev => ({ ...prev, lat: parseFloat(simulatedLat), lng: parseFloat(simulatedLng) }));
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+
+    // Convert click coordinates on the SVG to our viewport format (500x280)
+    const svgX = (clickX / rect.width) * 500;
+    const svgY = (clickY / rect.height) * 280;
+
+    let calculatedLat = 37.0902;
+    let calculatedLng = -95.7129; // Center of US defaults
+
+    // Check click targets for insets
+    const isAlaskaBox = svgX >= 15 && svgX <= 85 && svgY >= 200 && svgY <= 250;
+    const isHawaiiBox = svgX >= 95 && svgX <= 155 && svgY >= 220 && svgY <= 250;
+    const isInternationalBox = svgX >= 390 && svgX <= 485 && svgY >= 200 && svgY <= 265;
+
+    if (isAlaskaBox) {
+      const xPercent = (svgX - 15) / 70;
+      const yPercent = (svgY - 200) / 50;
+      calculatedLng = (-172 + xPercent * (-130 - (-172))).toFixed(4);
+      calculatedLat = (72 - yPercent * (72 - 52)).toFixed(4);
+    } else if (isHawaiiBox) {
+      const xPercent = (svgX - 95) / 60;
+      const yPercent = (svgY - 220) / 30;
+      calculatedLng = (-160.5 + xPercent * (-154.5 - (-160.5))).toFixed(4);
+      calculatedLat = (22.5 - yPercent * (22.5 - 18.5)).toFixed(4);
+    } else if (isInternationalBox) {
+      const xPercent = (svgX - 390) / 95;
+      const yPercent = (svgY - 200) / 65;
+      calculatedLng = (126.0 + xPercent * (129.5 - 126.0)).toFixed(4);
+      calculatedLat = (36.0 - yPercent * (36.0 - 33.0)).toFixed(4);
+    } else {
+      // Continental US region
+      const xPercent = Math.max(0, Math.min(1, (svgX - 40) / 400));
+      const yPercent = Math.max(0, Math.min(1, (svgY - 45) / 180));
+
+      const minLng = -125.0;
+      const maxLng = -66.5;
+      const minLat = 24.5;
+      const maxLat = 49.5;
+
+      calculatedLng = (minLng + xPercent * (maxLng - minLng)).toFixed(4);
+      calculatedLat = (maxLat - yPercent * (maxLat - minLat)).toFixed(4);
+    }
+
+    setMapClickedCoords({ lat: parseFloat(calculatedLat), lng: parseFloat(calculatedLng) });
+    setNewCourse(prev => ({ ...prev, lat: parseFloat(calculatedLat), lng: parseFloat(calculatedLng) }));
   };
 
   const handleSaveScore = (e) => {
@@ -763,11 +883,11 @@ export default function App() {
       ladySlope: course.ladySlope || 113,
       blueRating: course.blueRating || 72.0,
       blueSlope: course.blueSlope || 113,
-      lat: course.lat || 33.3541,
-      lng: course.lng || 126.3712
+      lat: course.lat || 36.5684,
+      lng: course.lng || -121.9511
     });
     setCourseHolePars(course.holePars || Array(18).fill(4));
-    setMapClickedCoords({ lat: course.lat || 33.3541, lng: course.lng || 126.3712 });
+    setMapClickedCoords({ lat: course.lat || 36.5684, lng: course.lng || -121.9511 });
     setShowCourseModal(true);
   };
 
@@ -791,11 +911,11 @@ export default function App() {
       ladySlope: 113,
       blueRating: 72.0,
       blueSlope: 113,
-      lat: 33.3541,
-      lng: 126.3712
+      lat: 36.5684,
+      lng: -121.9511
     });
     setCourseHolePars(Array(18).fill(4));
-    setMapClickedCoords({ lat: 33.3541, lng: 126.3712 });
+    setMapClickedCoords({ lat: 36.5684, lng: -121.9511 });
   };
 
   const handleSaveCourse = (e) => {
@@ -1368,21 +1488,175 @@ export default function App() {
             </h2>
 
             {/* Map GPS simulator card (always present) */}
-            <div className="bg-white p-5 rounded-none shadow-sm border border-gray-300">
+            <div className="bg-white p-4 rounded-none shadow-sm border border-gray-300">
               <div 
                 onClick={handleMapClick}
-                className="w-full h-48 bg-emerald-50 border border-emerald-100 rounded-none flex flex-col items-center justify-center relative cursor-crosshair overflow-hidden group shadow-inner"
+                className="w-full h-80 bg-slate-50 border border-slate-300 rounded-none relative cursor-crosshair overflow-hidden group shadow-inner flex flex-col justify-end"
               >
-                <div className="absolute inset-0 bg-opacity-15 bg-[radial-gradient(#059669_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                {/* Clean retro design bg grid */}
+                <div className="absolute inset-0 bg-opacity-40 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:12px_12px]"></div>
                 
-                <div className="z-10 bg-white px-3.5 py-1.5 rounded-none shadow-md border border-gray-200 text-xs text-gray-700 flex items-center space-x-1.5 transition-all">
-                  <span>📍</span> 
-                  <span className="font-bold text-emerald-800">
-                    Lat: {Number(mapClickedCoords?.lat || 33.3541).toFixed(4)}, Lng: {Number(mapClickedCoords?.lng || 126.3712).toFixed(4)}
-                  </span>
+                {/* Beautiful Inline SVG USA Map with Alaska, Hawaii, and Jeju insets */}
+                <svg viewBox="0 0 500 280" className="absolute inset-0 w-full h-full select-none">
+                  {/* Continental USA outline path */}
+                  <path
+                    d="M 50,55 L 43,100 L 45,150 L 53,185 C 65,190 73,195 80,185 L 140,195 L 175,225 L 195,245 L 210,215 L 255,215 L 285,188 L 320,190 L 335,215 L 350,250 C 355,245 358,230 355,210 C 352,190 357,180 361,165 L 380,145 L 395,142 L 392,130 L 413,105 L 420,105 L 430,95 L 440,88 L 455,48 L 445,46 L 430,60 L 415,62 L 400,75 L 385,68 L 372,78 L 360,70 L 340,78 L 325,58 L 315,58 L 295,78 L 260,56 L 245,62 L 75,55 Z"
+                    fill="#f0fdf4"
+                    stroke="#059669"
+                    strokeWidth="1.2"
+                    className="transition-all hover:fill-emerald-50/80"
+                  />
+
+                  {/* Alaska Inset */}
+                  <g>
+                    <rect x="15" y="200" width="70" height="50" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.8" strokeDasharray="3 3" />
+                    <text x="50" y="210" textAnchor="middle" fontSize="6.5" fontWeight="black" fill="#64748b">ALASKA</text>
+                    <path 
+                      d="M 22,240 L 25,228 L 35,222 L 45,217 L 60,219 L 75,221 L 79,230 L 70,244 L 65,241 L 50,244 L 38,239 L 30,247 Z" 
+                      fill="#f8fafc" 
+                      stroke="#94a3b8" 
+                      strokeWidth="0.8" 
+                    />
+                  </g>
+
+                  {/* Hawaii Inset */}
+                  <g>
+                    <rect x="95" y="220" width="60" height="30" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.8" strokeDasharray="3 3" />
+                    <text x="125" y="229" textAnchor="middle" fontSize="6.5" fontWeight="black" fill="#64748b">HAWAII</text>
+                    <ellipse cx="106" cy="241" rx="1" ry="1" fill="#10b981" />
+                    <ellipse cx="113" cy="239" rx="1.5" ry="1" fill="#10b981" />
+                    <ellipse cx="120" cy="238" rx="1.5" ry="1" fill="#10b981" />
+                    <ellipse cx="131" cy="237" rx="1" ry="0.8" fill="#10b981" />
+                    <ellipse cx="140" cy="242" rx="2.2" ry="1.2" fill="#10b981" />
+                  </g>
+
+                  {/* International (Jeju) Inset */}
+                  <g>
+                    <rect x="390" y="200" width="95" height="65" fill="#f0fdff80" stroke="#cbd5e1" strokeWidth="0.8" strokeDasharray="3 3" />
+                    <text x="437" y="210" textAnchor="middle" fontSize="6.5" fontWeight="black" fill="#0891b2">🌐 JEJU / INTL</text>
+                    <ellipse cx="438" cy="238" rx="15" ry="9" fill="#ecfdf5" stroke="#10b981" strokeWidth="0.8" />
+                    <text x="438" y="240" textAnchor="middle" fontSize="5.5" fontWeight="bold" fill="#047857">제주 CC</text>
+                  </g>
+
+                  {/* 1. Plot pins for all registered golf courses */}
+                  {courses.map(course => {
+                    const pos = getCoordinatesPosition(course.lat, course.lng);
+                    if (!pos || pos.type === 'UNKNOWN') return null;
+
+                    // Highlight selected course on the map
+                    const isSelected = Number(course.id) === Number(selectedCourseId);
+
+                    return (
+                      <g key={course.id} className="cursor-pointer group">
+                        {/* Interactive invisible hover surface */}
+                        <circle cx={pos.x} cy={pos.y} r="12" fill="transparent" />
+
+                        {/* Pulsing ring for active or high-profile state */}
+                        <circle
+                          cx={pos.x}
+                          cy={pos.y}
+                          r={isSelected ? "11" : "7"}
+                          className={`fill-red-500 opacity-25 ${isSelected ? 'animate-ping' : ''}`}
+                          style={{ transformOrigin: `${pos.x}px ${pos.y}px`, animationDuration: '2s' }}
+                        />
+                        {/* Outer border/pin shape */}
+                        <circle
+                          cx={pos.x}
+                          cy={pos.y}
+                          r={isSelected ? "5.5" : "4.5"}
+                          className={`${isSelected ? 'fill-emerald-600 stroke-white stroke-2' : 'fill-red-600 stroke-white stroke-[1.5]'}`}
+                        />
+                        {/* Core element dot */}
+                        <circle cx={pos.x} cy={pos.y} r="1.5" className="fill-white" />
+
+                        {/* Interactive hover display */}
+                        <g className="opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50">
+                          {/* Tooltip Background */}
+                          <rect
+                            x={pos.x - 55}
+                            y={pos.y - 32}
+                            width="110"
+                            height="22"
+                            rx="4"
+                            fill="#1e293b"
+                            stroke="#334155"
+                            strokeWidth="1"
+                            className="shadow-lg"
+                          />
+                          {/* Tooltip Title Text */}
+                          <text
+                            x={pos.x}
+                            y={pos.y - 18}
+                            textAnchor="middle"
+                            fill="#f8fafc"
+                            fontSize="7.5"
+                            fontWeight="bold"
+                          >
+                            {course.name.length > 20 ? course.name.substring(0, 18) + '...' : course.name}
+                          </text>
+                          {/* Little triangle pointer arrow */}
+                          <polygon
+                            points={`${pos.x - 4},${pos.y - 10} ${pos.x + 4},${pos.y - 10} ${pos.x},${pos.y - 7}`}
+                            fill="#1e293b"
+                          />
+                        </g>
+                      </g>
+                    );
+                  })}
+
+                  {/* 2. Plot Active target crosshair picker (yellow) */}
+                  {mapClickedCoords && (() => {
+                    const clickPos = getCoordinatesPosition(mapClickedCoords.lat, mapClickedCoords.lng);
+                    if (!clickPos || clickPos.type === 'UNKNOWN') return null;
+                    return (
+                      <g className="pointer-events-none">
+                        {/* Radar effect */}
+                        <circle
+                          cx={clickPos.x}
+                          cy={clickPos.y}
+                          r="15"
+                          fill="none"
+                          stroke="#eab308"
+                          strokeWidth="1"
+                          strokeDasharray="2 2"
+                        />
+                        {/* Crosshairs */}
+                        <line x1={clickPos.x - 7} y1={clickPos.y} x2={clickPos.x + 7} y2={clickPos.y} stroke="#eab308" strokeWidth="1.2" />
+                        <line x1={clickPos.x} y1={clickPos.y - 7} x2={clickPos.x} y2={clickPos.y + 7} stroke="#eab308" strokeWidth="1.2" />
+                        {/* Pin picker */}
+                        <circle
+                          cx={clickPos.x}
+                          cy={clickPos.y}
+                          r="3"
+                          className="fill-yellow-400 stroke-yellow-700 stroke-1 shadow-md"
+                        />
+                        {/* Label Badge */}
+                        <g>
+                          <rect x={clickPos.x - 24} y={clickPos.y + 9} width="48" height="11" rx="2" fill="#eab308" stroke="#ca8a04" strokeWidth="0.5" />
+                          <text x={clickPos.x} y={clickPos.y + 17} textAnchor="middle" fill="#78350f" fontSize="6" fontWeight="black">PICKED 📍</text>
+                        </g>
+                      </g>
+                    );
+                  })()}
+                </svg>
+
+                {/* Info Hud layer Overlay */}
+                <div className="z-10 bg-white/95 backdrop-blur-sm px-3.5 py-2.5 rounded-none shadow-md border-t border-r border-gray-300 text-xs text-gray-700 flex flex-col space-y-1 self-start select-none max-w-[240px]">
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-emerald-600">🎯</span> 
+                    <span className="font-extrabold text-emerald-900 text-[11px] uppercase tracking-wider">
+                      GPS Target Coordinate
+                    </span>
+                  </div>
+                  <div className="font-mono text-[10px] text-gray-600 flex justify-between space-x-3 bg-gray-50 px-1.5 py-0.5 border border-gray-200">
+                    <span>L: <strong>{Number(mapClickedCoords?.lat || 36.5684).toFixed(4)}</strong></span>
+                    <span>G: <strong>{Number(mapClickedCoords?.lng || -121.9511).toFixed(4)}</strong></span>
+                  </div>
                 </div>
-                <div className="absolute bottom-2 text-[9px] text-gray-400 font-bold uppercase tracking-widest text-center select-none">
-                  클릭하여 핀 위치 변경하기
+
+                {/* Help tip at the bottom */}
+                <div className="absolute right-2 bottom-2 z-10 bg-black/60 backdrop-blur-xs px-2 py-1 text-[8.5px] text-white font-extrabold uppercase tracking-widest text-center select-none rounded-none">
+                  지도를 클릭해 골프장 위치 핀 지정
                 </div>
               </div>
             </div>
@@ -1478,6 +1752,23 @@ export default function App() {
                             <span className="text-[11px] font-black text-emerald-700">{p}</span>
                           </div>
                         ))}
+                      </div>
+                    </div>
+
+                    {/* Coordinates Indicator */}
+                    <div>
+                      <span className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1">
+                        📍 Geolocations (Targeted on Map)
+                      </span>
+                      <div className="bg-gray-50 p-2 text-center rounded-none border border-gray-200 grid grid-cols-2 gap-2 text-xs font-mono text-gray-700">
+                        <div className="bg-white p-1.5 border border-gray-150 rounded-none flex justify-between px-2.5">
+                          <span className="text-gray-400 font-bold">LAT:</span>
+                          <span className="font-extrabold text-emerald-700">{Number(mapClickedCoords?.lat || 36.5684).toFixed(4)}</span>
+                        </div>
+                        <div className="bg-white p-1.5 border border-gray-150 rounded-none flex justify-between px-2.5">
+                          <span className="text-gray-400 font-bold">LNG:</span>
+                          <span className="font-extrabold text-emerald-700">{Number(mapClickedCoords?.lng || -121.9511).toFixed(4)}</span>
+                        </div>
                       </div>
                     </div>
 
