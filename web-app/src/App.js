@@ -1516,7 +1516,7 @@ export default function App() {
             {/* Course search input */}
             <div className="px-1">
               <div className="relative flex items-center">
-                <span className="absolute left-3 text-gray-400 text-sm select-none">
+                <span className="absolute left-3 text-gray-450 text-sm select-none">
                   🔍
                 </span>
                 <input
@@ -1538,13 +1538,16 @@ export default function App() {
               </div>
             </div>
 
-            <button 
-              type="button"
-              onClick={() => setShowCourseModal(true)}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 px-4 rounded-none text-sm transition-all shadow-md active:scale-95"
-            >
-              ⛳ Add Golf Course
-            </button>
+            {/* Add Golf Course Button in requested order */}
+            <div className="px-1">
+              <button 
+                type="button"
+                onClick={() => setShowCourseModal(true)}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 px-4 rounded-none text-xs transition-all shadow active:scale-[0.98] border-0 outline-none"
+              >
+                ⛳ Add Golf Course
+              </button>
+            </div>
 
             {/* Interactive Registration Modal Overlays */}
             {showCourseModal && (

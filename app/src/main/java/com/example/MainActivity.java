@@ -208,7 +208,6 @@ public class MainActivity extends AppCompatActivity {
             try {
                 webView.stopLoading();
                 webView.clearHistory();
-                webView.clearCache(true);
                 webView.loadUrl("about:blank");
             } catch (Throwable ignored) {}
             android.view.ViewParent parent = webView.getParent();
