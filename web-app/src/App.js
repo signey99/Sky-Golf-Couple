@@ -142,8 +142,48 @@ export default function App() {
     const saved = localStorage.getItem('golf_diary_courses');
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
-        if (parsed && Array.isArray(parsed)) return parsed;
+        let parsed = JSON.parse(saved);
+        if (parsed && Array.isArray(parsed)) {
+          // Robust Migration: filter out ('jeju')
+          let filtered = parsed.filter(c => c && c.name && !c.name.toLowerCase().includes('jeju'));
+          
+          // Let's ensure 'Frisco Lakes Golf Club' and 'The Club at Frisco Farms' are in the list if not already there
+          const hasFriscoLakes = filtered.some(c => c && c.name && c.name.toLowerCase().includes('frisco lakes'));
+          const hasFriscoFarms = filtered.some(c => c && c.name && c.name.toLowerCase().includes('frisco farms'));
+          
+          if (!hasFriscoLakes) {
+            filtered.push({
+              id: 1,
+              name: 'Frisco Lakes Golf Club',
+              address: '7170 Stonebrook Pkwy, Frisco, TX 75034',
+              totalPar: 72,
+              ladyRating: 70.8,
+              ladySlope: 120,
+              blueRating: 73.1,
+              blueSlope: 132,
+              lat: 33.1444,
+              lng: -96.8906,
+              holePars: Array(18).fill(4)
+            });
+          }
+          if (!hasFriscoFarms) {
+            filtered.push({
+              id: 4,
+              name: 'The Club at Frisco Farms',
+              address: 'Frisco, TX, USA',
+              totalPar: 72,
+              ladyRating: 72.0,
+              ladySlope: 113,
+              blueRating: 72.0,
+              blueSlope: 113,
+              lat: 33.1550,
+              lng: -96.8200,
+              holePars: Array(18).fill(4)
+            });
+          }
+          localStorage.setItem('golf_diary_courses', JSON.stringify(filtered));
+          return filtered;
+        }
       } catch (e) {
         console.error("Error reading courses from localStorage", e);
       }
@@ -1453,7 +1493,8 @@ export default function App() {
                   <div className="flex-1 grid grid-cols-10 divide-x divide-gray-300">
                     {scoreboardHoles.slice(0, 9).map((h, k) => {
                       const isFocused = (k === currentFocusedIndex);
-                      const isClickable = (currentFocusedIndex === -1 || k <= currentFocusedIndex);
+                      const isEntered = h.iron > 0 || h.putt > 0 || h.iron2 > 0 || h.putt2 > 0;
+                      const isClickable = isEntered || (currentFocusedIndex !== -1 && k === currentFocusedIndex);
                       const p1T = h.iron + h.putt;
                       const p2T = h.iron2 + h.putt2;
                       const holePar = courseHolePars[k] || 4;
@@ -1526,7 +1567,8 @@ export default function App() {
                     {scoreboardHoles.slice(9, 18).map((h, k) => {
                       const globalK = k + 9;
                       const isFocused = (globalK === currentFocusedIndex);
-                      const isClickable = (currentFocusedIndex === -1 || globalK <= currentFocusedIndex);
+                      const isEntered = h.iron > 0 || h.putt > 0 || h.iron2 > 0 || h.putt2 > 0;
+                      const isClickable = isEntered || (currentFocusedIndex !== -1 && globalK === currentFocusedIndex);
                       const p1T = h.iron + h.putt;
                       const p2T = h.iron2 + h.putt2;
                       const holePar = courseHolePars[globalK] || 4;
@@ -1769,10 +1811,10 @@ export default function App() {
             </h2>
 
             {/* Map GPS simulator card (always present) - Expanded for full width display */}
-            <div className="-mx-4 bg-white border-y border-gray-300 relative">
+            <div className="-mx-4 relative">
               <div 
                 id="leaflet-course-map"
-                className="w-full h-80 bg-slate-50 relative overflow-hidden group shadow-inner"
+                className="w-full h-[380px] bg-slate-50 relative overflow-hidden group"
                 style={{ zIndex: 1 }}
               >
               </div>
