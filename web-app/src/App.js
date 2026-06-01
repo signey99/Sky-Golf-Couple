@@ -184,6 +184,8 @@ export default function App() {
     if (mainEl) {
       mainEl.scrollTop = 0;
     }
+    window.scrollTo(0, 0);
+    document.body.scrollTop = 0;
   }, [activeTab]);
 
   // Utility to prevent Firebase SDK & fetch calls from hanging indefinitely (max timeout)
@@ -917,7 +919,7 @@ export default function App() {
 
   return (
     <div 
-      className="max-w-lg mx-auto h-full bg-gray-50 flex flex-col justify-between shadow-xl relative border-x border-gray-100 overflow-hidden"
+      className="max-w-lg mx-auto h-screen h-[100dvh] bg-gray-50 flex flex-col justify-between shadow-xl relative border-x border-gray-100 overflow-hidden"
       style={{ fontFamily: '"Outfit", "Noto Sans KR", sans-serif' }}
     >
       
@@ -1710,41 +1712,51 @@ export default function App() {
                       </div>
 
                       {/* Row 2: Address */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const query = encodeURIComponent(course.name + ' ' + (course.address || ''));
-                          window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
-                        }}
-                        className="text-xs text-gray-500 font-bold flex items-center gap-1.5 hover:text-emerald-700 hover:underline transition-colors w-full text-left bg-transparent border-0 p-0 cursor-pointer min-h-[24px]"
-                      >
-                        <span className="text-emerald-600 scale-110 shrink-0 flex items-center bg-emerald-50 p-1 rounded-none border border-emerald-100 hover:bg-emerald-100 active:scale-95 transition-all">
+                      <div className="flex items-center gap-2 min-h-[24px] text-xs font-bold text-gray-500">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const query = encodeURIComponent(course.name + ' ' + (course.address || ''));
+                            window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+                          }}
+                          className="text-emerald-600 scale-110 shrink-0 flex items-center justify-center bg-emerald-50 p-1 rounded-none border border-emerald-100 hover:bg-emerald-100 hover:text-emerald-700 active:scale-95 transition-all outline-none"
+                          title="Search on Google Maps"
+                        >
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s-7-4.85-7-11.5a7 7 0 1 1 14 0c0 6.65-7 11.5-7 11.5z" />
                             <circle cx="12" cy="9.5" r="2.5" />
                           </svg>
-                        </span>{' '}
-                        <span className="truncate">{course.address || 'No address registered'}</span>
-                      </button>
+                        </button>
+                        <span className="truncate select-text">{course.address || 'No address registered'}</span>
+                      </div>
 
                       {/* Row 3: Telephone (left) and Total Played Rounds (right) */}
                       <div className="flex justify-between items-center text-xs text-gray-500 font-bold mt-0.5">
                         {course.phone ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              window.open(`tel:${course.phone}`, '_self');
-                            }}
-                            className="flex items-center gap-1.5 hover:text-emerald-700 hover:underline text-left bg-transparent border-0 p-0 cursor-pointer min-h-[24px]"
-                          >
-                            <span className="text-emerald-600 bg-emerald-50 p-1 rounded-none border border-emerald-100 hover:bg-emerald-100 active:scale-95 transition-all flex items-center justify-center scale-110 w-5.5 h-5.5 shrink-0">📞</span>
-                            <span className="truncate">{course.phone}</span>
-                          </button>
+                          <div className="flex items-center gap-2 min-h-[24px]">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                window.open(`tel:${course.phone}`, '_self');
+                              }}
+                              className="text-emerald-600 scale-110 shrink-0 flex items-center justify-center bg-emerald-50 p-1 rounded-none border border-emerald-100 hover:bg-emerald-100 hover:text-emerald-700 active:scale-95 transition-all outline-none"
+                              title="Call golf course"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.387a20.302 20.302 0 01-7.097-7.097c-.145-.44.02-.927.396-1.21l1.293-.97a1.125 1.125 0 00.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                              </svg>
+                            </button>
+                            <span className="truncate select-text">{course.phone}</span>
+                          </div>
                         ) : (
-                          <p className="flex items-center gap-1.5 truncate min-h-[24px]">
-                            <span className="text-gray-400 bg-gray-50 p-1 rounded-none border border-gray-200 flex items-center justify-center scale-110 w-5.5 h-5.5 shrink-0">📞</span>
+                          <div className="flex items-center gap-2 min-h-[24px]">
+                            <span className="text-gray-400 bg-gray-50 p-1 rounded-none border border-gray-200 flex items-center justify-center scale-110 shrink-0">
+                              <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.387a20.302 20.302 0 01-7.097-7.097c-.145-.44.02-.927.396-1.21l1.293-.97a1.125 1.125 0 00.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                              </svg>
+                            </span>
                             <span className="text-gray-400 font-normal">No phone number</span>
-                          </p>
+                          </div>
                         )}
                         <span className="shrink-0 text-[11px] font-extrabold text-emerald-850 bg-emerald-50 px-2 py-0.5 rounded-none border border-emerald-100/50 flex items-center gap-0.5 select-none font-mono">🏆 {courseHistories.length} Rounds</span>
                       </div>
